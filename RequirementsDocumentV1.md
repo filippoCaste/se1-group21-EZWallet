@@ -37,6 +37,7 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
+- [Defects Table](#defects-table)
 
 # Informal description
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
@@ -335,3 +336,10 @@ note bottom of "Browser" #LightGray: Compatible Browser
 note top of "Web server" #LightGray: Node.js must be installed on the machine
 note top of "DBServer" #LightGray: MongoDB (for users and transactions)
 ```
+
+# Defects Table
+|Name|Description|
+|---|:---:|
+|getUsers|Should be used by an user with admin privileges, but this check is not done|
+|GetLabel|Doesn’t work, should be fixed|
+|GetUserByUsername|Doesn’t work properly|
