@@ -25,12 +25,15 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 	- [Non Functional Requirements](#non-functional-requirements)
 - [Use case diagram and use cases](#use-case-diagram-and-use-cases)
 	- [Use case diagram](#use-case-diagram)
-		- [Use case 1, UC1](#use-case-1-uc1)
-				- [Scenario 1.1](#scenario-11)
-				- [Scenario 1.2](#scenario-12)
-				- [Scenario 1.x](#scenario-1x)
-		- [Use case 2, UC2](#use-case-2-uc2)
-		- [Use case x, UCx](#use-case-x-ucx)
+		- [Use case 1: Manage accounts (UC1)](#use-case-1-manage-accounts-uc1)
+				- [Scenario 1.1: Register Account](#scenario-11-register-account)
+				- [Scenario 1.2: Login](#scenario-12-login)
+		- [Use case 2: Manage transactions (UC2)](#use-case-2-manage-transactions-uc2)
+				- [Scenario 2.1: Create Transactions](#scenario-21-create-transactions)
+		- [Use case 3: Manage Categories (UC3)](#use-case-3-manage-categories-uc3)
+			- [Scenario 3.1: Create a category](#scenario-31-create-a-category)
+			- [Scenario 3.2: View categories](#scenario-32-view-categories)
+			- [Scenario 3.3: Edit a category](#scenario-33-edit-a-category)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -154,43 +157,104 @@ User -- (FR3: Manage Categories)
 ```
 
 <!-- \<next describe here each use case in the UCD> -->
-### Use case 1, UC1
-| Actors Involved        |  |
-| ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the UC can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after UC is finished> |
-|  Nominal Scenario     | \<Textual description of actions executed by the UC> |
-|  Variants     | \<other normal executions> |
-|  Exceptions     | \<exceptions, errors > |
+### Use case 1: Manage accounts (UC1)
+| Actors Involved        | User or Admin|
+| ------------- |:-------------:|
+|  Precondition     | User has installed the EZWallet application |
+|  Post condition     | User's account is managed |
+|  Nominal Scenario     | User registers, logs in, logs out, authorizes, edits, deletes, and adds a profile picture |
+|  Variants     | N/A |
+|  Exceptions     | Invalid account credentials, network errors, invalid image format for profile picture |
 
-##### Scenario 1.1 
-
-\<describe here scenarios instances of UC1>
-
-\<a scenario is a sequence of steps that corresponds to a particular execution of one use case>
-
-\<a scenario is a more formal description of a story>
-
-\<only relevant scenarios should be described>
-
-| Scenario 1.1 | |
-| ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the scenario can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after scenario is finished> |
+##### Scenario 1.1: Register Account
+| **Scenario 1.1** | |
+| ------------- |:-------------:|
+|  Precondition     | User has not registered an account |
+|  Post condition     | User's account is registered |
 | Step#        | Description  |
-|  1     |  |  
-|  2     |  |
-|  ...     |  |
+|  1     | User launches the EZWallet application |
+|  2     | User selects "Register" |
+|  3     | User fills in the required information (email, password, name) |
+|  4     | User submits the registration form |
+|  5     | System creates the new account and stores it in the database |
+|  6     | User receives a confirmation message |
 
-##### Scenario 1.2
+##### Scenario 1.2: Login
+| **Scenario 1.2** | |
+| ------------- |:-------------:|
+|  Precondition     | User has a registered account |
+|  Post condition     | User is logged in |
+| Step#        | Description  |
+|  1     | User launches the EZWallet application |
+|  2     | User enters their email and password |
+|  3     | User selects "Login" |
+|  4     | System validates the user's credentials |
+|  5     | System logs the user in and displays the main screen |
 
-##### Scenario 1.x
+### Use case 2: Manage transactions (UC2)
+| Actors Involved        | User |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in |
+|  Post condition     | User's transactions are managed |
+|  Nominal Scenario     | User creates, gets, deletes, filters, edits, and sorts transactions |
+|  Variants     | N/A |
+|  Exceptions     | Invalid transaction data, network errors |
 
-### Use case 2, UC2
-..
+##### Scenario 2.1: Create Transactions
+| **Scenario 2.1** | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and wants to create a new transaction |
+|  Post condition     | New transaction is created and added to the user's transaction list |
+| Step#        | Description  |
+|  1     | User navigates to the "Transactions" section |
+|  2     | User selects "Create Transaction" |
+|  3     | User fills in the required transaction information (type, amount, category, date) |
+|  4     | User submits the transaction form |
+|  5     | System creates the new transaction and stores it in the database |
+|  6     | User receives a confirmation message and the transaction is added to the list |
 
-### Use case x, UCx
-..
+### Use case 3: Manage Categories (UC3)
+| Actors Involved        | User or Admin |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | Category is created, retrieved, edited, or deleted based on user action |
+|  Nominal Scenario     | 1. User selects to create, retrieve, edit, or delete a category. 2. User provides necessary input for the chosen action. 3. System processes the request and updates the category list accordingly. 4. User receives a confirmation message regarding the success of the operation. |
+|  Variants     | None |
+|  Exceptions     | 1. User provides invalid input for the chosen action.  2. System fails to process the request.  3. User tries to delete a category with active transactions. |
+
+#### Scenario 3.1: Create a category
+| **Scenario 3.1** | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | A new category is created and added to the user's category list |
+| Step#        | Description  |
+|  1     | User clicks on the "Create Category" button |  
+|  2     | System displays a form to enter the category name and description |
+|  3     | User fills in the required information and submits the form |
+|  4     | System validates the input and creates the new category |
+|  5     | System displays a confirmation message and adds the new category to the user's category list |
+
+#### Scenario 3.2: View categories
+| **Scenario 3.2** | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | User views their existing categories |
+| Step#        | Description  |
+|  1     | User navigates to the categories section |
+|  2     | System retrieves and displays the list of user's categories |
+
+#### Scenario 3.3: Edit a category
+| **Scenario 3.3** | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section, with at least one category present in the list |
+|  Post condition     | The selected category is updated with the new information provided by the user |
+| Step#        | Description  |
+|  1     | User selects a category from the category list |
+|  2     | User clicks on the "Edit Category" button |
+|  3     | System displays a form with the existing category information |
+|  4     | User modifies the information as needed and submits the form |
+|  5     | System validates the input and updates the category information |
+|  6     | System displays a confirmation message and updates the category list |
 
 
 
