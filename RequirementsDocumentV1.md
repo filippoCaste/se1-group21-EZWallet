@@ -52,9 +52,15 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 ## Context Diagram
 <!-- \<Define here Context diagram using UML use case diagram> -->
+```plantuml
+left to right direction
 
-![Context Diagram](imgs/context_V1.png)
+actor User as a
 
+rectangle System #Yellow {
+  (EzWallet) #LightBlue
+  a -- (EzWallet) }
+```
 <!-- \<actors are a subset of stakeholders> -->
 
 ## Interfaces
@@ -120,10 +126,15 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 
 ## Use case diagram
-\<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
+<!-- \<define here UML Use case diagram UCD summarizing all use cases, and their relationships> -->
+```plantuml
+actor User
+User -- (FR1: Manage Accounts)
+User -- (FR2: Manage Transactions)
+User -- (FR3: Manage Categories)
+```
 
-
-\<next describe here each use case in the UCD>
+<!-- \<next describe here each use case in the UCD> -->
 ### Use case 1, UC1
 | Actors Involved        |  |
 | ------------- |:-------------:| 
@@ -168,12 +179,57 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
 
+```plantuml
+left to right direction
+class Category {
++ Type
++ Colour
+}
+
+class Transactions {
++ Name
++ Type
++ Amount
++ Date
+}
+
+class User {
++ Username
++ Password
++ Email
+}
+
+
+Transactions "1.." -- Category
+User -- "" Transactions
+note top of User #LightGray: Descriptor of Users
+note top of Transactions #LightGray: List of all of the transactions made by users
+note top of Category #LightGray: Descriptor of Categories
+```
+
 \<concepts must be used consistently all over the document, ex in use cases, requirements etc>
 
 # System Design
 <!-- \<describe here system design> -->
 
-![System Design](imgs/systemDesign_V1.png)
+```plantuml
+class EzWallet #Yellow 
+class "EzWallet Client / Server" #Red 
+class "Browser" #LightBlue
+class "Web server" #LightBlue
+class "DBServer" #LightBlue
+
+EzWallet o-- "EzWallet Client / Server"
+  "EzWallet Client / Server" <|-- "Browser"
+
+  "EzWallet Client / Server" <|-- "Web server"
+  "EzWallet Client / Server" <|-- "DBServer"
+note bottom of DBServer: "MongoDB"
+note bottom of "Web server" 
+  Node.js
+  React
+end note
+```
 
 <!-- \<must be consistent with Context diagram> -->
 
@@ -181,8 +237,18 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 <!-- \<describe here deployment diagram > -->
 
-![Deployment Diagram](imgs/deployment_V1.png)
+```plantuml
+node "PC client / Server" #LightYellow
 
+artifact "Browser" #LightBlue
+artifact "Web server" #LightBlue
+artifact "DBServer" #LightBlue
 
+"PC client / Server" <.. "Browser"
+"PC client / Server" <.up. "Web server"
+"PC client / Server" <.up. "DBServer"
 
-
+note bottom of "Browser" #LightGray: Compatible Browser
+note top of "Web server" #LightGray: Node.js must be installed on the machine
+note top of "DBServer" #LightGray: MongoDB (for users and transactions)
+```
