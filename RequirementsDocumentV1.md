@@ -74,11 +74,30 @@ rectangle System #Yellow {
 
 
 # Stories and personas
-\<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system>
+<!-- \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system> -->
 
-\<Persona is-an-instance-of actor>
+**Persona 1: Budget-Conscious Shopper**  
+Sarah, a full-time university student who is also a part-time retail worker. As a busy student, Sarah needs to keep track of her expenses to stay within budget. She uses EZWallet to categorize her expenses, such as groceries, textbooks, and bills.
 
-\<stories will be formalized later as scenarios in use cases>
+Sarah can use EZWallet to set limits in each category to ensure she stays within her budget. EZWallet also provides personalized notifications if she exceeds her spending limits in a particular category, allowing her to adjust her spending appropriately.
+
+
+**Persona 2:  Vacation Planner**  
+Tom and Emily are a married couple who enjoy traveling with their three children. As a family vacation planner, Emily is responsible for planning and budgeting their vacations. She needs to keep track of their vacation expenses, including transportation, accommodation, food, and activities.
+
+EZWallet can help Emily categorize the family's vacation expenses providing her more control over the vacation budget. Emily uses the software to analyze her family's vacation spending patterns and make informed decisions to plan her trip efficiently.
+
+
+**Persona 3: Business Owner**  
+Charles, who owns a cozy café in the downtown area. He uses EZWallet to track his business expenses related to supplies, travel, marketing, and payroll. Categorizing these expenses helps him to analyze his business spending and identifies any areas where he could reduce costs.
+
+**Persona 4: Recent College Graduate**  
+Lauren is a recent college graduate trying to establish healthy financial habits. She found the transition to adulting to be challenging, but EZWallet has made it easier. She uses the application to track her expenses, such as rent, utilities, shopping, and entertainment.
+
+Using EZWallet has enabled Lauren to gain financial knowledge by providing her with statistical data on her spending behavior. She can now make well-informed decisions to develop healthy financial habits to achieve her financial goals.
+
+
+<!-- \<stories will be formalized later as scenarios in use cases> -->
 
 
 # Functional and non functional requirements
