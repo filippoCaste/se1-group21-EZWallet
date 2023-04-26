@@ -15,6 +15,7 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 - [Requirements Document - current EZWallet](#requirements-document---current-ezwallet)
 - [Contents](#contents)
 - [Informal description](#informal-description)
+	- [Business Model](#business-model)
 - [Stakeholders](#stakeholders)
 - [Context Diagram and interfaces](#context-diagram-and-interfaces)
 	- [Context Diagram](#context-diagram)
@@ -42,7 +43,8 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 # Informal description
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
 
-
+## Business Model
+The business model is based on voluntary donations from the users who appreciate our open source app. The application does not offer any premium services or features that require payment. 
 
 # Stakeholders
 
