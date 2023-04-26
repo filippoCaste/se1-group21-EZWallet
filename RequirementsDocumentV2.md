@@ -428,9 +428,48 @@ Admin --|> User
 
 # Glossary
 
-\<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
+<!-- \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>  -->
 
-\<concepts must be used consistently all over the document, ex in use cases, requirements etc>
+<!-- \<concepts must be used consistently all over the document, ex in use cases, requirements etc> -->
+
+```plantuml
+class Statistic {
++ Type
+}
+
+class Category {
++ Type
++ Colour
+}
+
+class Transactions {
++ Name
++ Type
++ Amount
++ Date
+}
+
+class User {
++ Username
++ Password
++ Email
++ Profile pictur
++ Member of family
+}
+
+class Family {
++ Number of members
++ List of members
+}
+
+Transactions "*" -- Category
+Statistic "1..*" -- Transactions
+User -- "*" Transactions
+User --|> Family
+Admin --|> User
+Admin --|> Family
+```
+
 
 # System Design
 \<describe here system design>
