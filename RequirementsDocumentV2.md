@@ -472,14 +472,77 @@ Admin --|> Family
 
 
 # System Design
-\<describe here system design>
+<!-- \<describe here system design>
+\<must be consistent with Context diagram> -->
 
-\<must be consistent with Context diagram>
+```plantuml
+class EzWallet #Yellow 
+class "EzWallet Client" #Red 
+class "EzWallet Server" #Red
+class "Android Device" #LightBlue
+class "IOS/iPadOS Device" #LightBlue
+class "PC" #LightBlue
+class "Web server" #LightBlue
+class "DBServer" #LightBlue
+class "Android app" #LightGreen
+class "IOS/iPad OS app" #LightGreen
+class "Browser" #LightGreen
+class "MongoDB" #LightGreen
+
+EzWallet o-- "1...*" "EzWallet Client"
+  "EzWallet Client" <|-- "Android Device"
+    "Android Device" <|.. "Android app"
+  "EzWallet Client" <|-- "IOS/iPadOS Device"
+    "IOS/iPadOS Device" <|.. "IOS/iPad OS app"
+  "EzWallet Client" <|-- "PC"
+    "PC" <|.. "Browser"
+EzWallet o--  "EzWallet Server"
+  "EzWallet Server" <|-- "Web server"
+  "EzWallet Server" <|-- "DBServer"
+    "DBServer" <|.. "MongoDB"
+note bottom of "Web server" 
+  Node.js   
+  React
+```
 
 # Deployment Diagram 
+<!-- \<describe here deployment diagram > -->
 
-\<describe here deployment diagram >
+```plantuml
+node "EzWallet Server" #LightYellow
+node "Android Device" #LightYellow
+node "IOS/iPadOS Device" #LightYellow
+node "PC client" #LightYellow
+node "Distribution" #LightYellow
+node "Analytics" #LightYellow
 
 
+artifact "Browser" #LightBlue
+artifact "Android app" #LightBlue
+artifact "IOS/iPad OS app" #LightBlue
+artifact "Web server" #LightBlue
+artifact "DBServer" #LightBlue
+artifact "Google Play" #LightBlue
+artifact "Apple Store" #LightBlue
+artifact "Google Analytics" #LightBlue
 
+"EzWallet Server" -left- "internet link" "PC client"
+"EzWallet Server" -down- "internet link" "Android Device"
+"EzWallet Server" -down- "internet link" "IOS/iPadOS Device"
+"EzWallet Server" -down-- "internet link" "Distribution"
+"EzWallet Server" -right-- "internet link" "Analytics"
 
+"PC client" <.. "Browser"
+"Android Device" <.. "Android app"
+"IOS/iPadOS Device" <.. "IOS/iPad OS app"
+"Analytics" <.. "Google Analytics"
+"Distribution" <.. "Google Play"
+"Distribution" <.. "Apple Store"
+"EzWallet Server" <.up. "Web server"
+"EzWallet Server" <.up. "DBServer"
+
+note bottom of "Browser" #LightGray: Compatible Browser
+note bottom of "Android app" #LightGray: Supported versions of Operating System
+note bottom of "IOS/iPad OS app" #LightGray: Supported versions of Operating System
+note top of "DBServer" #LightGray: MongoDB (for users and transactions)
+```
