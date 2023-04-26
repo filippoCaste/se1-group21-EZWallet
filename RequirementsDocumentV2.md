@@ -147,6 +147,7 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 <!-- \<they match to high level use cases> -->
 
 | ID    	| Description  |
+|---|---|
 |  **FR1**  | Manage accounts (**) |
 |  FR1.1    |  Register account |
 |  FR1.2    |  Login |
