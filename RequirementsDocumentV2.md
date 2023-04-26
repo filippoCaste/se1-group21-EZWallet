@@ -489,7 +489,7 @@ class "IOS/iPad OS app" #LightGreen
 class "Browser" #LightGreen
 class "MongoDB" #LightGreen
 
-EzWallet o-- "1...*" "EzWallet Client"
+EzWallet o-- "1..*" "EzWallet Client"
   "EzWallet Client" <|-- "Android Device"
     "Android Device" <|.. "Android app"
   "EzWallet Client" <|-- "IOS/iPadOS Device"
@@ -500,9 +500,7 @@ EzWallet o--  "EzWallet Server"
   "EzWallet Server" <|-- "Web server"
   "EzWallet Server" <|-- "DBServer"
     "DBServer" <|.. "MongoDB"
-note bottom of "Web server" 
-  Node.js   
-  React
+note bottom of "Web server" #LightGray: Node.js, React
 ```
 
 # Deployment Diagram 
