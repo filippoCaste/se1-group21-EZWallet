@@ -106,12 +106,12 @@ The Joneses run a small tech startup that offers web development services. The c
 With EZWallet, David can categorize expenses related to supplies, travel, marketing, and organization departments. The software tracks expenses, and by analyzing spending patterns, the Joneses can make informed financial decisions and cut back on unnecessary expenses to increase profitability.
 
 
-**Persona 4: Recent College Graduate**
+**Persona 4: Recent College Graduate**  
 Emily is a recent college graduate who just started working at a tech company. After years of being in college, Emily is ready to establish healthy financial habits and avoid unwise spending. She wants to save some money, pay off her student loan, and invest in herself.  
 By using EZWallet, Emily can track expenses and gain financial awareness. The software provides statistics related to her financial behavior, helping her to develop responsible spending habits, and test better habits earned by using EZWallet better.
 
 
-**Persona 5: Retirement Planner**
+**Persona 5: Retirement Planner**  
 Mrs. Morris is a retirement planner who has been providing retirement planning services for over twenty years. She has vast experience in financial management and helps her clients make informed financial decisions to achieve their financial goals. Mrs. Morris has a diverse clientele, including individuals, families, and small business owners.  
 Mrs. Morris uses EZWallet to keep track of her clients' expenses, analyze spending patterns, and provide personalized financial advice. The software helps her to make accurate retirement planning recommendations based on her clients' financial habits and goals. By using EZWallet, Mrs. Morris ensures her clients are on track to meet their financial goals and live comfortably in retirement.
 
