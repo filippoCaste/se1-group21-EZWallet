@@ -65,7 +65,8 @@ actor User as a
 
 rectangle System #Yellow {
   (EzWallet) #LightBlue
-  a -- (EzWallet) }
+  a -- (EzWallet) 
+}
 ```
 <!-- \<actors are a subset of stakeholders> -->
 
@@ -286,8 +287,8 @@ class User {
 }
 
 
-Transactions "1.." -- Category
-User -- "" Transactions
+Transactions "1..*" -- Category
+User -- " " Transactions
 note top of User #LightGray: Descriptor of Users
 note top of Transactions #LightGray: List of all of the transactions made by users
 note top of Category #LightGray: Descriptor of Categories
