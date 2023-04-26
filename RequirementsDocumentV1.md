@@ -110,9 +110,9 @@ Using EZWallet has enabled Lauren to gain financial knowledge by providing her w
 
 ## Functional Requirements
 
-\<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system>
+<!-- \<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system> -->
 
-\<they match to high level use cases>
+<!-- \<they match to high level use cases> -->
 
 | ID    	| Description  |
 | ------------- |:-------------:|
@@ -134,18 +134,17 @@ Using EZWallet has enabled Lauren to gain financial knowledge by providing her w
 
 ## Non Functional Requirements
 
-\<Describe constraints on functional requirements>
+<!-- \<Describe constraints on functional requirements> -->
 
-| ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
+| ID    	| Type (efficiency, reliability, ..)       	| Description  | Refers to |
 | ------------- |:-------------:| :-----:| -----:|
-| NFR1 	| Usability  | Core functions for users (read transactions), should be used with no training by all users with at least 1yr experience with browsers | |
-| NFR2 	| Availability |  99.9% uptime | |
-| NFR3 	| Efficiency| All functions should be completed in 0.5s | |
-| NFR4 	| Security|  Access only to authorized users | |
-| NFR5 	| Maintainability |The facility to  modify software components,  to correct faults, improve performance  or to adapt to a changed environment. For measures, refer to `EstimationV1.md` | |
-| NFR6 	| Portability | Effort to redeploy application on other platform, browser compatibility: javascript support| |
-| NFR7  | Correctness | Capability to provide intended functionality in all cases (no error while querying the database, show only data required). |  |
-
+| NFR1 	| Usability  | Core functions for users (read transactions), should be used with no training by all users with at least 1yr experience with browsers | All FR|
+| NFR2 	| Availability |  99.9% uptime | - |
+| NFR3 	| Efficiency| All functions should be completed in 0.5s | All FR|
+| NFR4 	| Security|  Access only to authorized users |FR 1.5 |
+| NFR5 	| Maintainability |The facility to  modify software components,  to correct faults, improve performance  or to adapt to a changed environment. For measures, refer to `EstimationV1.md` | - |
+| NFR6 	| Portability | Effort to redeploy application on other platform, browser compatibility: javascript support| - |
+| NFR7		| Correctness | Capability to provide intended functionality in all cases (no error while querying the database, show only data required). | All FR |
 
 # Use case diagram and use cases
 
@@ -263,7 +262,7 @@ User -- (FR3: Manage Categories)
 
 # Glossary
 
-\<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships> 
+<!-- \<use UML class diagram to define important terms, or concepts in the domain of the application, and their relationships>  -->
 
 ```plantuml
 left to right direction
@@ -293,7 +292,7 @@ note top of Transactions #LightGray: List of all of the transactions made by use
 note top of Category #LightGray: Descriptor of Categories
 ```
 
-\<concepts must be used consistently all over the document, ex in use cases, requirements etc>
+<!-- \<concepts must be used consistently all over the document, ex in use cases, requirements etc> -->
 
 # System Design
 <!-- \<describe here system design> -->
