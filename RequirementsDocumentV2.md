@@ -1,13 +1,13 @@
 # Requirements Document - future EZWallet
 
-Date: 
+Date: 20/04
 
 Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 
  
 | Version number | Change |
 | ----------------- |:-----------|
-| | | 
+| 2.1 | add business model, stakeholders and personas |
 
 
 # Contents

@@ -1,14 +1,21 @@
 # Requirements Document - current EZWallet
 
-Date: 
+Date: 11/04
 
 Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 
  
 | Version number | Change |
 | ----------------- |:-----------|
-| | | 
-
+| 1.1 | Context diagram, interfaces, FR, NFR, Deployment Diagram | 
+| 1.1.2 | add images |
+| 1.1.3 | redesign diagrams with PlantUML |
+| 1.2 | add personas |
+| 1.3 | add use cases and scenarios |
+| 1.4 | add defects table |
+| 1.5 | add business model |
+| 1.6 | fix NFRs |
+| 1.6.1 | fix rendering errors in PlantUML |
 
 # Contents
 
