@@ -9,6 +9,7 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 | ----------------- |:-----------|
 | 2.1 | add business model, stakeholders and personas |
 | 2.2 | add use cases |
+| 2.3 | add FRs and NFRs |
 
 
 # Contents
@@ -141,32 +142,70 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 
 ## Functional Requirements
 
-\<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system>
+<!-- \<In the form DO SOMETHING, or VERB NOUN, describe high level capabilities of the system> -->
 
-\<they match to high level use cases>
+<!-- \<they match to high level use cases> -->
 
-| ID        | Description  |
-| ------------- |:-------------:| 
-|  FR1     |  |
-|  FR2     |   |
-| FRx..  | | 
+| ID    	| Description  |
+|  **FR1**  | Manage accounts (**) |
+|  FR1.1    |  Register account |
+|  FR1.2    |  Login |
+|  FR1.3    |  Logout |
+|  FR1.4    |  Authorize |
+|  FR1.5    |  Delete Account |
+|  FR1.6    |  Edit Account |
+|  FR1.7    |  Add profile picture |
+| **FR2**  | Manage transactions |
+| FR2.1  | Create transactions |
+| FR2.2  | Get transactions |
+| FR2.3  | Delete transactions |
+| FR2.4  | Filter transactions |
+| FR2.4.1| Filter by User|
+| FR2.4.2| Filter by Type|
+| FR2.4.3| Filter by Date|
+| FR2.5  | Edit transactions |
+| FR2.6  | Sort transactions |
+| **FR3**  | Manage categories |
+| FR3.1  | Create categories |
+| FR3.2  | Get categories |
+| FR3.3  | Edit category |
+| FR3.4  | Delete category |
+| **FR4**  | Manage Family |
+| FR4.1 | Create Family |
+| FR4.2 | Add member |
+| FR4.3 | Delete member |
+| FR4.4 | Generate Admin (*) |
+| FR4.5 | Delete Family |
+| FR4.6 | Get Users|
+| **FR5** | Statistics |
+| FR5.1 | Show statistics |
+| FR5.2 | Filter statistics |
+
+
+>>(*) When family is generated, the admin is the one that has more functions available to manage the group of users (add member, get list of members, and delete family)
+>>(**) manage users refers to all account management functionalities that the user can realize.
+
 
 ## Non Functional Requirements
 
-\<Describe constraints on functional requirements>
+<!-- \<Describe constraints on functional requirements> -->
 
 | ID        | Type (efficiency, reliability, ..)           | Description  | Refers to |
 | ------------- |:-------------:| :-----:| -----:|
-|  NFR1     |   |  | |
-|  NFR2     | |  | |
-|  NFR3     | | | |
-| NFRx .. | | | | 
+| NFR1  | Usability  | Core functions for users (read transactions), should be used with no training by all users with at least 1yr experience with browsers and smartphones| All FRs |
+| NFR2  | Availability |  99.9% uptime | - |
+| NFR3  | Efficiency| All functions should be completed in 0.5s | All FRs |
+| NFR4  | Security|  Access only to authorized users | FR 1.4 |
+| NFR5  | Maintainability |The facility to  modify software components,  to correct faults, improve performance  or to adapt to a changed environment. For measures, refer to `EstimationV2.md` | All FRs |
+| NFR6  | Portability | Effort to redeploy application on other platforms (> android 11, > iOS 11, > iPadOs 2) and , browser compatibility: javascript support (all recent versions). <br> Distribution channel: PlayStore, AppStore, Internet| - |
+| NFR7  | Correctness | Capability to provide intended functionality in all cases (**no error** while querying the database, shows **only required data**). | All FRs |
+
 
 
 # Use case diagram and use cases
-
-
 ## Use case diagram
+
+
 ### Use case 1: Manage accounts (UC1)
 | Actors Involved        | User or Admin|
 | ------------- |:-------------:|
