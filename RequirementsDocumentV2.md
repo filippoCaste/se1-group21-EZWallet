@@ -60,7 +60,6 @@ EZWallet, with a partnership with Google Analytics, controls the user behavior t
 
 # Stakeholders
 
-
 | Stakeholder name  | Description |
 | ----------------- |:-----------:|
 | User   |  Uses the system. There are different user profiles (see later). In our case it is formed by all the users of the application that are logged in the system and have access to the app |
@@ -226,6 +225,19 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 # Use case diagram and use cases
 ## Use case diagram
 
+```plantuml
+actor User
+actor Admin
+
+User -- (FR1: Manage Accounts)
+User -- (FR2: Manage Transactions)
+User -- (FR3: Manage Categories)
+
+User -- (FR5: Statistics)
+
+Admin -- (FR4: Manage Family)
+Admin --|> User
+```
 
 ### Use case 1: Manage accounts (UC1)
 | Actors Involved        | User or Admin|
