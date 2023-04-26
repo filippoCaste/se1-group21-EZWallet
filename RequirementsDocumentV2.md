@@ -74,18 +74,38 @@ EZWallet, with a partnership with Google Analytics, controls the user behavior t
 # Context Diagram and interfaces
 
 ## Context Diagram
-\<Define here Context diagram using UML use case diagram>
+<!-- \<Define here Context diagram using UML use case diagram>
+\<actors are a subset of stakeholders> -->
 
-\<actors are a subset of stakeholders>
+```plantuml
+left to right direction
+actor Administrator as a
+actor User as b
+actor "Google Play" as c
+actor "Apple Store" as d
+actor "Google Analtytics" as e
+
+rectangle System #Yellow {
+  (EzWallet) #LightBlue
+  a -- (EzWallet)
+  b -- (EzWallet)
+  (EzWallet) -- c
+  (EzWallet) -- d
+  (EzWallet) -- e
+}
+```
 
 ## Interfaces
-\<describe here each interface in the context diagram>
-
-\<GUIs will be described graphically in a separate document>
+<!-- \<describe here each interface in the context diagram> -->
+<!-- \<GUIs will be described graphically in a separate document> -->
 
 | Actor | Logical Interface | Physical Interface  |
 | ------------- |:-------------:| -----:|
-|   Actor x..     |  |  |
+| User | GUI with added functions: register, logIn/logOut, create categories, check expenses, add/remove transactions  |  PC (Screen and Keyboards) and Mobile Device |
+| Administrator| GUI with additional functions to manage family accounts and settings | PC (Screen and Keyboards)and Mobile Phone |
+| Apple Store | Internet link | [https://developer.apple.com/app-store-connect/](link) |
+| Google Play | Internet link | [https://developers.google.com/android-publisher?hl=it#publishing](link) |
+| Google Analytics | Internet link |  [https://developers.google.com/analytics/devguides/reporting/embed/v1/getting-started?hl=it](link) |
 
 # Stories and personas
 <!-- \<A Persona is a realistic impersonation of an actor. Define here a few personas and describe in plain text how a persona interacts with the system> -->
