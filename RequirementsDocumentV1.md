@@ -151,6 +151,7 @@ Using EZWallet has enabled Lauren to gain financial knowledge by providing her w
 
 ## Use case diagram
 <!-- \<define here UML Use case diagram UCD summarizing all use cases, and their relationships> -->
+
 ```plantuml
 actor User
 User -- (FR1: Manage Accounts)
