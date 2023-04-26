@@ -8,6 +8,7 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 | Version number | Change |
 | ----------------- |:-----------|
 | 2.1 | add business model, stakeholders and personas |
+| 2.2 | add use cases |
 
 
 # Contents
@@ -26,12 +27,23 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 	- [Non Functional Requirements](#non-functional-requirements)
 - [Use case diagram and use cases](#use-case-diagram-and-use-cases)
 	- [Use case diagram](#use-case-diagram)
-		- [Use case 1, UC1](#use-case-1-uc1)
-				- [Scenario 1.1](#scenario-11)
-				- [Scenario 1.2](#scenario-12)
-				- [Scenario 1.x](#scenario-1x)
-		- [Use case 2, UC2](#use-case-2-uc2)
-		- [Use case x, UCx](#use-case-x-ucx)
+		- [Use case 1: Manage accounts (UC1)](#use-case-1-manage-accounts-uc1)
+				- [Scenario 1.1: Register Account](#scenario-11-register-account)
+				- [Scenario 1.2: Login](#scenario-12-login)
+		- [Use case 2: Manage transactions (UC2)](#use-case-2-manage-transactions-uc2)
+				- [Scenario 2.1: Create Transactions](#scenario-21-create-transactions)
+		- [Use case 3, UC3: Manage Categories](#use-case-3-uc3-manage-categories)
+			- [Scenario 3.1: Create a category](#scenario-31-create-a-category)
+			- [Scenario 3.2: Retrieve categories](#scenario-32-retrieve-categories)
+			- [Scenario 3.3: Edit a category](#scenario-33-edit-a-category)
+			- [Scenario 3.4: Delete a category](#scenario-34-delete-a-category)
+		- [Use case 4, UC4: Manage Family](#use-case-4-uc4-manage-family)
+			- [Scenario 4.1: Create a family](#scenario-41-create-a-family)
+			- [Scenario 4.2: Add member to the family](#scenario-42-add-member-to-the-family)
+			- [Scenario 4.3: Remove member from the family](#scenario-43-remove-member-from-the-family)
+		- [Use case 5, UC5: Statistics](#use-case-5-uc5-statistics)
+			- [Scenario 5.1: Show statistics](#scenario-51-show-statistics)
+			- [Scenario 5.2: Filter statistics](#scenario-52-filter-statistics)
 - [Glossary](#glossary)
 - [System Design](#system-design)
 - [Deployment Diagram](#deployment-diagram)
@@ -155,49 +167,192 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 
 
 ## Use case diagram
-\<define here UML Use case diagram UCD summarizing all use cases, and their relationships>
+### Use case 1: Manage accounts (UC1)
+| Actors Involved        | User or Admin|
+| ------------- |:-------------:|
+|  Precondition     | User has installed the EZWallet application |
+|  Post condition     | User's account is managed |
+|  Nominal Scenario     | User registers, logs in, logs out, authorizes, edits, deletes, and adds a profile picture |
+|  Variants     | N/A |
+|  Exceptions     | Invalid account credentials, network errors, invalid image format for profile picture |
 
-
-\<next describe here each use case in the UCD>
-### Use case 1, UC1
-| Actors Involved        |  |
-| ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the UC can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after UC is finished> |
-|  Nominal Scenario     | \<Textual description of actions executed by the UC> |
-|  Variants     | \<other normal executions> |
-|  Exceptions     | \<exceptions, errors > |
-
-##### Scenario 1.1 
-
-\<describe here scenarios instances of UC1>
-
-\<a scenario is a sequence of steps that corresponds to a particular execution of one use case>
-
-\<a scenario is a more formal description of a story>
-
-\<only relevant scenarios should be described>
-
+##### Scenario 1.1: Register Account
 | Scenario 1.1 | |
-| ------------- |:-------------:| 
-|  Precondition     | \<Boolean expression, must evaluate to true before the scenario can start> |
-|  Post condition     | \<Boolean expression, must evaluate to true after scenario is finished> |
+| ------------- |:-------------:|
+|  Precondition     | User has not registered an account |
+|  Post condition     | User's account is registered |
 | Step#        | Description  |
-|  1     |  |  
-|  2     |  |
-|  ...     |  |
+|  1     | User launches the EZWallet application |
+|  2     | User selects "Register" |
+|  3     | User fills in the required information (email, password, name) |
+|  4     | User submits the registration form |
+|  5     | System creates the new account and stores it in the database |
+|  6     | User receives a confirmation message |
 
-##### Scenario 1.2
+##### Scenario 1.2: Login
+| Scenario 1.2 | |
+| ------------- |:-------------:|
+|  Precondition     | User has a registered account |
+|  Post condition     | User is logged in |
+| Step#        | Description  |
+|  1     | User launches the EZWallet application |
+|  2     | User enters their email and password |
+|  3     | User selects "Login" |
+|  4     | System validates the user's credentials |
+|  5     | System logs the user in and displays the main screen |
 
-##### Scenario 1.x
+### Use case 2: Manage transactions (UC2)
+| Actors Involved        | User |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in |
+|  Post condition     | User's transactions are managed |
+|  Nominal Scenario     | User creates, gets, deletes, filters, edits, and sorts transactions |
+|  Variants     | N/A |
+|  Exceptions     | Invalid transaction data, network errors |
 
-### Use case 2, UC2
-..
+##### Scenario 2.1: Create Transactions
+| Scenario 2.1 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and wants to create a new transaction |
+|  Post condition     | New transaction is created and added to the user's transaction list |
+| Step#        | Description  |
+|  1     | User navigates to the "Transactions" section |
+|  2     | User selects "Create Transaction" |
+|  3     | User fills in the required transaction information (type, amount, category, date) |
+|  4     | User submits the transaction form |
+|  5     | System creates the new transaction and stores it in the database |
+|  6     | User receives a confirmation message and the transaction is added to the list |
 
-### Use case x, UCx
-..
+### Use case 3, UC3: Manage Categories
+| Actors Involved        | User or Admin |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | Category is created, retrieved, edited, or deleted based on user action |
+|  Nominal Scenario     | 1. User selects to create, retrieve, edit, or delete a category. 2. User provides necessary input for the chosen action. 3. System processes the request and updates the category list accordingly. 4. User receives a confirmation message regarding the success of the operation. |
+|  Variants     | None |
+|  Exceptions     | 1. User provides invalid input for the chosen action.  2. System fails to process the request.  3. User tries to delete a category with active transactions. |
 
+#### Scenario 3.1: Create a category
+| Scenario 3.1 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | A new category is created and added to the user's category list |
+| Step#        | Description  |
+|  1     | User clicks on the "Create Category" button |  
+|  2     | System displays a form to enter the category name and description |
+|  3     | User fills in the required information and submits the form |
+|  4     | System validates the input and creates the new category |
+|  5     | System displays a confirmation message and adds the new category to the user's category list |
 
+#### Scenario 3.2: Retrieve categories
+| Scenario 3.2 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section |
+|  Post condition     | User views their existing categories |
+| Step#        | Description  |
+|  1     | User navigates to the categories section |
+|  2     | System retrieves and displays the list of user's categories |
+
+#### Scenario 3.3: Edit a category
+| Scenario 3.3 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section, with at least one category present in the list |
+|  Post condition     | The selected category is updated with the new information provided by the user |
+| Step#        | Description  |
+|  1     | User selects a category from the category list |
+|  2     | User clicks on the "Edit Category" button |
+|  3     | System displays a form with the existing category information |
+|  4     | User modifies the information as needed and submits the form |
+|  5     | System validates the input and updates the category information |
+|  6     | System displays a confirmation message and updates the category list |
+
+#### Scenario 3.4: Delete a category
+| Scenario 3.4 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the categories section, with at least one category present in the list |
+|  Post condition     | The selected category is removed from the user's category list |
+| Step#        | Description  |
+|  1     | User selects a category from the category list |
+|  2     | User clicks on the "Delete Category" button |
+|  3     | System prompts the user for confirmation |
+|  4     | User confirms the deletion |
+
+### Use case 4, UC4: Manage Family
+| Actors Involved        | Admin  |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the family management section |
+|  Post condition     | Family is created, member added or removed, admin is generated, or family is deleted based on user action |
+|  Nominal Scenario     | 1. User selects to create, add or remove a member, generate admin, or delete a family.  2. User provides necessary input for the chosen action.  3. System processes the request and updates the family list accordingly.  4. User receives a confirmation message regarding the success of the operation. |
+|  Variants     | None |
+|  Exceptions     | 1. User provides invalid input for the chosen action.  2. System fails to process the request. |
+
+#### Scenario 4.1: Create a family
+| Scenario 4.1 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the family management section |
+|  Post condition     | A new family is created and the user is set as the family administrator |
+| Step#        | Description  |
+|  1     | User clicks on the "Create Family" button |  
+|  2     | System displays a form to enter the family name and description |
+|  3     | User fills in the required information and submits the form |
+|  4     | System validates the input and creates the new family |
+|  5     | System sets the user as the family administrator |
+|  6     | System displays a confirmation message and adds the new family to the user's family list |
+
+#### Scenario 4.2: Add member to the family
+| Scenario 4.2 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in, has access to the family management section, and is the family administrator |
+|  Post condition     | A new member is added to the family |
+| Step#        | Description  |
+|  1     | Admin selects the family in the family list |
+|  2     | Admin clicks on the "Add Member" button |
+|  3     | System displays a form to enter the new member's email address |
+|  4     | Admin fills in the email address and submits the form |
+|  5     | System validates the input and sends an invitation to the new member |
+|  6     | New member accepts the invitation |
+|  7     | System adds the new member to the family and displays a confirmation message |
+
+#### Scenario 4.3: Remove member from the family
+| Scenario 4.3 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in, has access to the family management section, and is the family administrator |
+|  Post condition     | A member is removed from the family |
+| Step#        | Description  |
+|  1     | Admin selects the family in the family list |
+|  2     | Admin selects the member to be removed |
+|  3     | Admin clicks on the "Remove Member" button |
+|  4     | System prompts the admin for confirmation
+
+### Use case 5, UC5: Statistics
+| Actors Involved        | User or Admin |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the statistics section |
+|  Post condition     | Statistics are displayed or filtered based on user action |
+|  Nominal Scenario     | 1. User selects to view or filter statistics.  2. User provides necessary input for the chosen action.  3. System processes the request and updates the statistics display accordingly.  4. User views the statistics based on their request. |
+|  Variants     | None |
+|  Exceptions     | 1. User provides invalid input for the chosen action.  2. System fails to process the request. |
+
+#### Scenario 5.1: Show statistics
+| Scenario 5.1 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the statistics section |
+|  Post condition     | User views their financial statistics |
+| Step#        | Description  |
+|  1     | User navigates to the statistics section |
+|  2     | System retrieves and displays the user's financial statistics |
+
+#### Scenario 5.2: Filter statistics
+| Scenario 5.2 | |
+| ------------- |:-------------:|
+|  Precondition     | User is logged in and has access to the statistics section |
+|  Post condition     | User views the filtered financial statistics based on the applied filters |
+| Step#        | Description  |
+|  1     | User navigates to the statistics section |
+|  2     | User clicks on the "Filter" button |
+|  3     | System displays a filter form with various filtering options |
+|  4     | User selects the desired filters and submits the form |
+|  5     | System retrieves and displays the user's financial statistics based on the applied filters |
 
 # Glossary
 
