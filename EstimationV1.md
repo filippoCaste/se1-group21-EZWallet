@@ -50,10 +50,10 @@ Report here the results of the three estimation approaches. The  estimates may d
 (Assuming 8 hours per day!)
 
 
-|             | Estimated effort         (days)               |   Estimated duration (days)|  
+|             | Estimated effort         (Person hours)               |   Estimated duration (Calendar days)|  
 | ----------- | ------------------------------- | ---------------|
-| estimate by size |3 | 4 |
-| estimate by product decomposition |16 | 16 |
-| estimate by activity decomposition | 9 | 10 |
+| estimate by size | 90 | 3 |
+| estimate by product decomposition |128 | 4 |
+| estimate by activity decomposition | 98 | 3 |
 
-
+Differences can be caused by the fact that not all the work can be parallelized. Only the *activity decomposition* estimation includes this factor that is the reason why it differs from the other two estimations.
