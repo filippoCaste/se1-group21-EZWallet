@@ -334,6 +334,7 @@ note top of "DBServer" #LightGray: MongoDB (for users and transactions)
 # Defects Table
 |Name|Description|
 |---|:---:|
-|getUsers|Should be used by an user with admin privileges, but this check is not done|
-|GetLabel|Doesn’t work, should be fixed|
-|GetUserByUsername|Doesn’t work properly|
+| `getUsers` |Should be used by an user with admin privileges, but this check is not done|
+| `get_labels` |Doesn’t work, should be fixed|
+| `getUserByUsername` |Doesn’t work properly|
+| `get_transactions` | All transactions are shown indipendently of the user logged in. This is a security issue that must be fixed as soon as possible. |

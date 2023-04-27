@@ -185,6 +185,10 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 | FR2.4.3| Filter by Date|
 | FR2.5  | Edit transactions |
 | FR2.6  | Sort transactions |
+| FR2.6.1  | Sort by transaction name |
+| FR2.6.2  | Sort by date |
+| FR2.6.3  | Sort by amount |
+| FR2.6.4  | Sort by category name |
 | **FR3**  | Manage categories |
 | FR3.1  | Create categories |
 | FR3.2  | Get categories |
@@ -202,7 +206,7 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 | FR5.2 | Filter statistics |
 
 
->>(*) When family is generated, the admin is the one that has more functions available to manage the group of users (add member, get list of members, and delete family)
+>>(*) When family is created, the admin is the one that has more functions available to manage the group of users (add member, get list of members, and delete family)
 >>(**) manage users refers to all account management functionalities that the user can realize.
 
 
