@@ -16,6 +16,8 @@ Version: V1 - description of EZWallet in CURRENT form (as received by teachers)
 | 1.5 | add business model |
 | 1.6 | fix NFRs |
 | 1.6.1 | fix rendering errors in PlantUML |
+| 1.7 | fix Use Cases |
+| 1.7.1 | fix typos |
 
 # Contents
 

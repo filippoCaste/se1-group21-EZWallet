@@ -54,7 +54,7 @@ EZWallet (read EaSy Wallet) is a software application designed to help individua
 
 ## Business Model
 EZWallet is a free to use web application for users: they can be organized in groups to share transactions among all other members.
-Also, EZWallet is available as a mobile application with a pay-to-use license. Cost is yet to be defined.
+EZWallet is also available as a mobile application, but it is necessary to buy it directly from the Google Play or the App store. Cost is yet to be defined.  
 EZWallet, with a partnership with Google Analytics, controls the user behavior to increase performances.
 
 
@@ -477,8 +477,8 @@ Admin --|> Family
 
 ```plantuml
 class EzWallet #Yellow 
-class "EzWallet Client" #Red 
-class "EzWallet Server" #Red
+class "EzWallet Client" #Orange 
+class "EzWallet Server" #Orange
 class "Android Device" #LightBlue
 class "IOS/iPadOS Device" #LightBlue
 class "PC" #LightBlue
