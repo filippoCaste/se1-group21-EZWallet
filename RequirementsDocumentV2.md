@@ -53,10 +53,10 @@ Version: V2 - description of EZWallet in FUTURE form (as proposed by the team)
 EZWallet (read EaSy Wallet) is a software application designed to help individuals and families keep track of their expenses. Users can enter and categorize their expenses, allowing them to quickly see where their money is going. EZWallet is a powerful tool for those looking to take control of their finances and make informed decisions about their spending.
 
 ## Business Model
-EZWallet is a free to use web application for users: they can be organized in groups to share transactions among all other members.
-EZWallet is also available as a mobile application, but it is necessary to buy it directly from the Google Play or the App store. Cost is yet to be defined.  
-EZWallet, with a partnership with Google Analytics, controls the user behavior to increase performances.
+The business model behind EzWallet is fairly simple: provide a free to use Web application to everyone, whatever the use case. If the users want to use the software on other devices, like smartphones watches or any other terminal, they need to purchase the software from the device's store (e.g AppStore, Google Play Store).  
+This is ideal because it allows users to get a feel for the software and see if it fits their use case and then decide whether it is convenient for them to use it on the go. 
 
+The price of the software is yet to be decided. It will be offered on the App Store and Google Play store to start but could be ported to other devices in the future.
 
 # Stakeholders
 
@@ -130,27 +130,17 @@ Emily is a recent college graduate who just started working at a tech company. A
 By using EZWallet, Emily can track expenses and gain financial awareness. The software provides statistics related to her financial behavior, helping her to develop responsible spending habits, and test better habits earned by using EZWallet better.
 
 
-**Persona 5: Retirement Planner**  
-Mrs. Morris is a retirement planner who has been providing retirement planning services for over twenty years. She has vast experience in financial management and helps her clients make informed financial decisions to achieve their financial goals. Mrs. Morris has a diverse clientele, including individuals, families, and small business owners.  
-Mrs. Morris uses EZWallet to keep track of her clients' expenses, analyze spending patterns, and provide personalized financial advice. The software helps her to make accurate retirement planning recommendations based on her clients' financial habits and goals. By using EZWallet, Mrs. Morris ensures her clients are on track to meet their financial goals and live comfortably in retirement.
-
-
-**Persona 6: Freelance Creative**  
-Sophie is a freelance graphic designer who works on a per-project basis. She has several clients and needs to keep track of her income, expenses, and taxes. Sophie also wants to analyze her spending patterns to increase income and reduce expenses.  
-EZWallet is an excellent tool for Sophie to keep track of her income, categorize expenses, and set spending limits. Sophie can also analyze spending patterns and make informed decisions to run her business more efficiently.
-
-
-**Persona 7: Family Vacation Planner**  
+**Persona 5: Family Vacation Planner**  
 Tom and Emily are a married couple who enjoy traveling with their three children. As a family vacation planner, Emily is responsible for planning and budgeting their vacations. She needs to keep track of their vacation expenses, including transportation, accommodation, food, and activities.  
 EZWallet can help Emily categorize the family's vacation expenses providing her more control over the vacation budget. Emily uses the software to analyze her family's vacation spending patterns and make informed decisions to plan her trip efficiently.
 
 
-**Persona 8: College Student**  
+**Persona 6: College Student**  
 Joe is a college student who just started his freshman year at a university. He's staying in a dorm room and on a meal plan, which makes it easy to track his living expenses. However, Joe still spends money on clothes, entertainment, textbooks, and other miscellaneous items.  
 By using EZWallet, Joe can track his expenses and categorize his purchases. The software will also provide Joe with insights into his spending habits, allowing him to make wise decisions with his remaining funds while keeping his budget under control.
 
 
-**Persona 9: Busy Entrepreneur**  
+**Persona 7: Busy Entrepreneur**  
 Jessica is an entrepreneur who runs her company from home. She's extremely busy and sometimes forgets to track her expenses each day. Jessica needs a tool that can help her track expenses efficiently and remind her to categorize her purchases.  
 EZWallet works well for Jessica, allowing her to quickly categorize her expenses and set custom reminders to track her expenses regularly. The software will also capture data on spending patterns, enabling Jessica to identify areas to save costs and help her run her business more efficiently.
 
@@ -206,8 +196,8 @@ EZWallet works well for Jessica, allowing her to quickly categorize her expenses
 | FR5.2 | Filter statistics |
 
 
->>(*) When family is created, the admin is the one that has more functions available to manage the group of users (add member, get list of members, and delete family)
->>(**) manage users refers to all account management functionalities that the user can realize.
+>>(*) When family is created, the admin is the one that has more functions available to manage the group of users (add member, get list of members, and delete family)  
+>>(**) Manage users refers to all account management functionalities that the user can realize.
 
 
 ## Non Functional Requirements
