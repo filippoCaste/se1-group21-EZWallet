@@ -15,6 +15,7 @@ export const createCategory = (req, res) => {
         }
         const { type, color } = req.body;
         const new_categories = new categories({ type, color });
+        console.log("New category created: " + type);
         new_categories.save()
             .then(data => res.json(data))
             .catch(err => { throw err })
@@ -33,6 +34,47 @@ export const createCategory = (req, res) => {
  */
 export const updateCategory = async (req, res) => {
     try {
+        const cookie = req.cookies
+        if (!cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+        const type = req.params.type;
+        const color = req.body.color;
+
+        const category = await categories.findOne({ type: type });
+        // console.log(category);
+        if (category === null) {
+            res.status(401).json({ error: "The specified category does not exist." });
+        }
+
+        // check if color is valid
+        let invalid = false;
+        if(color[0] !== '#' || color.length !== 7) {
+            invalid = true ;
+        } else {
+            for (let c of color) {
+                if(c>'f') {
+                    invalid = true ;
+                    break;
+                }
+            }
+        }
+
+        if (invalid) {
+            res.status(401).json({ error: "New parameters have invalid values" });
+        }
+
+        const updateColor = {
+            $set: {
+                color: color
+            },
+        };
+        await categories.updateOne({ type: type}, updateColor )
+
+        // count of transactions
+        const count = (await transactions.find({type:type})).length; 
+
+        res.json({ message: "Category updated", count: count });
 
     } catch (error) {
         res.status(400).json({ error: error.message })
