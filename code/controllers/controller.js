@@ -38,8 +38,8 @@ export const updateCategory = async (req, res) => {
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-        const type = req.params.type;
-        const color = req.body.color;
+        const type = req.params.type.trim().toLowerCase();
+        const color = req.body.color.trim().toLowerCase();
 
         const category = await categories.findOne({ type: type });
         // console.log(category);
@@ -90,6 +90,30 @@ export const updateCategory = async (req, res) => {
  */
 export const deleteCategory = async (req, res) => {
     try {
+        const cookie = req.cookies
+        if (!cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+
+        const types = req.body.types.trim().toLowerCase();
+
+        // count of transactions
+        let count = 0;
+        for (let type of types) {
+            console.log(type);
+            const category = await categories.findOne({ type: type });
+            // console.log(category);
+            if (category === null) {
+                res.status(401).json({ error: "The specified category does not exist." });
+            }
+
+            // category delete
+            await categories.deleteMany({type: type});
+            // transactions update
+            count += (await transactions.findByIdAndUpdate(type, { type: "investment" })).length;
+        }
+
+        res.json({ message: "Categories deleted", count: count });
 
     } catch (error) {
         res.status(400).json({ error: error.message })
