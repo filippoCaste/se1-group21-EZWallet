@@ -225,8 +225,22 @@ export const getTransactionsByUser = async (req, res) => {
     try {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
+        const cookie = req.cookies;
+        const username = await userExists(cookie.refreshToken);
+        const paramUsername = req.params.username;
+
         if (req.url.indexOf("/transactions/users/") >= 0) {
+            // admin ?
+
         } else {
+            if(! username) {
+                return res.status(401).json({error: "User does not exist"});
+            }
+            if (paramUsername !== username) {
+                return res.status(400).json({error: "You cannot access to these data"});
+            }
+            let data = await transactions.find({ username: username });
+            res.json(data)
         }
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -323,7 +337,7 @@ async function userExists(refreshToken) {
     console.log(user);
     if(!user) return false;
 
-    return true;
+    return user.username;
 }
 
 /**
