@@ -118,10 +118,28 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
   try {
+    // Check if a user is logged in and has the admin role
+    const user = await User.findOne({ refreshToken: req.cookies.refreshToken, role: "Admin" });
+    if (!user) {
+      return res.status(401).json("Unauthorized");
+    }
+
+    // Retrieve all groups
+    const groups = await Group.find();
+
+    // Prepare the response data
+    const responseData = groups.map(group => ({
+      name: group.name,
+      members: group.members.map(member => member.email)
+    }));
+
+    // Send the response with the data
+    res.status(200).json({ data: responseData });
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json(err.message);
   }
-}
+};
+    
 
 /**
  * Return information of a specific group
