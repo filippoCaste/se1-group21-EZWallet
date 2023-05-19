@@ -14,6 +14,13 @@ export const createCategory = (req, res) => {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         const { type, color } = req.body;
+        // const lowType = type.toLowerCase();
+        // console.log(lowType);
+        // const bool = await categoryTypeExists(lowType);
+        // if( bool ) {
+        //     return res.status(401).json({ message: "Category type already exists" });
+        // }
+
         const new_categories = new categories({ type, color });
         console.log("New category created: " + type);
         new_categories.save()
@@ -95,22 +102,21 @@ export const deleteCategory = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
 
-        const types = req.body.types.trim().toLowerCase();
+        const types = req.body.types;
 
         // count of transactions
         let count = 0;
         for (let type of types) {
             console.log(type);
-            const category = await categories.findOne({ type: type });
-            // console.log(category);
-            if (category === null) {
-                res.status(401).json({ error: "The specified category does not exist." });
+            if (! await categoryTypeExists(type)) {
+                return res.status(401).json({ error: "The specified category does not exist." });
             }
 
             // category delete
             await categories.deleteMany({type: type});
             // transactions update
-            count += (await transactions.findByIdAndUpdate(type, { type: "investment" })).length;
+            count += (await transactions.find({ type: type })).length;
+            await transactions.updateMany({ type: type }, { type: "investment" });
         }
 
         res.json({ message: "Categories deleted", count: count });
@@ -152,11 +158,16 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
+        const paramUsername = req.params.username;
         const cookie = req.cookies
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         const { username, amount, type } = req.body;
+        let lowerType = type.toLowerCase();
+        if (paramUsername !== username || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(lowerType)) {
+            return res.status(401).json({ error: "Uncorrect username or category not found"});
+        }
         const new_transactions = new transactions({ username, amount, type });
         new_transactions.save()
             .then(data => res.json(data))
@@ -299,4 +310,32 @@ export const deleteTransactions = async (req, res) => {
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
+}
+
+/**
+ * Check whether the user exists or not in the database
+ * @param {*} username 
+ * @returns true if it exists or false otherwise.
+ */
+async function userExists(refreshToken) {
+
+    const user = await User.findOne({ refreshToken: refreshToken })
+    console.log(user);
+    if(!user) return false;
+
+    return true;
+}
+
+/**
+ * Query the database to find if a given category type exists.
+ * @param {*} categoryType 
+ * @returns true if it exists or false;
+ */
+async function categoryTypeExists(type) {
+
+    const category = await categories.findOne({ type: type });
+    console.log(category)
+    if(! category) return false;
+
+    return true;
 }
