@@ -330,7 +330,17 @@ export const deleteTransaction = async (req, res) => {
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
+
+        if(! await userExists(req.params.username)) {
+            return res.status(401).json({ error: "User does not exist" });
+        }
+
         let data = await transactions.deleteOne({ _id: req.body._id });
+
+        if(data.deletedCount === 0) {
+            return res.status(401).json({error: "Transaction does not exist"});
+        }
+
         return res.json("deleted");
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -346,6 +356,28 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
     try {
+        // TODO check if admin
+        const cookie = req.cookies
+        if (!cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
+
+        const idList = req.body;
+        if (idList === undefined) {
+            return res.status(300).json({message: "No ids provided"})
+        }
+        for(let id of idList) {
+            if (! await transactions.findOne({_id: id})){
+                return res.status(401).json({ error: "Transaction does not exist" });
+            }
+        }
+
+        for(let id of idList) {
+            await transactions.deleteOne({_id: id});
+        }
+
+        return res.json({message: "Deleted"});
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
