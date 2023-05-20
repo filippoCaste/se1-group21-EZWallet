@@ -257,6 +257,31 @@ export const getTransactionsByUser = async (req, res) => {
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        const cookie = req.cookies;
+        const paramUsername = req.params.username;
+        const paramCategory = req.params.category;
+        const username = await userExists(cookie.refreshToken);
+
+        if (req.url.indexOf("/transactions/users/") >= 0) {
+            // admin
+
+        } else {
+            // no admin
+            if (!username) {
+                return res.status(401).json({ error: "User does not exist" });
+            }
+            if(! await categoryTypeExists(paramCategory)) {
+                return res.status(401).json({ error: "Category does not exist" });
+            }
+            if (paramUsername !== username) {
+                return res.status(400).json({ error: "You cannot access to these data" });
+            }
+            let data = await transactions.find({ username: username, type: paramCategory });
+            res.json(data);
+
+        }
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -326,10 +351,13 @@ export const deleteTransactions = async (req, res) => {
     }
 }
 
+// ----------------------------------------------------------------------------------------------
+// ---------------------------------------added functions----------------------------------------
+// ----------------------------------------------------------------------------------------------
 /**
  * Check whether the user exists or not in the database
  * @param {*} username 
- * @returns true if it exists or false otherwise.
+ * @returns the username of the user if it exists, false otherwise.
  */
 async function userExists(refreshToken) {
 
