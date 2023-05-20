@@ -2,6 +2,15 @@ import { categories, transactions } from "../models/model.js";
 import { Group, User } from "../models/User.js";
 import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./utils.js";
 
+/*
+    SLACK MESSAGE 2023-05-17
+    All APIs must resolve with a specific structure, with an item that has data and message parameters: message is used only when the 
+    accessToken has expired and has been refreshed successfully. This behavior is not something that happens in real applications, 
+    but is just a workaround we put in place to ensure that you change your tokens after they expire on Postman. If a method's comments 
+    specify that it must return a message, then this message must be placed as an attribute of the data object.
+*/
+
+
 /**
  * Create a new category
   - Request Body Content: An object having attributes `type` and `color`
@@ -18,7 +27,7 @@ export const createCategory = (req, res) => {
         // console.log(lowType);
         // const bool = await categoryTypeExists(lowType);
         // if( bool ) {
-        //     return res.status(401).json({ message: "Category type already exists" });
+        //     return res.status(400).json({ message: "Category type already exists" });
         // }
 
         const new_categories = new categories({ type, color });
@@ -36,8 +45,8 @@ export const createCategory = (req, res) => {
   - Request Body Content: An object having attributes `type` and `color` equal to the new values to assign to the category
   - Response `data` Content: An object with parameter `message` that confirms successful editing and a parameter `count` that is equal to the count of transactions whose category was changed with the new type
   - Optional behavior:
-    - error 401 returned if the specified category does not exist
-    - error 401 is returned if new parameters have invalid values
+    - error 400 returned if the specified category does not exist
+    - error 400 is returned if new parameters have invalid values
  */
 export const updateCategory = async (req, res) => {
     try {
@@ -51,7 +60,7 @@ export const updateCategory = async (req, res) => {
         const category = await categories.findOne({ type: type });
         // console.log(category);
         if (category === null) {
-            res.status(401).json({ error: "The specified category does not exist." });
+            res.status(400).json({ error: "The specified category does not exist." });
         }
 
         // check if color is valid
@@ -68,7 +77,7 @@ export const updateCategory = async (req, res) => {
         }
 
         if (invalid) {
-            res.status(401).json({ error: "New parameters have invalid values" });
+            res.status(400).json({ error: "New parameters have invalid values" });
         }
 
         const updateColor = {
@@ -93,7 +102,7 @@ export const updateCategory = async (req, res) => {
   - Request Body Content: An array of strings that lists the `types` of the categories to be deleted
   - Response `data` Content: An object with parameter `message` that confirms successful deletion and a parameter `count` that is equal to the count of affected transactions (deleting a category sets all transactions with that category to have `investment` as their new category)
   - Optional behavior:
-    - error 401 is returned if the specified category does not exist
+    - error 400 is returned if the specified category does not exist
  */
 export const deleteCategory = async (req, res) => {
     try {
@@ -107,16 +116,17 @@ export const deleteCategory = async (req, res) => {
         // count of transactions
         let count = 0;
         for (let type of types) {
-            console.log(type);
             if (! await categoryTypeExists(type)) {
-                return res.status(401).json({ error: "The specified category does not exist." });
+                return res.status(400).json({ error: "The specified category does not exist." });
             }
-
+        }
+        for (let type of types) {
             // category delete
             await categories.deleteMany({type: type});
             // transactions update
-            count += (await transactions.find({ type: type })).length;
-            await transactions.updateMany({ type: type }, { type: "investment" });
+            // TODO: not investment but 'first' category ?????
+            let data = await transactions.updateMany({ type: type }, { type: "investment" });
+            count += data.modifiedCount;
         }
 
         res.json({ message: "Categories deleted", count: count });
@@ -154,7 +164,7 @@ export const getCategories = async (req, res) => {
   - Request Body Content: An object having attributes `username`, `type` and `amount`
   - Response `data` Content: An object having attributes `username`, `type`, `amount` and `date`
   - Optional behavior:
-    - error 401 is returned if the username or the type of category does not exist
+    - error 400 is returned if the username or the type of category does not exist
  */
 export const createTransaction = async (req, res) => {
     try {
@@ -166,7 +176,7 @@ export const createTransaction = async (req, res) => {
         const { username, amount, type } = req.body;
         let lowerType = type.toLowerCase();
         if (paramUsername !== username || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(lowerType)) {
-            return res.status(401).json({ error: "Uncorrect username or category not found"});
+            return res.status(400).json({ error: "Uncorrect username or category not found"});
         }
         const new_transactions = new transactions({ username, amount, type });
         new_transactions.save()
@@ -217,7 +227,7 @@ export const getAllTransactions = async (req, res) => {
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
   - Optional behavior:
-    - error 401 is returned if the user does not exist
+    - error 400 is returned if the user does not exist
     - empty array is returned if there are no transactions made by the user
     - if there are query parameters and the function has been called by a Regular user then the returned transactions must be filtered according to the query parameters
  */
@@ -229,13 +239,36 @@ export const getTransactionsByUser = async (req, res) => {
         const username = await userExists(cookie.refreshToken);
         const paramUsername = req.params.username;
 
+/*
+        try {
+    const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
+    if (userAuth.authorized) {
+      //User auth successful
+    } else {
+      const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+      if (adminAuth.authorized) {
+        //Admin auth successful
+      } else {
+        res.status(400).json({ error: adminAuth.cause})
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+*/
+
+        if (!username) {
+            return res.status(400).json({ error: "User does not exist" });
+        }
+
         if (req.url.indexOf("/transactions/users/") >= 0) {
-            // admin ?
+            // admin
+            let data = await transactions.find({ username: username });
+            res.json(data)
 
         } else {
-            if(! username) {
-                return res.status(401).json({error: "User does not exist"});
-            }
+            // TODO filtering params
+
             if (paramUsername !== username) {
                 return res.status(400).json({error: "You cannot access to these data"});
             }
@@ -253,7 +286,7 @@ export const getTransactionsByUser = async (req, res) => {
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects
   - Optional behavior:
     - empty array is returned if there are no transactions made by the user with the specified category
-    - error 401 is returned if the user or the category does not exist
+    - error 400 is returned if the user or the category does not exist
  */
 export const getTransactionsByUserByCategory = async (req, res) => {
     try {
@@ -270,10 +303,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         } else {
             // no admin
             if (!username) {
-                return res.status(401).json({ error: "User does not exist" });
+                return res.status(400).json({ error: "User does not exist" });
             }
             if(! await categoryTypeExists(paramCategory)) {
-                return res.status(401).json({ error: "Category does not exist" });
+                return res.status(400).json({ error: "Category does not exist" });
             }
             if (paramUsername !== username) {
                 return res.status(400).json({ error: "You cannot access to these data" });
@@ -292,7 +325,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`
   - Optional behavior:
-    - error 401 is returned if the group does not exist
+    - error 400 is returned if the group does not exist
     - empty array must be returned if there are no transactions made by the group
  */
 export const getTransactionsByGroup = async (req, res) => {
@@ -307,7 +340,7 @@ export const getTransactionsByGroup = async (req, res) => {
   - Request Body Content: None
   - Response `data` Content: An array of objects, each one having attributes `username`, `type`, `amount`, `date` and `color`, filtered so that `type` is the same for all objects.
   - Optional behavior:
-    - error 401 is returned if the group or the category does not exist
+    - error 400 is returned if the group or the category does not exist
     - empty array must be returned if there are no transactions made by the group with the specified category
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
@@ -322,7 +355,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
   - Request Body Content: The `_id` of the transaction to be deleted
   - Response `data` Content: A string indicating successful deletion of the transaction
   - Optional behavior:
-    - error 401 is returned if the user or the transaction does not exist
+    - error 400 is returned if the user or the transaction does not exist
  */
 export const deleteTransaction = async (req, res) => {
     try {
@@ -332,13 +365,13 @@ export const deleteTransaction = async (req, res) => {
         }
 
         if(! await userExists(req.params.username)) {
-            return res.status(401).json({ error: "User does not exist" });
+            return res.status(400).json({ error: "User does not exist" });
         }
 
         let data = await transactions.deleteOne({ _id: req.body._id });
 
         if(data.deletedCount === 0) {
-            return res.status(401).json({error: "Transaction does not exist"});
+            return res.status(400).json({error: "Transaction does not exist"});
         }
 
         return res.json("deleted");
@@ -352,7 +385,7 @@ export const deleteTransaction = async (req, res) => {
   - Request Body Content: An array of strings that lists the `_ids` of the transactions to be deleted
   - Response `data` Content: A message confirming successful deletion
   - Optional behavior:
-    - error 401 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
+    - error 400 is returned if at least one of the `_ids` does not have a corresponding transaction. Transactions that have an id are not deleted in this case
  */
 export const deleteTransactions = async (req, res) => {
     try {
@@ -364,11 +397,11 @@ export const deleteTransactions = async (req, res) => {
 
         const idList = req.body;
         if (idList === undefined) {
-            return res.status(300).json({message: "No ids provided"})
+            return res.status(400).json({message: "No ids provided"})
         }
         for(let id of idList) {
             if (! await transactions.findOne({_id: id})){
-                return res.status(401).json({ error: "Transaction does not exist" });
+                return res.status(400).json({ error: "Transaction does not exist" });
             }
         }
 
