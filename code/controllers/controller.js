@@ -239,42 +239,39 @@ export const getTransactionsByUser = async (req, res) => {
         const username = await userExists(cookie.refreshToken);
         const paramUsername = req.params.username;
 
-/*
-        try {
-    const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
-    if (userAuth.authorized) {
-      //User auth successful
-    } else {
-      const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-      if (adminAuth.authorized) {
-        //Admin auth successful
-      } else {
-        res.status(400).json({ error: adminAuth.cause})
-      }
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
-*/
+        if (!cookie.accessToken) {
+            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        }
 
-        if (!username) {
+        if (!username || ! await userExistsByUsername(paramUsername)) {
             return res.status(400).json({ error: "User does not exist" });
         }
-
-        if (req.url.indexOf("/transactions/users/") >= 0) {
-            // admin
-            let data = await transactions.find({ username: username });
-            res.json(data)
-
-        } else {
-            // TODO filtering params
-
-            if (paramUsername !== username) {
-                return res.status(400).json({error: "You cannot access to these data"});
+        try {
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+            if (adminAuth.authorized && username.role==="Admin") {
+                //Admin auth successful
+                // admin
+                console.log("THIS MUST BE AN ADMIN")
+                let data = await transactions.find({ username: paramUsername });
+                res.json(data)
+            } else {
+                const userAuth = verifyAuth(req, res, { authType: "User", username: username.username })
+                if (userAuth.authorized) {
+                //User auth successful
+                    // TODO filtering params
+                    if (paramUsername !== username.username) {
+                        return res.status(400).json({ error: "You cannot access to these data" });
+                    }
+                    let data = await transactions.find({ username: username.username });
+                    res.json(data)
+                } else{
+                    res.status(401).json({message: "Unauthorized"})
+                }
             }
-            let data = await transactions.find({ username: username });
-            res.json(data)
+        } catch (error) {
+            res.status(500).json({ error: error.message })
         }
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -295,23 +292,23 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const cookie = req.cookies;
         const paramUsername = req.params.username;
         const paramCategory = req.params.category;
-        const username = await userExists(cookie.refreshToken);
+        const user = await userExists(cookie.refreshToken);
 
         if (req.url.indexOf("/transactions/users/") >= 0) {
             // admin
 
         } else {
             // no admin
-            if (!username) {
+            if (!user) {
                 return res.status(400).json({ error: "User does not exist" });
             }
             if(! await categoryTypeExists(paramCategory)) {
                 return res.status(400).json({ error: "Category does not exist" });
             }
-            if (paramUsername !== username) {
+            if (paramUsername !== user.username) {
                 return res.status(400).json({ error: "You cannot access to these data" });
             }
-            let data = await transactions.find({ username: username, type: paramCategory });
+            let data = await transactions.find({ username: user.username, type: paramCategory });
             res.json(data);
 
         }
@@ -421,8 +418,8 @@ export const deleteTransactions = async (req, res) => {
 // ----------------------------------------------------------------------------------------------
 /**
  * Check whether the user exists or not in the database
- * @param {*} username 
- * @returns the username of the user if it exists, false otherwise.
+ * @param {*} refreshToken 
+ * @returns an object containing the username and the role of the user if it exists, false otherwise.
  */
 async function userExists(refreshToken) {
 
@@ -430,7 +427,7 @@ async function userExists(refreshToken) {
     console.log(user);
     if(!user) return false;
 
-    return user.username;
+    return {username: user.username, role: user.role};
 }
 
 /**
@@ -445,4 +442,18 @@ async function categoryTypeExists(type) {
     if(! category) return false;
 
     return true;
+}
+
+/**
+ * Check whether the user exists or not in the database
+ * @param {*} username 
+ * @returns an object containing the username and the role of the user if it exists, false otherwise.
+ */
+async function userExistsByUsername(username) {
+
+    const user = await User.findOne({ username: username })
+    console.log(user);
+    if (!user) return false;
+
+    return { username: user.username, role: user.role };
 }
