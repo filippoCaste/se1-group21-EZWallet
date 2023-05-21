@@ -289,22 +289,6 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-  } catch (err) {
-    res.status(500).json(err.message)
-  }
-}
-
-/**
- * Delete a user
-  - Request Parameters: None
-  - Request Body Content: A string equal to the `email` of the user to be deleted
-  - Response `data` Content: An object having an attribute that lists the number of `deletedTransactions` and a boolean attribute that
-    specifies whether the user was also `deletedFromGroup` or not.
-  - Optional behavior:
-    - error 401 is returned if the user does not exist 
- */
-export const deleteUser = async (req, res) => {
-  try {
     const groupName = req.params.name; // Get the group name from the request parameter
 
     // Find the group by name and populate the 'members' field with 'User' model data
@@ -344,6 +328,23 @@ export const deleteUser = async (req, res) => {
     };
 
     res.status(200).json({ data: responseData });
+  } catch (err) {
+    res.status(500).json(err.message)
+  }
+}
+
+/**
+ * Delete a user
+  - Request Parameters: None
+  - Request Body Content: A string equal to the `email` of the user to be deleted
+  - Response `data` Content: An object having an attribute that lists the number of `deletedTransactions` and a boolean attribute that
+    specifies whether the user was also `deletedFromGroup` or not.
+  - Optional behavior:
+    - error 401 is returned if the user does not exist 
+ */
+export const deleteUser = async (req, res) => {
+  try {
+    
   } catch (err) {
     res.status(500).json(err.message)
   }
