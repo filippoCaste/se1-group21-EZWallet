@@ -11,6 +11,7 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
   try {
+    //verifyAuth
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
@@ -75,7 +76,6 @@ export const createGroup = async (req, res) => {
         const isInGroup = await Group.exists({ 'members.email': email });
         if (isInGroup) {
           alreadyInGroup.push(email);
-          validMembers.push({ email, user });
         } else {
           validMembers.push({ email, user });
         }
@@ -86,15 +86,8 @@ export const createGroup = async (req, res) => {
     const group = new Group({ name });
     group.members = validMembers;
 
-    // Check if the new group has the exact same members as any existing group
-    const duplicateGroup = await Group.findOne({
-      $and: [
-        { members: { $size: group.members.length } }, // Compare the length of members array
-        { 'members.email': { $all: group.members.map(member => member.email) } } // Check if all members are present
-      ]
-    });
-
-    if (membersNotFound.length === memberEmails.length || duplicateGroup) {
+    
+    if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
       return res.status(401).json({ "error": { membersNotFound, alreadyInGroup } });
     }
 
@@ -115,6 +108,7 @@ export const createGroup = async (req, res) => {
     res.status(500).json(err.message);
   }
 };
+
      
 
 /**
@@ -127,12 +121,8 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
   try {
-    // Check if a user is logged in and has the admin role
-    const user = await User.findOne({ refreshToken: req.cookies.refreshToken, role: "Admin" });
-    if (!user) {
-      return res.status(401).json("Unauthorized");
-    }
-
+    // verifyAuth
+    
     // Retrieve all groups
     const groups = await Group.find();
 
@@ -158,7 +148,7 @@ export const getGroups = async (req, res) => {
   - Optional behavior:
     - error 401 is returned if the group does not exist
  */
-export const getGroup = async (req, res) => {
+export const getGroup = async (req, res) => { //<---------------------------TO CHECK
   try {
     const { name } = req.params;
 
@@ -219,6 +209,8 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
   try {
+
+    //verifyAuth
     const { name } = req.params;
     const memberEmails = req.body;
 
@@ -286,7 +278,8 @@ export const addToGroup = async (req, res) => {
 
 /**
  * Remove members from a group
-  - Request Body Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the
+  -Request Body Content: A list of strings equal to the `emails` of the users to be removed
+  -Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name` of the
     created group and an array for the `members` of the group, this array must include only the remaining members),
     an array that lists the `notInGroup` members (members whose email is not in the group) and an array that lists 
     the `membersNotFound` (members whose email does not appear in the system)
@@ -312,6 +305,45 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
+    const groupName = req.params.name; // Get the group name from the request parameter
+
+    // Find the group by name and populate the 'members' field with 'User' model data
+    const group = await Group.findOne({ name: groupName }).populate('members.user');
+
+    if (!group) {
+      return res.status(401).json({ error: 'Group does not exist' });
+    }
+
+    const { emails } = req.body; // Assuming the list of emails to be removed is provided in the request body
+
+    const members = group.members.map(member => member.email);
+
+    // Check if all the member emails exist and are in the group
+    const notInGroup = emails.filter(email => members.includes(email));
+    const membersNotFound = emails.filter(email => !members.includes(email));
+
+    if (emails.length === membersNotFound.length) {
+      return res.status(401).json({ error: 'Member emails either do not exist or are not in the group' });
+    }
+
+    // Remove members from the group
+    const remainingMembers = group.members.filter(member => !emails.includes(member.email));
+    group.members = remainingMembers;
+
+    // Save the updated group
+    await group.save();
+
+    // Prepare the response data
+    const responseData = {
+      group: {
+        name: group.name,
+        members: remainingMembers.map(member => member.email)
+      },
+      notInGroup,
+      membersNotFound
+    };
+
+    res.status(200).json({ data: responseData });
   } catch (err) {
     res.status(500).json(err.message)
   }
