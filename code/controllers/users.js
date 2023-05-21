@@ -209,52 +209,34 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
  */
 export const addToGroup = async (req, res) => {
   try {
-
-    //verifyAuth
-    const { name } = req.params;
-    const memberEmails = req.body;
-
-    // Check if a user is logged in
-    const refreshToken = req.cookies.refreshToken;
-    const user = await User.findOne({ refreshToken });
-    if (!user) {
-      return res.status(401).json("please login..." );
-    }
-
-    // Find the group by name
+    const name = req.params.name; // Get the group name from the request parameter
+    const {memberEmails} = req.body;
+    // Find the group by name and populate the 'members' field with 'User' model data
     const group = await Group.findOne({ name });
     if (!group) {
-      return res.status(401).json("The group does not exist" );
+      return res.status(401).json({ error: 'There is no Group with this name' });
     }
 
-    // Check if the user is authorized to add members to the group
-    const isAdmin = user.role === "Admin";
-    const isMember = group.members.some(member => member.user && member.user.equals(user._id));
-    if (!isAdmin && !isMember) {
-      return res.status(401).json("Unauthorized to add members to this group");
-    }
-
-    // Find existing members in the group
-    const existingMembers = group.members.map(member => member.email);
-
-    // Separate new members, already present members, and members not found
-    const newMembers = [];
-    const alreadyInGroup = [];
+    // Check if all memberEmails exist and are not already in a group
     const membersNotFound = [];
+    const alreadyInGroup = [];
+    const validMembers = [];
 
     for (const email of memberEmails) {
-      if (existingMembers.includes(email)) {
-        alreadyInGroup.push(email);
+      const user = await User.findOne({ email });
+      if (!user) {
+        membersNotFound.push(email);
       } else {
-        const memberUser = await User.findOne({ email });
-        if (memberUser) {
-          newMembers.push(email);
-          group.members.push({ email, user: memberUser._id });
+        const isInGroup = await Group.exists({ 'members.email': email });
+        if (isInGroup) {
+          alreadyInGroup.push(email);
         } else {
-          membersNotFound.push(email);
+          validMembers.push({ email, user });
         }
       }
     }
+
+    group.members = [...group.members, ...validMembers];
 
     // Save the updated group
     await group.save();
@@ -269,7 +251,6 @@ export const addToGroup = async (req, res) => {
       membersNotFound
     };
 
-    // Send the response with the data
     res.status(200).json({ data: responseData });
   } catch (err) {
     res.status(500).json(err.message);
@@ -298,20 +279,35 @@ export const removeFromGroup = async (req, res) => {
       return res.status(401).json({ error: 'Group does not exist' });
     }
 
-    const { emails } = req.body; // Assuming the list of emails to be removed is provided in the request body
+    const { memberEmails } = req.body; // Assuming the list of emails to be removed is provided in the request body
 
-    const members = group.members.map(member => member.email);
+    const groupMembers = group.members.map(member => member.email);
+
+    // Fetch all users from the database
+    const allUsers = await User.find({}, 'email');
+
+    // Get the emails of all users in the database
+    const allUserEmails = allUsers.map(user => user.email);
 
     // Check if all the member emails exist and are in the group
-    const notInGroup = emails.filter(email => members.includes(email));
-    const membersNotFound = emails.filter(email => !members.includes(email));
+    const notInGroup = memberEmails.filter(email => !groupMembers.includes(email) && allUserEmails.includes(email));
+    const membersNotFound = memberEmails.filter(email => !allUserEmails.includes(email));
 
-    if (emails.length === membersNotFound.length) {
+    if (memberEmails.length === membersNotFound.length) {
       return res.status(401).json({ error: 'Member emails either do not exist or are not in the group' });
     }
 
+    // Check if all the emails in the group are in the list to be removed
+    const allGroupMembersRemoved = groupMembers.every(member => memberEmails.includes(member));
+
     // Remove members from the group
-    const remainingMembers = group.members.filter(member => !emails.includes(member.email));
+    let remainingMembers;
+    if (allGroupMembersRemoved) {
+      remainingMembers = group.members.slice(0, 1); // Keep the first member
+    } else {
+      remainingMembers = group.members.filter(member => !memberEmails.includes(member.email));
+    }
+
     group.members = remainingMembers;
 
     // Save the updated group
