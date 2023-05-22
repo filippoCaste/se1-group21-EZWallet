@@ -82,10 +82,9 @@ export const verifyAuth = (req, res, info) => {
             case "Admin":
                 if (decodedRefreshToken.role === "Admin")
                     return { authorized: true, cause: "Authorized" }
-                    
                 return { authorized: false, cause: "Unauthorized" };
             case "User":
-                if (decodedRefreshToken.role === "Regular")
+                if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username )
                     return { authorized: true, cause: "Authorized" }
                 return { authorized: false, cause: "Unauthorized" };
             default:

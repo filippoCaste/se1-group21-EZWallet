@@ -32,26 +32,26 @@ export const getUsers = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
-    const loggedUser = await User.findOne({refreshToken : req.cookies.refreshToken});
-    const reqUser = await User.findOne({username: req.params.username});
-    if(!reqUser){
-      return res.status(401).json({error: "User not found"});
+    const reqUser = await User.findOne({ username: req.params.username });
+    if (!reqUser) {
+      return res.status(401).json({ error: "User not found" });
     }
     if (userAuth.authorized) {
       //User auth successful
-      if(loggedUser.username!==reqUser.username)
-        return res.status(401).json({error: "Unauthorized"});
-      return res.status(200).json(loggedUser);
+      return res.status(200).json(await User.findOne({ refreshToken: req.cookies.refreshToken }));
     } else {
       const adminAuth = verifyAuth(req, res, { authType: "Admin" })
       if (adminAuth.authorized) {
         //Admin auth successful
         return res.status(200).json(reqUser);
       } else {
-        res.status(401).json({ error: adminAuth.cause })
+        return res.status(401).json({ error: adminAuth.cause })
       }
+     
     }
-    
+
+
+
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
