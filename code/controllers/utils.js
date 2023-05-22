@@ -65,6 +65,7 @@ export const verifyAuth = (req, res, info) => {
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
+        
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
             return { authorized: false, cause: "Token is missing information" }
         }
@@ -74,7 +75,25 @@ export const verifyAuth = (req, res, info) => {
         if (decodedAccessToken.username !== decodedRefreshToken.username || decodedAccessToken.email !== decodedRefreshToken.email || decodedAccessToken.role !== decodedRefreshToken.role) {
             return { authorized: false, cause: "Mismatched users" };
         }
-        return { authorized: true, cause: "Authorized" }
+
+        switch (info.authType) {
+            case "Simple":
+                return { authorized: true, cause: "Authorized" }
+            case "Admin":
+                if (decodedRefreshToken.role === "Admin")
+                    return { authorized: true, cause: "Authorized" }
+                    
+                return { authorized: false, cause: "Unauthorized" };
+            case "User":
+                if (decodedRefreshToken.role === "Regular")
+                    return { authorized: true, cause: "Authorized" }
+                return { authorized: false, cause: "Unauthorized" };
+            default:
+                return { authorized: false, cause: "Unknown auth type" };
+        }
+
+
+
     } catch (err) {
         if (err.name === "TokenExpiredError") {
             try {

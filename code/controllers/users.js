@@ -11,9 +11,12 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
   try {
-    //verifyAuth
-    const users = await User.find();
-    res.status(200).json(users);
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+    if (adminAuth.authorized) {
+      const users = await User.find();
+      return res.status(200).json(users);
+    }
+    return res.status(401).json({ message: "Unauthorized" })
   } catch (error) {
     res.status(500).json(error.message);
   }
@@ -28,17 +31,29 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
-    const cookie = req.cookies
-    if (!cookie.accessToken || !cookie.refreshToken) {
-      return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+    const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
+    const loggedUser = await User.findOne({refreshToken : req.cookies.refreshToken});
+    const reqUser = await User.findOne({username: req.params.username});
+    if(!reqUser){
+      return res.status(401).json({error: "User not found"});
     }
-    const username = req.params.username
-    const user = await User.findOne({ refreshToken: cookie.refreshToken })
-    if (!user) return res.status(401).json({ message: "User not found" })
-    if (user.username !== username) return res.status(401).json({ message: "Unauthorized" })
-    res.status(200).json(user)
+    if (userAuth.authorized) {
+      //User auth successful
+      if(loggedUser.username!==reqUser.username)
+        return res.status(401).json({error: "Unauthorized"});
+      return res.status(200).json(loggedUser);
+    } else {
+      const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+      if (adminAuth.authorized) {
+        //Admin auth successful
+        return res.status(200).json(reqUser);
+      } else {
+        res.status(401).json({ error: adminAuth.cause })
+      }
+    }
+    
   } catch (error) {
-    res.status(500).json(error.message)
+    res.status(500).json({ error: error.message })
   }
 }
 
@@ -86,7 +101,7 @@ export const createGroup = async (req, res) => {
     const group = new Group({ name });
     group.members = validMembers;
 
-    
+
     if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
       return res.status(401).json({ "error": { membersNotFound, alreadyInGroup } });
     }
@@ -109,7 +124,7 @@ export const createGroup = async (req, res) => {
   }
 };
 
-     
+
 
 /**
  * Return all the groups
@@ -122,7 +137,7 @@ export const createGroup = async (req, res) => {
 export const getGroups = async (req, res) => {
   try {
     // verifyAuth
-    
+
     // Retrieve all groups
     const groups = await Group.find();
 
@@ -138,7 +153,7 @@ export const getGroups = async (req, res) => {
     res.status(500).json(err.message);
   }
 };
-    
+
 
 /**
  * Return information of a specific group
@@ -195,7 +210,7 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
     res.status(500).json(err.message);
   }
 };
-  
+
 /**
  * Add new members to a group
   - Request Body Content: An array of strings containing the emails of the members to add to the group
@@ -210,7 +225,7 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
 export const addToGroup = async (req, res) => {
   try {
     const name = req.params.name; // Get the group name from the request parameter
-    const {memberEmails} = req.body;
+    const { memberEmails } = req.body;
     // Find the group by name and populate the 'members' field with 'User' model data
     const group = await Group.findOne({ name });
     if (!group) {
@@ -340,7 +355,7 @@ export const removeFromGroup = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    
+
   } catch (err) {
     res.status(500).json(err.message)
   }
