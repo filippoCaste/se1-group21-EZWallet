@@ -27,14 +27,14 @@ export const getUsers = async (req, res) => {
   - Request Body Content: None
   - Response `data` Content: An object having attributes `username`, `email` and `role`.
   - Optional behavior:
-    - error 401 is returned if the user is not found in the system
+    - error 400 is returned if the user is not found in the system
  */
 export const getUser = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
     const reqUser = await User.findOne({ username: req.params.username });
     if (!reqUser) {
-      return res.status(401).json({ error: "User not found" });
+      return res.status(400).json({ error: "User not found" });
     }
     if (userAuth.authorized) {
       //User auth successful
@@ -65,8 +65,8 @@ export const getUser = async (req, res) => {
     (members whose email is already present in a group) and an array that lists the `membersNotFound` (members whose email
     +does not appear in the system)
   - Optional behavior:
-    - error 401 is returned if there is already an existing group with the same name
-    - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
+    - error 400 is returned if there is already an existing group with the same name
+    - error 400 is returned if all the `memberEmails` either do not exist or are already in a group
  */
 export const createGroup = async (req, res) => {
   try {
@@ -75,7 +75,7 @@ export const createGroup = async (req, res) => {
     // Check if a group with the same name already exists
     const existingGroup = await Group.findOne({ name });
     if (existingGroup) {
-      return res.status(401).json({ error: 'A group with the same name already exists.' });
+      return res.status(400).json({ error: 'A group with the same name already exists.' });
     }
 
     // Check if all memberEmails exist and are not already in a group
@@ -103,7 +103,7 @@ export const createGroup = async (req, res) => {
 
 
     if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
-      return res.status(401).json({ "error": { membersNotFound, alreadyInGroup } });
+      return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
     }
 
     await group.save();
@@ -161,7 +161,7 @@ export const getGroups = async (req, res) => {
   - Response `data` Content: An object having a string attribute for the `name` of the group and an array for the 
     `members` of the group
   - Optional behavior:
-    - error 401 is returned if the group does not exist
+    - error 400 is returned if the group does not exist
  */
 export const getGroup = async (req, res) => { //<---------------------------TO CHECK
   try {
@@ -178,7 +178,7 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
     // Find the group by name
     const group = await Group.findOne({ name });
     if (!group) {
-      return res.status(401).json("The group does not exist");
+      return res.status(400).json("The group does not exist");
     }
 
     let isMember = false;
@@ -196,7 +196,7 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
     }
 
     if (!isMember) {
-      return res.status(401).json("You are not authorized to access this group");
+      return res.status(400).json("You are not authorized to access this group");
     }
 
     // Prepare and send the response
@@ -219,8 +219,8 @@ export const getGroup = async (req, res) => { //<---------------------------TO C
     an array that lists the `alreadyInGroup` members (members whose email is already present in a group) and an array that lists 
     the `membersNotFound` (members whose email does not appear in the system)
   - Optional behavior:
-    - error 401 is returned if the group does not exist
-    - error 401 is returned if all the `memberEmails` either do not exist or are already in a group
+    - error 400 is returned if the group does not exist
+    - error 400 is returned if all the `memberEmails` either do not exist or are already in a group
  */
 export const addToGroup = async (req, res) => {
   try {
@@ -229,7 +229,7 @@ export const addToGroup = async (req, res) => {
     // Find the group by name and populate the 'members' field with 'User' model data
     const group = await Group.findOne({ name });
     if (!group) {
-      return res.status(401).json({ error: 'There is no Group with this name' });
+      return res.status(400).json({ error: 'There is no Group with this name' });
     }
 
     // Check if all memberEmails exist and are not already in a group
@@ -280,8 +280,8 @@ export const addToGroup = async (req, res) => {
     an array that lists the `notInGroup` members (members whose email is not in the group) and an array that lists 
     the `membersNotFound` (members whose email does not appear in the system)
   - Optional behavior:
-    - error 401 is returned if the group does not exist
-    - error 401 is returned if all the `memberEmails` either do not exist or are not in the group
+    - error 400 is returned if the group does not exist
+    - error 400 is returned if all the `memberEmails` either do not exist or are not in the group
  */
 export const removeFromGroup = async (req, res) => {
   try {
@@ -291,7 +291,7 @@ export const removeFromGroup = async (req, res) => {
     const group = await Group.findOne({ name: groupName }).populate('members.user');
 
     if (!group) {
-      return res.status(401).json({ error: 'Group does not exist' });
+      return res.status(400).json({ error: 'Group does not exist' });
     }
 
     const { memberEmails } = req.body; // Assuming the list of emails to be removed is provided in the request body
@@ -309,7 +309,7 @@ export const removeFromGroup = async (req, res) => {
     const membersNotFound = memberEmails.filter(email => !allUserEmails.includes(email));
 
     if (memberEmails.length === membersNotFound.length) {
-      return res.status(401).json({ error: 'Member emails either do not exist or are not in the group' });
+      return res.status(400).json({ error: 'Member emails either do not exist or are not in the group' });
     }
 
     // Check if all the emails in the group are in the list to be removed
@@ -351,7 +351,7 @@ export const removeFromGroup = async (req, res) => {
   - Response `data` Content: An object having an attribute that lists the number of `deletedTransactions` and a boolean attribute that
     specifies whether the user was also `deletedFromGroup` or not.
   - Optional behavior:
-    - error 401 is returned if the user does not exist 
+    - error 400 is returned if the user does not exist 
  */
 export const deleteUser = async (req, res) => {
   try {
@@ -366,7 +366,7 @@ export const deleteUser = async (req, res) => {
   - Request Body Content: A string equal to the `name` of the group to be deleted
   - Response `data` Content: A message confirming successful deletion
   - Optional behavior:
-    - error 401 is returned if the group does not exist
+    - error 400 is returned if the group does not exist
  */
 export const deleteGroup = async (req, res) => {
   try {

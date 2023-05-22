@@ -13,19 +13,34 @@ import { verifyAuth } from './utils.js';
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) return res.status(400).json({ message: "you are already registered" });
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Check if username or email is already in use
+        const existingUser = await User.findOne({
+            $or: [{ username: username }, { email: email }],
+        });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username or email already in use" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
             email,
             password: hashedPassword,
         });
-        res.status(200).json('user added succesfully');
+        res.status(200).json({message:'User added successfully'});
     } catch (err) {
         res.status(400).json(err);
     }
 };
+
+
 
 /**
  * Register a new user in the system with an Admin role
@@ -36,22 +51,34 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
-        const { username, email, password } = req.body
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) return res.status(400).json({ message: "you are already registered" });
+        const { username, email, password } = req.body;
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Check if username or email is already in use
+        const existingUser = await User.findOne({
+            $or: [{ username: username }, { email: email }],
+        });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username or email already in use" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
             email,
             password: hashedPassword,
-            role: "Admin"
+            role: "Admin",
         });
-        res.status(200).json('admin added succesfully');
+        res.status(200).json({message:'Admin added successfully'});
     } catch (err) {
         res.status(500).json(err);
     }
-
-}
+};
 
 /**
  * Perform login 
