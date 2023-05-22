@@ -16,7 +16,7 @@ export const getUsers = async (req, res) => {
       const users = await User.find();
       return res.status(200).json(users);
     }
-    return res.status(401).json({ message: "Unauthorized" })
+    return res.status(401).json(adminAuth.cause);
   } catch (error) {
     res.status(500).json(error.message);
   }
