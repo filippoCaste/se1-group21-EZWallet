@@ -367,7 +367,7 @@ export const deleteUser = async (req, res) => {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     if (adminAuth.authorized) {
       const { email } = req.body;
-      var deletedFromGroup = false;
+      let deletedFromGroup = false;
       // Find the user by email
       const user = await User.findOne({ email });
       if (!user) {
