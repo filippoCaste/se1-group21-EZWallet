@@ -366,7 +366,39 @@ export const deleteUser = async (req, res) => {
   try {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     if (adminAuth.authorized) {
+      const { email } = req.body;
+      var deletedFromGroup = false;
+      // Find the user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(400).json({ error: 'User does not exist' });
+      }
 
+      // Delete the user
+      await User.deleteOne({ username: user.username });
+
+      // Remove the user from his group
+      const group = await Group.findOne({ "members.email": email });
+      if (group) {
+        if (group.members.length === 1) {
+          await Group.deleteOne({ name: group.name })
+        } else {
+          group.members = group.members.filter(member => member.email !== email);
+          await group.save();
+        }
+        deletedFromGroup=true;
+      }
+
+      //Delete associated transactions
+      const deletedTransactions = await transactions.deleteMany({ username: user.username });
+
+      // Prepare the response data
+      const responseData = {
+        deletedTransactions: deletedTransactions.deletedCount, // Update this with the actual number of deleted transactions
+        deletedFromGroup: deletedFromGroup
+      };
+
+      return res.status(200).json({ data: responseData });
     } else {
       return res.status(401).json({ error: adminAuth.cause })
     }
@@ -374,6 +406,7 @@ export const deleteUser = async (req, res) => {
     res.status(500).json(err.message)
   }
 }
+
 
 /**
  * Delete a group
@@ -386,18 +419,17 @@ export const deleteGroup = async (req, res) => {
   try {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const { name } = req.body;
-    
+
     if (adminAuth.authorized) {
 
-    const group = await Group.findOne({ name });
-    if (!group) {
-      return res.status(400).json({ error: 'Group does not exist' });
-    }
-    
-    
-    await Group.deleteOne({name: group.name});
+      const group = await Group.findOne({ name });
+      if (!group) {
+        return res.status(400).json({ error: 'Group does not exist' });
+      }
 
-    return res.status(200).json({message: "The group has been successfully deleted"})
+      await Group.deleteOne({ name: group.name });
+
+      return res.status(200).json({ message: "The group has been successfully deleted" })
     } else {
       return res.status(401).json({ error: adminAuth.cause })
     }
