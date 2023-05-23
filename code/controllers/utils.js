@@ -65,7 +65,7 @@ export const verifyAuth = (req, res, info) => {
     try {
         const decodedAccessToken = jwt.verify(cookie.accessToken, process.env.ACCESS_KEY);
         const decodedRefreshToken = jwt.verify(cookie.refreshToken, process.env.ACCESS_KEY);
-        
+
         if (!decodedAccessToken.username || !decodedAccessToken.email || !decodedAccessToken.role) {
             return { authorized: false, cause: "Token is missing information" }
         }
@@ -84,7 +84,11 @@ export const verifyAuth = (req, res, info) => {
                     return { authorized: true, cause: "Authorized" }
                 return { authorized: false, cause: "Unauthorized" };
             case "User":
-                if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username )
+                if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username)
+                    return { authorized: true, cause: "Authorized" }
+                return { authorized: false, cause: "Unauthorized" };
+            case "Group":
+                if (info.memberEmails.includes(decodedRefreshToken.email))
                     return { authorized: true, cause: "Authorized" }
                 return { authorized: false, cause: "Unauthorized" };
             default:

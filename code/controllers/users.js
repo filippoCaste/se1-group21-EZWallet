@@ -47,7 +47,7 @@ export const getUser = async (req, res) => {
       } else {
         return res.status(401).json({ error: adminAuth.cause })
       }
-     
+
     }
 
 
@@ -70,55 +70,61 @@ export const getUser = async (req, res) => {
  */
 export const createGroup = async (req, res) => {
   try {
+
     const { name, memberEmails } = req.body;
-
+    const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: memberEmails })
     // Check if a group with the same name already exists
-    const existingGroup = await Group.findOne({ name });
-    if (existingGroup) {
-      return res.status(400).json({ error: 'A group with the same name already exists.' });
-    }
+    if (groupAuth.authorized) {
+      const existingGroup = await Group.findOne({ name });
+      if (existingGroup) {
+        return res.status(400).json({ error: 'A group with the same name already exists.' });
+      }
 
-    // Check if all memberEmails exist and are not already in a group
-    const membersNotFound = [];
-    const alreadyInGroup = [];
-    const validMembers = [];
+      // Check if all memberEmails exist and are not already in a group
+      const membersNotFound = [];
+      const alreadyInGroup = [];
+      const validMembers = [];
 
-    for (const email of memberEmails) {
-      const user = await User.findOne({ email });
-      if (!user) {
-        membersNotFound.push(email);
-      } else {
-        const isInGroup = await Group.exists({ 'members.email': email });
-        if (isInGroup) {
-          alreadyInGroup.push(email);
+      for (const email of memberEmails) {
+        const user = await User.findOne({ email });
+        if (!user) {
+          membersNotFound.push(email);
         } else {
-          validMembers.push({ email, user });
+          const isInGroup = await Group.exists({ 'members.email': email });
+          if (isInGroup) {
+            alreadyInGroup.push(email);
+          } else {
+            validMembers.push({ email, user });
+          }
         }
       }
+
+      // Create the new group
+      const group = new Group({ name });
+      group.members = validMembers;
+
+
+      if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
+        return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
+      }
+
+      await group.save();
+
+      // Prepare and send the response
+      const responseData = {
+        group: {
+          name: group.name,
+          members: group.members.map(member => member.email)
+        },
+        alreadyInGroup,
+        membersNotFound
+      };
+
+      res.status(200).json({ data: responseData });
+    } else {
+      return res.status(401).json({ error: groupAuth.cause })
     }
 
-    // Create the new group
-    const group = new Group({ name });
-    group.members = validMembers;
-
-
-    if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
-      return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
-    }
-
-    await group.save();
-
-    // Prepare and send the response
-    const responseData = {
-      group: {
-        name: group.name,
-        members: group.members.map(member => member.email)
-      },
-      alreadyInGroup,
-      membersNotFound
-    };
-
-    res.status(200).json({ data: responseData });
   } catch (err) {
     res.status(500).json(err.message);
   }
@@ -136,19 +142,23 @@ export const createGroup = async (req, res) => {
  */
 export const getGroups = async (req, res) => {
   try {
-    // verifyAuth
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+    if (adminAuth.authorized) {
+      // Retrieve all groups
+      const groups = await Group.find();
 
-    // Retrieve all groups
-    const groups = await Group.find();
+      // Prepare the response data
+      const responseData = groups.map(group => ({
+        name: group.name,
+        members: group.members.map(member => member.email)
+      }));
 
-    // Prepare the response data
-    const responseData = groups.map(group => ({
-      name: group.name,
-      members: group.members.map(member => member.email)
-    }));
+      // Send the response with the data
+      res.status(200).json({ data: responseData });
+    } else {
+      return res.status(401).json({ error: adminAuth.cause })
+    }
 
-    // Send the response with the data
-    res.status(200).json({ data: responseData });
   } catch (err) {
     res.status(500).json(err.message);
   }
@@ -163,49 +173,28 @@ export const getGroups = async (req, res) => {
   - Optional behavior:
     - error 400 is returned if the group does not exist
  */
-export const getGroup = async (req, res) => { //<---------------------------TO CHECK
+export const getGroup = async (req, res) => {
   try {
     const { name } = req.params;
-
-    // Find the currently logged-in user using the refresh token from cookies
-    const refreshToken = req.cookies.refreshToken;
-
-    const user = await User.findOne({ refreshToken });
-    if (!user) {
-      return res.status(400).json("please login...");
-    }
-
     // Find the group by name
     const group = await Group.findOne({ name });
     if (!group) {
-      return res.status(400).json("The group does not exist");
+      return res.status(400).json({ error:"The group does not exist"});
     }
-
-    let isMember = false;
-    if (user.role === "Admin") {
-      // Admin user can access group information without being a member
-      isMember = true;
-    } else {
-      // Check if the user is a member of the group
-      for (const member of group.members) {
-        if (member.user && member.user.equals(user._id)) {
-          isMember = true;
-          break;
-        }
-      }
-    }
-
-    if (!isMember) {
-      return res.status(400).json("You are not authorized to access this group");
-    }
-
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+    const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
+    
     // Prepare and send the response
-    const responseData = {
-      name: group.name,
-      members: group.members.map(member => member.email)
-    };
+    if (adminAuth.authorized || groupAuth.authorized) {
+      const responseData = {
+        name: group.name,
+        members: group.members.map(member => member.email)
+      };
 
-    res.status(200).json({ data: responseData });
+      res.status(200).json({ data: responseData });
+    } else {
+      return res.status(401).json({ error: groupAuth.cause })
+    }
   } catch (err) {
     res.status(500).json(err.message);
   }
