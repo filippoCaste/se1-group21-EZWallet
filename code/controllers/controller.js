@@ -54,7 +54,7 @@ export const updateCategory = async (req, res) => {
         if (!cookie.accessToken) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
-        const type = req.params.type.trim().toLowerCase();
+        // const type = req.params.type.trim().toLowerCase();
         const color = req.body.color.trim().toLowerCase();
 
         const category = await categories.findOne({ type: type });
@@ -177,8 +177,8 @@ export const createTransaction = async (req, res) => {
         }
         const { username, amount, type } = req.body;
         const user = await userExists(cookie.refreshToken);
-        let lowerType = type.toLowerCase();
-        if ((user.username !== username || user.username !== paramUsername) || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(lowerType)) {
+        // let lowerType = type.toLowerCase();
+        if ((user.username !== username || user.username !== paramUsername) || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(type)) {
             return res.status(400).json({ error: "Uncorrect username or category not found"});
         }
         const new_transactions = new transactions({ username, amount, type });
@@ -348,7 +348,7 @@ export const getTransactionsByGroup = async (req, res) => {
 
         const group = await Group.findOne({ name: req.params.name });
         if(!group) {
-            return res.send(400).json({message: "Group doesn't exist"});
+            return res.send(400).json({message: "Group does not exist"});
         }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
@@ -379,6 +379,32 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
+        const cookie = req.cookies;
+        const user = await userExists(cookie.refreshToken);
+
+        const paramCategory = await categoryTypeExists(req.params.category)
+        if(! paramCategory) {
+            return res.send(400).json({message: "Category does not exist"})
+        }
+
+        const group = await Group.findOne({ name: req.params.name });
+        if (!group) {
+            return res.send(400).json({ message: "Group does not exist" });
+        }
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
+
+        if (adminAuth.authorized || groupAuth.authorized) {
+            let ids = group.members.map(member => member.email)
+            let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
+            console.log(ids)
+            console.log(usernames)
+            const data = (await transactions.find().where('username').in(usernames).exec()).filter((t) => t.type === req.params.category);
+            res.json(data)
+        } else {
+            res.status(401).json({ message: "Unauthorized" })
+        }
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
