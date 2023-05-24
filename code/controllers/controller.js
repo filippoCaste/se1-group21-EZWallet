@@ -176,8 +176,9 @@ export const createTransaction = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         const { username, amount, type } = req.body;
+        const user = await userExists(cookie.refreshToken);
         let lowerType = type.toLowerCase();
-        if (paramUsername !== username || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(lowerType)) {
+        if ((user.username !== username || user.username !== paramUsername) || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(lowerType)) {
             return res.status(400).json({ error: "Uncorrect username or category not found"});
         }
         const new_transactions = new transactions({ username, amount, type });
@@ -310,7 +311,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
                 let data = await transactions.find({ username: user.username, type: paramCategory });
                 res.json(data)
             } else {
-                const userAuth = verifyAuth(req, res, { authType: "User", username: username.username })
+                const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
                 if (userAuth.authorized) {
                     //User auth successful
                     // TODO filtering params
@@ -342,6 +343,27 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
     try {
+        const cookie = req.cookies;
+        const user = await userExists(cookie.refreshToken);
+
+        const group = await Group.findOne({ name: req.params.name });
+        if(!group) {
+            return res.send(400).json({message: "Group doesn't exist"});
+        }
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
+
+        if (adminAuth.authorized || groupAuth.authorized) {
+            let ids = group.members.map(member => member.email)
+            let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
+            console.log(ids)
+            console.log(usernames)
+            const data = await transactions.find().where('username').in(usernames).exec();
+            res.json(data)
+        } else {
+                res.status(401).json({ message: "Unauthorized" })
+        }
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -372,12 +394,13 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
+        const user = await userExists(cookie.refreshToken);
         const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
         if (! simpleAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
 
-        if(! await userExists(req.params.username)) {
+        if(! user) {
             return res.status(400).json({ error: "User does not exist" });
         }
 
@@ -402,7 +425,6 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
     try {
-        // TODO check if admin
         const cookie = req.cookies
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         if (! adminAuth.authorized) {
@@ -472,5 +494,5 @@ async function userExistsByUsername(username) {
     console.log(user);
     if (!user) return false;
 
-    return { username: user.username, role: user.role };
+    return { username: user.username, role: user.role, email:user.email };
 }
