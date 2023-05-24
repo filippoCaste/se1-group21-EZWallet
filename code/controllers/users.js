@@ -374,6 +374,11 @@ export const deleteUser = async (req, res) => {
         return res.status(400).json({ error: 'User does not exist' });
       }
 
+      // Check if the user is an admin
+      if(user.role === "Admin"){
+        return res.status(400).json({ error: 'You cannot delete an Admin' });
+      }
+
       // Delete the user
       await User.deleteOne({ username: user.username });
 
@@ -394,10 +399,10 @@ export const deleteUser = async (req, res) => {
 
       // Prepare the response data
       const responseData = {
-        deletedTransactions: deletedTransactions.deletedCount, // Update this with the actual number of deleted transactions
+        deletedTransactions: deletedTransactions.deletedCount, 
         deletedFromGroup: deletedFromGroup
       };
-
+      
       return res.status(200).json({ data: responseData });
     } else {
       return res.status(401).json({ error: adminAuth.cause })
