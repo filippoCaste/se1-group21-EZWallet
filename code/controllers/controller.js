@@ -146,7 +146,8 @@ export const deleteCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
+        if (! simpleAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         let data = await categories.find({})
@@ -170,7 +171,8 @@ export const createTransaction = async (req, res) => {
     try {
         const paramUsername = req.params.username;
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
+        if (! simpleAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         const { username, amount, type } = req.body;
@@ -197,7 +199,8 @@ export const createTransaction = async (req, res) => {
 export const getAllTransactions = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        if (! adminAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
         /**
@@ -239,16 +242,12 @@ export const getTransactionsByUser = async (req, res) => {
         const username = await userExists(cookie.refreshToken);
         const paramUsername = req.params.username;
 
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-
         if (!username || ! await userExistsByUsername(paramUsername)) {
             return res.status(400).json({ error: "User does not exist" });
         }
         try {
             const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-            if (adminAuth.authorized && username.role==="Admin") {
+            if (adminAuth.authorized) {
                 //Admin auth successful
                 // admin
                 console.log("THIS MUST BE AN ADMIN")
@@ -265,7 +264,7 @@ export const getTransactionsByUser = async (req, res) => {
                     let data = await transactions.find({ username: username.username });
                     res.json(data)
                 } else{
-                    res.status(401).json({message: "Unauthorized"})
+                    res.status(401).json({message: userAuth.cause})
                 }
             }
         } catch (error) {
@@ -290,28 +289,44 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const cookie = req.cookies;
+        const user = await userExists(cookie.refreshToken);
         const paramUsername = req.params.username;
         const paramCategory = req.params.category;
-        const user = await userExists(cookie.refreshToken);
 
-        if (req.url.indexOf("/transactions/users/") >= 0) {
-            // admin
-
-        } else {
-            // no admin
-            if (!user) {
-                return res.status(400).json({ error: "User does not exist" });
-            }
-            if(! await categoryTypeExists(paramCategory)) {
-                return res.status(400).json({ error: "Category does not exist" });
-            }
-            if (paramUsername !== user.username) {
-                return res.status(400).json({ error: "You cannot access to these data" });
-            }
-            let data = await transactions.find({ username: user.username, type: paramCategory });
-            res.json(data);
-
+        if (!username || ! await userExistsByUsername(paramUsername)) {
+            return res.status(400).json({ error: "User does not exist" });
         }
+
+        if (! await categoryTypeExists(paramCategory)) {
+            return res.status(400).json({ error: "Category does not exist" });
+        }
+
+        try {
+            const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+            if (adminAuth.authorized) {
+                //Admin auth successful
+                // admin
+                console.log("THIS MUST BE AN ADMIN")
+                let data = await transactions.find({ username: user.username, type: paramCategory });
+                res.json(data)
+            } else {
+                const userAuth = verifyAuth(req, res, { authType: "User", username: username.username })
+                if (userAuth.authorized) {
+                    //User auth successful
+                    // TODO filtering params
+                    if (paramUsername !== username.username) {
+                        return res.status(400).json({ error: "You cannot access to these data" });
+                    }
+                    let data = await transactions.find({ username: user.username, type: paramCategory });
+                    res.json(data)
+                } else {
+                    res.status(401).json({ message: userAuth.cause })
+                }
+            }
+        } catch (error) {
+            res.status(500).json({ error: error.message })
+        }
+
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -357,7 +372,8 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
+        if (! simpleAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
 
@@ -388,7 +404,8 @@ export const deleteTransactions = async (req, res) => {
     try {
         // TODO check if admin
         const cookie = req.cookies
-        if (!cookie.accessToken) {
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        if (! adminAuth.authorized) {
             return res.status(401).json({ message: "Unauthorized" }) // unauthorized
         }
 
