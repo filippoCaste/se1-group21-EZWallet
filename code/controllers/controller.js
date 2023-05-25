@@ -279,7 +279,7 @@ export const getTransactionsByUser = async (req, res) => {
                     } else if(amountFiltering.amount) {
                         data = await transactions.find({ username: user.username, amount: amountFiltering.amount });
                     } else {
-                        // nothing or all?
+                        data = await transactions.find({ username: user.username });
                     }
                     res.json(data)
                 } else{
