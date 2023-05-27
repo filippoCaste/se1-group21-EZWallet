@@ -12,7 +12,18 @@ import { verifyAuth } from './utils.js';
  */
 export const register = async (req, res) => {
     try {
+
+        // Check for incomplete request body
+        if (!('username' in req.body) || !('email' in req.body) || !('password' in req.body)) {
+            return res.status(400).json({ error: "Incomplete request body" });
+        }
+
         const { username, email, password } = req.body;
+
+        // Check for empty strings
+        if (username.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0) {
+            return res.status(400).json({ error: "Empty fields are not allowed" });
+        }
 
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,9 +45,9 @@ export const register = async (req, res) => {
             email,
             password: hashedPassword,
         });
-        res.status(200).json({data: {message: "User added successfully"}});
+        res.status(200).json({ data: { message: "User added successfully" } });
     } catch (error) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -51,7 +62,18 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
+
+        // Check for incomplete request body
+        if (!('username' in req.body) || !('email' in req.body) || !('password' in req.body)) {
+            return res.status(400).json({ error: "Incomplete request body" });
+        }
+
         const { username, email, password } = req.body;
+
+        // Check for empty strings
+        if (username.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0) {
+            return res.status(400).json({ error: "Empty fields are not allowed" });
+        }
 
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -74,9 +96,9 @@ export const registerAdmin = async (req, res) => {
             password: hashedPassword,
             role: "Admin",
         });
-        res.status(200).json({data: {message: "Admin added successfully"}})
+        res.status(200).json({ data: { message: "Admin added successfully" } })
     } catch (error) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -89,13 +111,31 @@ export const registerAdmin = async (req, res) => {
     - error 400 is returned if the supplied password does not match with the one in the database
  */
 export const login = async (req, res) => {
-    const { email, password } = req.body
+
+    // Check for incomplete request body
+    if (!('email' in req.body) || !('password' in req.body)) {
+        return res.status(400).json({ error: "Incomplete request body" });
+    }
+
+    const { email, password } = req.body;
+
+    // Check for empty strings
+    if (email.trim().length === 0 || password.trim().length === 0) {
+        return res.status(400).json({ error: "Empty fields are not allowed" });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+    }
+
     const cookie = req.cookies
     const existingUser = await User.findOne({ email: email })
-    if (!existingUser) return res.status(400).json({error : "please you need to register"})
+    if (!existingUser) return res.status(400).json({ error: "please you need to register" })
     try {
         const match = await bcrypt.compare(password, existingUser.password)
-        if (!match) return res.status(400).json({error:"wrong credentials"})
+        if (!match) return res.status(400).json({ error: "wrong credentials" })
         //CREATE ACCESSTOKEN
         const accessToken = jwt.sign({
             email: existingUser.email,
@@ -117,7 +157,7 @@ export const login = async (req, res) => {
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
         res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } })
     } catch (error) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -129,20 +169,20 @@ export const login = async (req, res) => {
   - Optional behavior:
     - error 400 is returned if the user does not exist
  */
-    export const logout = async (req, res) => {
-        const refreshToken = req.cookies.refreshToken;
-        if (!refreshToken) return res.status(400).json({ error: "Refresh token not found" });
-    
-        try {
-            const user = await User.findOne({ refreshToken: refreshToken });
-            if (!user) return res.status(400).json({ error: "User not found" });
-    
-            user.refreshToken = null;
-            res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
-            res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
-            const savedUser = await user.save();
-            res.status(200).json({ data: { message: "User logged out" } });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    };
+export const logout = async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.status(400).json({ error: "No refresh token provided" });
+
+    try {
+        const user = await User.findOne({ refreshToken: refreshToken });
+        if (!user) return res.status(400).json({ error: "User not found" });
+
+        user.refreshToken = null;
+        res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
+        res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
+        const savedUser = await user.save();
+        res.status(200).json({ data: { message: "User logged out" } });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
