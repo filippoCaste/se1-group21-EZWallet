@@ -23,6 +23,44 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
+    const query = req.query;
+    if(req.query === undefined) {
+        return {};
+    } else {
+        console.log(query)
+        let matchStage = {};
+        try {
+            if(query.from) {
+                if (!query.from.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                    throw Error("The string is not a date");
+                }
+                const d = new Date(query.from + "T00:00:00.000Z")
+                matchStage = { date: { $gte: d } }
+            } 
+            if(query.upTo) {
+                if (!query.upTo.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                    throw Error("The string is not a date");
+                }
+                const d = new Date(query.upTo + "T23:59:59.000Z")
+                matchStage.date = {...matchStage.date, $lte: d}
+            }
+
+            if(query.date) {
+                if(matchStage !== {}) {
+                    throw Error("Impossible combination");
+                }
+                if (!query.date.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                    throw Error("The string is not a date");
+                }
+                const d = new Date(query.date)
+            }
+            
+        } catch(error) {
+            throw Error(error.message);
+        }
+        
+        return matchStage
+    }
 }
 
 // HOW TO USE VERIFYAUTH
@@ -131,4 +169,48 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
+    const query = req.query;
+    if (req.query === undefined) {
+        return {};
+    } else {
+        let matchStage = {};
+        try {
+            let min = 0;
+            let max = 99999999;
+            if (query.min) {
+                if (!query.min.match(/[0-9]+/)) {
+                    throw Error("The input is not a number");
+                }
+                min = Number(query.min);
+                matchStage.amount = { ...matchStage.amount, $gte: min }
+            }
+
+            if (query.max) {
+                if (!query.max.match(/[0-9]+/)) {
+                    throw Error("The input is not a number");
+                }
+                max = Number(query.max)
+                matchStage.amount = { ...matchStage.amount, $lte: max }
+            }
+
+            if(query.min && query.max && min > max) {
+                throw Error("Impossible combination")
+            }
+
+        } catch (error) {
+            console.log(error.message)
+            throw Error(error.message);
+        }
+
+        return matchStage;
+    }
 }
+
+
+/**   FILTERS
+ *  from. Specifies the starting date from which transactions must be retrieved.
+    upTo. Specifies the final date up to which transactions must be retrieved.
+    date. Specifies the date in which transactions must be retrieved.
+    min. Specifies the minimum amount that transactions must have to be retrieved.
+    max. Specifies the maximum amount that transactions must have to be retrieved.
+ */

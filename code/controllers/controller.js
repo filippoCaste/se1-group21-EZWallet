@@ -240,29 +240,47 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const cookie = req.cookies;
-        const username = await userExists(cookie.refreshToken);
+        const user = await userExists(cookie.refreshToken);
         const paramUsername = req.params.username;
 
-        if (!username || ! await userExistsByUsername(paramUsername)) {
+        if (!user || ! await userExistsByUsername(paramUsername)) {
             return res.status(400).json({ error: "User does not exist" });
         }
         try {
             const adminAuth = verifyAuth(req, res, { authType: "Admin" })
             if (adminAuth.authorized) {
-                //Admin auth successful
-                // admin
+                // Admin auth successful
                 console.log("THIS MUST BE AN ADMIN")
                 let data = await transactions.find({ username: paramUsername });
                 res.json(data)
             } else {
-                const userAuth = verifyAuth(req, res, { authType: "User", username: username.username })
+                const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
                 if (userAuth.authorized) {
-                //User auth successful
-                    // TODO filtering params
-                    if (paramUsername !== username.username) {
+                // User auth successful
+                    if (paramUsername !== user.username) {
                         return res.status(400).json({ error: "You cannot access to these data" });
                     }
-                    let data = await transactions.find({ username: username.username });
+                    let dateFiltering = {}
+                    let amountFiltering = {};
+                    try {
+                        dateFiltering = handleDateFilterParams(req);
+                        amountFiltering = handleAmountFilterParams(req);
+                        console.log(dateFiltering);
+                        console.log(amountFiltering)
+                    } catch(error) {
+                        return res.status(400).json({error: "Errors in the query"})
+                    }
+                    // console.log({ username: user.username, date: {$lte: dateFiltering.date.$lte, $gte: dateFiltering.$gte} })
+                    let data = [];
+                    if(dateFiltering.date && amountFiltering.amount) {
+                        data = await transactions.find({ username: user.username, date: dateFiltering.date, amount: amountFiltering.amount });
+                    } else if(dateFiltering.date) {
+                        data = await transactions.find({ username: user.username, date: dateFiltering.date });
+                    } else if(amountFiltering.amount) {
+                        data = await transactions.find({ username: user.username, amount: amountFiltering.amount });
+                    } else {
+                        data = await transactions.find({ username: user.username });
+                    }
                     res.json(data)
                 } else{
                     res.status(401).json({message: userAuth.cause})
@@ -314,7 +332,6 @@ export const getTransactionsByUserByCategory = async (req, res) => {
                 const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
                 if (userAuth.authorized) {
                     //User auth successful
-                    // TODO filtering params
                     if (paramUsername !== username.username) {
                         return res.status(400).json({ error: "You cannot access to these data" });
                     }
