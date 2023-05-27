@@ -59,6 +59,7 @@ export const handleDateFilterParams = (req) => {
  */
 export const verifyAuth = (req, res, info) => {
     const cookie = req.cookies
+    res.locals.refreshedTokenMessage = "Refresh Token still valid"
     if (!cookie.accessToken || !cookie.refreshToken) {
         return { authorized: false, cause: "Unauthorized" };
     }
