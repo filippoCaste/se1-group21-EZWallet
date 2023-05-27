@@ -19,22 +19,36 @@ import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./
 export const createCategory = (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (!verifyAuth(req, res, { authType: "Admin" })) {
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
-        const { type, color } = req.body;
-        // const lowType = type.toLowerCase();
-        // console.log(lowType);
-        // const bool = await categoryTypeExists(lowType);
-        // if( bool ) {
-        //     return res.status(400).json({ message: "Category type already exists" });
-        // }
+        let { type, color } = req.body;
+        if(!type || !color) {
+            return res.status(400).json({ error: "Not enough parameters." });
+        } else {
+            type = type.trim();
+            color = color.trim();
+        }
+        if( ! checkEmptyParam(type, color) ) {
+            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+        }
+
+        // check if color is valid
+        let invalid = false;
+        const regexp = /\#[0-9a-f]{6}/;
+        if (!color.match(regexp)) {
+            invalid = true;
+        }
+
+        if (invalid) {
+            return res.status(400).json({ error: "New parameters have invalid values." });
+        }
 
         const new_categories = new categories({ type, color });
         console.log("New category created: " + type);
         new_categories.save()
             .then(data => res.json(data))
-            .catch(err => { throw err })
+            .catch(err => { return res.status(400).json({ error: "This category already exists." }) })
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -51,46 +65,51 @@ export const createCategory = (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (!verifyAuth(req, res, { authType: "Admin" })) {
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
-        // const type = req.params.type.trim().toLowerCase();
-        const color = req.body.color.trim().toLowerCase();
+        const type = req.params.type;
+        let color = req.body.color.toLowerCase();
+        let type_new = req.body.type;
 
+        if(!type_new || !color) {
+            return res.status(400).json({ error: "Uncomplete request body." });
+        } else {
+            color = color.trim();
+            type_new = type_new.trim();
+        }
+        if(! checkEmptyParam(color, type_new)) {
+            return res.status(400).json({error: "Empty parameters are not allowed."});
+        }
+        const category_new = await categories.findOne({ type: type_new })
         const category = await categories.findOne({ type: type });
-        // console.log(category);
-        if (category === null) {
-            res.status(400).json({ error: "The specified category does not exist." });
+        if (category === null || category_new ) {
+            return res.status(400).json({ error: "The specified category does not exist or the new category is already existing." });
         }
 
         // check if color is valid
         let invalid = false;
-        if(color[0] !== '#' || color.length !== 7) {
+        const regexp = /\#[0-9a-f]{6}/;
+        if(! color.match(regexp)) {
             invalid = true ;
-        } else {
-            for (let c of color) {
-                if(c>'f') {
-                    invalid = true ;
-                    break;
-                }
-            }
         }
 
         if (invalid) {
-            res.status(400).json({ error: "New parameters have invalid values" });
+            return res.status(400).json({ error: "New parameters have invalid values" });
         }
 
-        const updateColor = {
+        const updateCat = {
             $set: {
+                type: type_new,
                 color: color
             },
         };
-        await categories.updateOne({ type: type}, updateColor )
+        const data = await categories.updateOne({ type: type}, updateCat )
 
         // count of transactions
         const count = (await transactions.find({type:type})).length; 
 
-        res.json({ message: "Category updated", count: count });
+        res.status(200).json({ data: { message: "Category updated", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -107,29 +126,54 @@ export const updateCategory = async (req, res) => {
 export const deleteCategory = async (req, res) => {
     try {
         const cookie = req.cookies
-        if (!cookie.accessToken) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+        if (!verifyAuth(req, res, { authType: "Admin" })) {
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
 
-        const types = req.body.types;
+        let types = req.body.types;
+
+        if(!types || types.length === 0) {
+            return res.status(400).json({ error: "Invalid input array." });
+        }
+
+        const categ = (await categories.find({})).length;
+        if(categ === 1) {
+            return res.status(400).json({error: "You cannot delete the remaining category."})
+        }
 
         // count of transactions
         let count = 0;
         for (let type of types) {
+            type = type.trim();
+            if(! checkEmptyParam(type)) {
+                return res.status(400).json({ error: "Empty strings are not allowed." });
+            }
             if (! await categoryTypeExists(type)) {
                 return res.status(400).json({ error: "The specified category does not exist." });
             }
         }
+        const sorted = (await categories.find({}).sort({ createdAt: -1 }));
+        let oldest = sorted[0];
+        let i = 0;
+        console.log(oldest.type);
+
+        if(categ === types.length) {
+            types = types.filter((c) => c !== oldest.type);
+        }
         for (let type of types) {
-            // category delete
+            type = type.trim();
+            // category deletion
+            if(oldest.type === type) {
+                i++;
+                oldest = sorted[i];
+            }
             await categories.deleteMany({type: type});
             // transactions update
-            // TODO: not investment but 'first' category ?????
-            let data = await transactions.updateMany({ type: type }, { type: "investment" });
+            let data = await transactions.updateMany({ type: type }, { type: oldest.type });
             count += data.modifiedCount;
         }
 
-        res.json({ message: "Categories deleted", count: count });
+        res.json({ data: { message: "Categories deleted", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage});
 
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -148,13 +192,13 @@ export const getCategories = async (req, res) => {
         const cookie = req.cookies
         const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
         if (! simpleAuth.authorized) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         let data = await categories.find({})
 
-        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color }))
-
-        return res.json(filter)
+        let filter = data.map(v => Object.assign({}, { type: v.type, color: v.color })) 
+        // TODO why is this undefined?  res.locals.refreshedTokenMessage 
+        res.json({ data:filter, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -171,19 +215,34 @@ export const createTransaction = async (req, res) => {
     try {
         const paramUsername = req.params.username;
         const cookie = req.cookies
-        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
-        if (! simpleAuth.authorized) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
-        }
-        const { username, amount, type } = req.body;
         const user = await userExists(cookie.refreshToken);
-        // let lowerType = type.toLowerCase();
-        if ((user.username !== username || user.username !== paramUsername) || !await userExists(cookie.refreshToken) || ! await categoryTypeExists(type)) {
+        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
+
+        let { username, amount, type } = req.body;
+        if(!username || !amount || !type) {
+            return res.status(400).json({error: "Some parameters were not provided." })
+        } else {
+            username = username.trim();
+            type = type.trim();
+        }
+        if(!checkEmptyParam(username, amount, type)) {
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
+        }
+        if ( !user || ! await categoryTypeExists(type)) {
             return res.status(400).json({ error: "Uncorrect username or category not found"});
+        }
+        if (!simpleAuth.authorized || (user.username !== username || user.username !== paramUsername)) {
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
+        }
+        let fp_amount = 0.0;
+        try {
+            fp_amount = parseFloat(String(amount))
+        } catch(error) {
+            return res.status(400).json({error: "Cannot parse to Floating point number"})
         }
         const new_transactions = new transactions({ username, amount, type });
         new_transactions.save()
-            .then(data => res.json(data))
+            .then(data => res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -202,7 +261,7 @@ export const getAllTransactions = async (req, res) => {
         const cookie = req.cookies
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         if (! adminAuth.authorized) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         /**
          * MongoDB equivalent to the query "SELECT * FROM transactions, categories WHERE transactions.type = categories.type"
@@ -218,7 +277,7 @@ export const getAllTransactions = async (req, res) => {
             },
             { $unwind: "$categories_info" }
         ]).then((result) => {
-            let data = result.map(v => Object.assign({}, { _id: v._id, username: v.username, amount: v.amount, type: v.type, color: v.categories_info.color, date: v.date }))
+            let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
             res.json(data);
         }).catch(error => { throw (error) })
     } catch (error) {
@@ -281,7 +340,7 @@ export const getTransactionsByUser = async (req, res) => {
                     } else {
                         data = await transactions.find({ username: user.username });
                     }
-                    res.json(data)
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
                 } else{
                     res.status(401).json({message: userAuth.cause})
                 }
@@ -378,7 +437,7 @@ export const getTransactionsByGroup = async (req, res) => {
             const data = await transactions.find().where('username').in(usernames).exec();
             res.json(data)
         } else {
-                res.status(401).json({ message: "Unauthorized" })
+                res.status(401).json({ error: "Unauthorized" })
         }
 
     } catch (error) {
@@ -419,7 +478,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
             const data = (await transactions.find().where('username').in(usernames).exec()).filter((t) => t.type === req.params.category);
             res.json(data)
         } else {
-            res.status(401).json({ message: "Unauthorized" })
+            res.status(401).json({ error: "Unauthorized" })
         }
 
     } catch (error) {
@@ -440,14 +499,22 @@ export const deleteTransaction = async (req, res) => {
         const user = await userExists(cookie.refreshToken);
         const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
         if (! simpleAuth.authorized) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
-
         if(! user) {
             return res.status(400).json({ error: "User does not exist" });
         }
+        let id = req.body._id;
+        if(! id) {
+            res.status(400).json({error: "Missing id."})
+        } else {
+            id = id.trim();
+        }
+        if(! checkEmptyParam(id)) {
+            res.status(400).json({error: "Invalid empty id."})
+        }
 
-        let data = await transactions.deleteOne({ _id: req.body._id });
+        let data = await transactions.deleteOne({ _id: id });
 
         if(data.deletedCount === 0) {
             return res.status(400).json({error: "Transaction does not exist"});
@@ -471,20 +538,22 @@ export const deleteTransactions = async (req, res) => {
         const cookie = req.cookies
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         if (! adminAuth.authorized) {
-            return res.status(401).json({ message: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
 
         const idList = req.body;
-        if (idList === undefined) {
+        if (!idList || idList.length===0) {
             return res.status(400).json({message: "No ids provided"})
         }
         for(let id of idList) {
+            id = id.trim();
             if (! await transactions.findOne({_id: id})){
                 return res.status(400).json({ error: "Transaction does not exist" });
             }
         }
 
         for(let id of idList) {
+            id = id.trim();
             await transactions.deleteOne({_id: id});
         }
 
@@ -538,4 +607,18 @@ async function userExistsByUsername(username) {
     if (!user) return false;
 
     return { username: user.username, role: user.role, email:user.email };
+}
+
+/**
+ * Check wether there are empty parameters in the code
+ * @param {*} list of inputs
+ * @returns a boolean value
+ */
+function checkEmptyParam(inputs) {
+    for(let inp of inputs) {
+        if(inp === '') {
+            return false;
+        }
+    }
+    return true;
 }
