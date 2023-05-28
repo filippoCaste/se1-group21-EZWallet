@@ -50,7 +50,7 @@ export const createCategory = (req, res) => {
             .then(data => res.json(data))
             .catch(err => { return res.status(400).json({ error: "This category already exists." }) })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -112,7 +112,7 @@ export const updateCategory = async (req, res) => {
         res.status(200).json({ data: { message: "Category updated", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -176,7 +176,7 @@ export const deleteCategory = async (req, res) => {
         res.json({ data: { message: "Categories deleted", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage});
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -200,7 +200,7 @@ export const getCategories = async (req, res) => {
         // TODO why is this undefined?  res.locals.refreshedTokenMessage 
         res.json({ data:filter, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -245,7 +245,7 @@ export const createTransaction = async (req, res) => {
             .then(data => res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -281,7 +281,7 @@ export const getAllTransactions = async (req, res) => {
             res.json(data);
         }).catch(error => { throw (error) })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -350,7 +350,7 @@ export const getTransactionsByUser = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -405,7 +405,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -441,7 +441,7 @@ export const getTransactionsByGroup = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -482,7 +482,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -522,7 +522,7 @@ export const deleteTransaction = async (req, res) => {
 
         return res.json("deleted");
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -560,7 +560,7 @@ export const deleteTransactions = async (req, res) => {
         return res.json({message: "Deleted"});
 
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
