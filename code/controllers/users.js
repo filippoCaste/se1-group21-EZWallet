@@ -14,7 +14,7 @@ export const getUsers = async (req, res) => {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     if (adminAuth.authorized) {
       const users = await User.find({}, { username: 1, email: 1, role: 1, _id: 0 });
-      return res.status(200).json({ data: users , refreshedTokenMessage: res.locals.refreshedTokenMessage });
+      return res.status(200).json({ data: users, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     }
     return res.status(401).json({ error: adminAuth.cause });
   } catch (error) {
@@ -41,7 +41,7 @@ export const getUser = async (req, res) => {
 
     if (userAuth.authorized || adminAuth.authorized) {
       // User or admin auth successful
-      
+
       return res.status(200).json({ data: reqUser, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(401).json({ error: adminAuth.cause });
@@ -51,7 +51,7 @@ export const getUser = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
-    
+
 /**
  * Create a new group
   - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
@@ -66,59 +66,87 @@ export const getUser = async (req, res) => {
 export const createGroup = async (req, res) => {
   try {
 
+    const simpleAuth = verifyAuth(req, res, { authType: "Simple" });
+    
+    if (!simpleAuth.authorized) {
+      return res.status(401).json({ error: simpleAuth.cause });
+    }
+
+    // Check for incomplete request body
+    if (!('name' in req.body) || !('memberEmails' in req.body)) {
+      return res.status(400).json({ error: "Incomplete request body" });
+    }
+
     const { name, memberEmails } = req.body;
-    const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: memberEmails })
+    const reqUserMail = await User.findOne({ refreshToken: req.cookies.refreshToken }).email;
+
+    // If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
+    if (!memberEmails.includes(reqUserMail)) {
+      memberEmails.push(reqUserMail);
+    }
+    // Check for empty strings
+    if (name.trim().length === 0) {
+      return res.status(400).json({ error: "Empty fields are not allowed" });
+    }
+
     // Check if a group with the same name already exists
-    if (groupAuth.authorized) {
-      const existingGroup = await Group.findOne({ name });
-      if (existingGroup) {
-        return res.status(400).json({ error: 'A group with the same name already exists.' });
+    const existingGroup = await Group.findOne({ name });
+    if (existingGroup) {
+      return res.status(400).json({ error: 'A group with the same name already exists.' });
+    }
+
+    // Check if the user who calls the API is already in a group
+    const apiCallerIsAlreadyInAGroup = await Group.exists({ 'member.email': reqUserMail })
+    if (apiCallerIsAlreadyInAGroup) {
+      return res.status(400).json({ "error": 'You are already in a Group' });
+    }
+
+    // Check if all memberEmails exist or are already in a group
+    const membersNotFound = [];
+    const alreadyInGroup = [];
+    const validMembers = [];
+
+    for (const email of memberEmails) {
+      // Check if at least one of the member emails is not in a valid email forma or empty
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Invalid memberEmail format at" + email });
       }
-
-      // Check if all memberEmails exist and are not already in a group
-      const membersNotFound = [];
-      const alreadyInGroup = [];
-      const validMembers = [];
-
-      for (const email of memberEmails) {
-        const user = await User.findOne({ email });
-        if (!user) {
-          membersNotFound.push(email);
+      const user = await User.findOne({ email });
+      if (!user) {
+        membersNotFound.push(email);
+      } else {
+        const isInGroup = await Group.exists({ 'members.email': email });
+        if (isInGroup) {
+          alreadyInGroup.push(email);
         } else {
-          const isInGroup = await Group.exists({ 'members.email': email });
-          if (isInGroup) {
-            alreadyInGroup.push(email);
-          } else {
-            validMembers.push({ email, user });
-          }
+          validMembers.push({ email, user });
         }
       }
-
-      // Create the new group
-      const group = new Group({ name });
-      group.members = validMembers;
-
-
-      if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
-        return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
-      }
-
-      await group.save();
-
-      // Prepare and send the response
-      const responseData = {
-        group: {
-          name: group.name,
-          members: group.members.map(member => member.email)
-        },
-        alreadyInGroup,
-        membersNotFound
-      };
-
-      res.status(200).json({ data: responseData });
-    } else {
-      return res.status(401).json({ error: groupAuth.cause })
     }
+
+    if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
+      return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
+    }
+
+    // Create the new group
+    const group = new Group({ name });
+    group.members = validMembers;
+
+    await group.save();
+
+    // Prepare and send the response
+    const responseData = {
+      group: {
+        name: group.name,
+        members: group.members.map(member => member.email)
+      },
+      alreadyInGroup,
+      membersNotFound
+    };
+
+    res.status(200).json({ data: responseData, refreshedTokenMessage : res.locals.refreshedTokenMessage});
+
 
   } catch (err) {
     res.status(500).json(err.message);
