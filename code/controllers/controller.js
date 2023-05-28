@@ -325,7 +325,7 @@ export const getTransactionsByUser = async (req, res) => {
                     dateFiltering = handleDateFilterParams(req);
                     amountFiltering = handleAmountFilterParams(req);
                 } catch(error) {
-                    return res.status(300).json({error: "Errors in the query"})
+                    return res.status(400).json({error: "Errors in the query"})
                 }
                 if(dateFiltering.date && amountFiltering.amount) {
                     data = await transactions.find({ username: user.username, date: dateFiltering.date, amount: amountFiltering.amount });

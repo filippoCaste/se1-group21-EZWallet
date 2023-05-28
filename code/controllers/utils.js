@@ -31,14 +31,14 @@ export const handleDateFilterParams = (req) => {
         let matchStage = {};
         try {
             if(query.from) {
-                if (!query.from.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                if (! checkDateValidity(query.from)) {
                     throw Error("The string is not a date");
                 }
                 const d = new Date(query.from + "T00:00:00.000Z")
                 matchStage = { date: { $gte: d } }
             } 
             if(query.upTo) {
-                if (!query.upTo.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                if (! checkDateValidity(query.upTo)) {
                     throw Error("The string is not a date");
                 }
                 const d = new Date(query.upTo + "T23:59:59.000Z")
@@ -46,21 +46,50 @@ export const handleDateFilterParams = (req) => {
             }
 
             if(query.date) {
-                if(matchStage !== {}) {
+                if (query.upTo || query.from) {
                     throw Error("Impossible combination");
                 }
-                if (!query.date.match(/[0-9]{4}[/-]{1}[0-9]{2}[/-]{1}[0-9]{2}/)) {
+                if (! checkDateValidity(query.date)) {
                     throw Error("The string is not a date");
                 }
-                const d = new Date(query.date)
+                const d1 = new Date(query.date)
+                const d2 = new Date(query.date + "T23:59:59.000Z")
+                matchStage.date = {$gte: d1, $lte: d2};
             }
             
         } catch(error) {
+            console.log(error.message)
             throw Error(error.message);
         }
         
         return matchStage
     }
+}
+
+/**
+ * Check wether the date provided is a valid date.
+ * @param {*} date 
+ * @returns true if it is a valid date. Otherwise, false.
+ */
+function checkDateValidity(date) {
+    if (! date.match(/[0-9]{4}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/)) {
+        return false;
+    } else {
+        let [yyyy, mm, dd] = date.split('-');
+        yyyy = parseInt(yyyy);
+        mm = parseInt(mm);
+        dd = parseInt(dd);
+        if(yyyy > 2023 || mm > 12 || mm < 1 || dd > 31 || dd < 0 || yyyy < 0) {
+            return false;
+        } else {
+            if(mm === 2) {
+                if(dd > 28) return false;
+            } else if(mm === 4 || mm === 6 || mm === 9 || mm === 11) {
+                if(dd > 30) return false;
+            }
+        }
+    }
+    return true;
 }
 
 // HOW TO USE VERIFYAUTH
