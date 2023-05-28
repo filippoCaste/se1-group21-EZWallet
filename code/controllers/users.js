@@ -11,16 +11,16 @@ import { verifyAuth } from "./utils.js";
  */
 export const getUsers = async (req, res) => {
   try {
-    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     if (adminAuth.authorized) {
-      const users = await User.find();
-      return res.status(200).json(users);
+      const users = await User.find({}, { username: 1, email: 1, role: 1, _id: 0 });
+      return res.status(200).json({ data: users , refreshedTokenMessage: res.locals.refreshedTokenMessage });
     }
-    return res.status(401).json(adminAuth.cause);
+    return res.status(401).json({ error: adminAuth.cause });
   } catch (error) {
     res.status(500).json(error.message);
   }
-}
+};
 
 /**
  * Return information of a specific user
@@ -31,32 +31,27 @@ export const getUsers = async (req, res) => {
  */
 export const getUser = async (req, res) => {
   try {
-    const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username })
-    const reqUser = await User.findOne({ username: req.params.username });
+    const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" });
+    const reqUser = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 });
+
     if (!reqUser) {
       return res.status(400).json({ error: "User not found" });
     }
-    if (userAuth.authorized) {
-      //User auth successful
-      return res.status(200).json(await User.findOne({ refreshToken: req.cookies.refreshToken }));
-    } else {
-      const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-      if (adminAuth.authorized) {
-        //Admin auth successful
-        return res.status(200).json(reqUser);
-      } else {
-        return res.status(401).json({ error: adminAuth.cause })
-      }
 
+    if (userAuth.authorized || adminAuth.authorized) {
+      // User or admin auth successful
+      
+      return res.status(200).json({ data: reqUser, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+    } else {
+      return res.status(401).json({ error: adminAuth.cause });
     }
 
-
-
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json(error.message);
   }
-}
-
+};
+    
 /**
  * Create a new group
   - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
@@ -375,7 +370,7 @@ export const deleteUser = async (req, res) => {
       }
 
       // Check if the user is an admin
-      if(user.role === "Admin"){
+      if (user.role === "Admin") {
         return res.status(400).json({ error: 'You cannot delete an Admin' });
       }
 
@@ -391,7 +386,7 @@ export const deleteUser = async (req, res) => {
           group.members = group.members.filter(member => member.email !== email);
           await group.save();
         }
-        deletedFromGroup=true;
+        deletedFromGroup = true;
       }
 
       //Delete associated transactions
@@ -399,10 +394,10 @@ export const deleteUser = async (req, res) => {
 
       // Prepare the response data
       const responseData = {
-        deletedTransactions: deletedTransactions.deletedCount, 
+        deletedTransactions: deletedTransactions.deletedCount,
         deletedFromGroup: deletedFromGroup
       };
-      
+
       return res.status(200).json({ data: responseData });
     } else {
       return res.status(401).json({ error: adminAuth.cause })
