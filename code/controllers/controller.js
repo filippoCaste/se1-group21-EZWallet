@@ -278,7 +278,7 @@ export const getAllTransactions = async (req, res) => {
             { $unwind: "$categories_info" }
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-            res.json(data);
+            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
         }).catch(error => { throw (error) })
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -305,50 +305,47 @@ export const getTransactionsByUser = async (req, res) => {
         if (!user || ! await userExistsByUsername(paramUsername)) {
             return res.status(400).json({ error: "User does not exist" });
         }
-        try {
-            const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-            if (adminAuth.authorized) {
-                // Admin auth successful
-                console.log("THIS MUST BE AN ADMIN")
-                let data = await transactions.find({ username: paramUsername });
-                res.json(data)
-            } else {
-                const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
-                if (userAuth.authorized) {
-                // User auth successful
-                    if (paramUsername !== user.username) {
-                        return res.status(400).json({ error: "You cannot access to these data" });
-                    }
-                    let dateFiltering = {}
-                    let amountFiltering = {};
-                    try {
-                        dateFiltering = handleDateFilterParams(req);
-                        amountFiltering = handleAmountFilterParams(req);
-                        console.log(dateFiltering);
-                        console.log(amountFiltering)
-                    } catch(error) {
-                        return res.status(400).json({error: "Errors in the query"})
-                    }
-                    // console.log({ username: user.username, date: {$lte: dateFiltering.date.$lte, $gte: dateFiltering.$gte} })
-                    let data = [];
-                    if(dateFiltering.date && amountFiltering.amount) {
-                        data = await transactions.find({ username: user.username, date: dateFiltering.date, amount: amountFiltering.amount });
-                    } else if(dateFiltering.date) {
-                        data = await transactions.find({ username: user.username, date: dateFiltering.date });
-                    } else if(amountFiltering.amount) {
-                        data = await transactions.find({ username: user.username, amount: amountFiltering.amount });
-                    } else {
-                        data = await transactions.find({ username: user.username });
-                    }
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
-                } else{
-                    res.status(401).json({message: userAuth.cause})
-                }
-            }
-        } catch (error) {
-            res.status(500).json({ error: error.message })
-        }
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        const cats = await categories.find({});
+        let data = [];
 
+        if (adminAuth.authorized && req.url.indexOf("/transactions/users/") >= 0) {
+            // Admin auth successful
+            let data = await transactions.find({ username: paramUsername });
+        } else {
+            const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
+            if (userAuth.authorized && req.url.indexOf("/transactions/users/") !== 0) {
+            // User auth successful
+                if (paramUsername !== user.username) {
+                    return res.status(401).json({ error: "You cannot access to these data" });
+                }
+                let dateFiltering = {}
+                let amountFiltering = {};
+                try {
+                    dateFiltering = handleDateFilterParams(req);
+                    amountFiltering = handleAmountFilterParams(req);
+                } catch(error) {
+                    return res.status(300).json({error: "Errors in the query"})
+                }
+                if(dateFiltering.date && amountFiltering.amount) {
+                    data = await transactions.find({ username: user.username, date: dateFiltering.date, amount: amountFiltering.amount });
+                } else if(dateFiltering.date) {
+                    data = await transactions.find({ username: user.username, date: dateFiltering.date });
+                } else if(amountFiltering.amount) {
+                    data = await transactions.find({ username: user.username, amount: amountFiltering.amount });
+                } else {
+                    data = await transactions.find({ username: user.username });
+                }
+            } else{
+                res.status(401).json({error: "Unauthorized"})
+            }
+        }
+        data = data.map(
+            (v) => {
+                let col = getCategoryColor(v.type, cats);
+                return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
+            });
+        res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -371,7 +368,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         const paramUsername = req.params.username;
         const paramCategory = req.params.category;
 
-        if (!username || ! await userExistsByUsername(paramUsername)) {
+        if (!user.username || ! await userExistsByUsername(paramUsername)) {
             return res.status(400).json({ error: "User does not exist" });
         }
 
@@ -381,23 +378,26 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
         try {
             const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-            if (adminAuth.authorized) {
+            if (adminAuth.authorized && req.url.indexOf("/transactions/users/") >= 0) {
                 //Admin auth successful
-                // admin
-                console.log("THIS MUST BE AN ADMIN")
                 let data = await transactions.find({ username: user.username, type: paramCategory });
-                res.json(data)
+                res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
             } else {
                 const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
-                if (userAuth.authorized) {
+                if (userAuth.authorized && req.url.indexOf("/transactions/users/") !== 0) {
                     //User auth successful
-                    if (paramUsername !== username.username) {
-                        return res.status(400).json({ error: "You cannot access to these data" });
+                    if (paramUsername !== user.username) {
+                        return res.status(401).json({ error: "You cannot access to these data" });
                     }
-                    let data = await transactions.find({ username: user.username, type: paramCategory });
-                    res.json(data)
+                    const cats = await categories.find({});
+                    const data = (await transactions.find({ username: user.username, type: paramCategory })).map(
+                        (v) => {
+                            let col = getCategoryColor(v.type, cats);
+                            return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
+                        });;
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
                 } else {
-                    res.status(401).json({ message: userAuth.cause })
+                    return res.status(401).json({ error: "Unauthorized" })
                 }
             }
         } catch (error) {
@@ -424,18 +424,22 @@ export const getTransactionsByGroup = async (req, res) => {
 
         const group = await Group.findOne({ name: req.params.name });
         if(!group) {
-            return res.send(400).json({message: "Group does not exist"});
+            return res.status(400).json({error: "Group does not exist"});
         }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
 
-        if (adminAuth.authorized || groupAuth.authorized) {
+        if ((adminAuth.authorized && req.url.indexOf("/transactions/groups/") >= 0) || (groupAuth.authorized && req.url.indexOf("/transactions/groups/") !== 0)) {
             let ids = group.members.map(member => member.email)
             let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
-            console.log(ids)
-            console.log(usernames)
-            const data = await transactions.find().where('username').in(usernames).exec();
-            res.json(data)
+
+            const cats = await categories.find({});
+            const data = (await transactions.find().where('username').in(usernames).exec()).map(
+                (v) => {
+                    let col = getCategoryColor(v.type, cats);
+                    return Object.assign({},{username: v.username, amount: v.amount, type: v.type, date: v.date, color: col})
+                });
+            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
         } else {
                 res.status(401).json({ error: "Unauthorized" })
         }
@@ -460,23 +464,27 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 
         const paramCategory = await categoryTypeExists(req.params.category)
         if(! paramCategory) {
-            return res.send(400).json({message: "Category does not exist"})
+            return res.status(400).json({error: "Category does not exist"})
         }
 
         const group = await Group.findOne({ name: req.params.name });
         if (!group) {
-            return res.send(400).json({ message: "Group does not exist" });
+            return res.status(400).json({ error: "Group does not exist" });
         }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
+        const cats = await categories.find({});
 
-        if (adminAuth.authorized || groupAuth.authorized) {
+        if ((adminAuth.authorized && req.url.indexOf("/transactions/groups/") >= 0) || (groupAuth.authorized && req.url.indexOf("/transactions/groups/") !== 0)) {
             let ids = group.members.map(member => member.email)
             let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
-            console.log(ids)
-            console.log(usernames)
-            const data = (await transactions.find().where('username').in(usernames).exec()).filter((t) => t.type === req.params.category);
-            res.json(data)
+            const data = (await transactions.find().where('username').in(usernames).exec())
+                .filter((t) => t.type === req.params.category)
+                .map((v) => {
+                    let col = getCategoryColor(v.type, cats);
+                    return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
+                });
+            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
         } else {
             res.status(401).json({ error: "Unauthorized" })
         }
@@ -513,14 +521,18 @@ export const deleteTransaction = async (req, res) => {
         if(! checkEmptyParam(id)) {
             res.status(400).json({error: "Invalid empty id."})
         }
-
-        let data = await transactions.deleteOne({ _id: id });
-
-        if(data.deletedCount === 0) {
-            return res.status(400).json({error: "Transaction does not exist"});
+        const u = await userExistsByUsername(req.params.username);
+        if(! u || u.username !== user.username) {
+            res.status(401).json({ error: "You cannot access to these data." })
         }
 
-        return res.json("deleted");
+        let data = await transactions.deleteOne({ _id: id, username: u.username });
+
+        if(data.deletedCount === 0) {
+            return res.status(400).json({error: "Transaction does not exist."});
+        }
+
+        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -541,12 +553,15 @@ export const deleteTransactions = async (req, res) => {
             return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
 
-        const idList = req.body;
+        const idList = req.body._ids;
         if (!idList || idList.length===0) {
-            return res.status(400).json({message: "No ids provided"})
+            return res.status(400).json({error: "No ids provided"})
         }
         for(let id of idList) {
             id = id.trim();
+            if(! checkEmptyParam(id)) {
+                return res.status(400).json({ error: "Empty strings are invalid." })
+            }
             if (! await transactions.findOne({_id: id})){
                 return res.status(400).json({ error: "Transaction does not exist" });
             }
@@ -557,7 +572,7 @@ export const deleteTransactions = async (req, res) => {
             await transactions.deleteOne({_id: id});
         }
 
-        return res.json({message: "Deleted"});
+        return res.status(200).json({ data: { message: "Transactions deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -621,4 +636,12 @@ function checkEmptyParam(inputs) {
         }
     }
     return true;
+}
+
+function getCategoryColor(type, categories) {
+    for (let c of categories) {
+        if(c.type === type) {
+            return c.color;
+        }
+    }
 }
