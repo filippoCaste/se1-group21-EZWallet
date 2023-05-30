@@ -128,7 +128,7 @@ export const createGroup = async (req, res) => {
     }
 
     if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
-      return res.status(400).json({ "error": { membersNotFound, alreadyInGroup } });
+      return res.status(400).json({ error: "All the provided emails represent users that are already in a group or do not exist in the database" });
     }
 
     // Create the new group
