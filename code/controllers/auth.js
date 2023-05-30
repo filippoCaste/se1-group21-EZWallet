@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import { verifyAuth } from './utils.js';
@@ -111,8 +111,8 @@ export const registerAdmin = async (req, res) => {
     - error 400 is returned if the supplied password does not match with the one in the database
  */
 export const login = async (req, res) => {
-
-    // Check for incomplete request body
+    try {
+            // Check for incomplete request body
     if (!('email' in req.body) || !('password' in req.body)) {
         return res.status(400).json({ error: "Incomplete request body" });
     }
@@ -133,7 +133,7 @@ export const login = async (req, res) => {
     const cookie = req.cookies
     const existingUser = await User.findOne({ email: email })
     if (!existingUser) return res.status(400).json({ error: "please you need to register" })
-    try {
+        
         const match = await bcrypt.compare(password, existingUser.password)
         if (!match) return res.status(400).json({ error: "wrong credentials" })
         //CREATE ACCESSTOKEN
@@ -157,6 +157,7 @@ export const login = async (req, res) => {
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
         res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } })
     } catch (error) {
+        
         res.status(500).json({ error: error.message });
     }
 }
