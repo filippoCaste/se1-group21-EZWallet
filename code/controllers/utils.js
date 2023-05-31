@@ -144,25 +144,8 @@ export const verifyAuth = (req, res, info) => {
             return { authorized: false, cause: "Mismatched users" };
         }
 
-        switch (info.authType) {
-            case "Simple":
-                return { authorized: true, cause: "Authorized" }
-            case "Admin":
-                if (decodedRefreshToken.role === "Admin")
-                    return { authorized: true, cause: "Authorized" }
-                return { authorized: false, cause: "Unauthorized" };
-            case "User":
-                if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username)
-                    return { authorized: true, cause: "Authorized" }
-                return { authorized: false, cause: "Unauthorized" };
-            case "Group":
-                if (info.memberEmails.includes(decodedRefreshToken.email))
-                    return { authorized: true, cause: "Authorized" }
-                return { authorized: false, cause: "Unauthorized" };
-            default:
-                return { authorized: false, cause: "Unknown auth type" };
-        }
-
+        //Check if the caller has an authorized role
+        return switchRoles(decodedRefreshToken, info);
 
 
     } catch (err) {
@@ -177,16 +160,19 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.refreshedTokenMessage = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                return { authorized: true, cause: "Authorized" }
+                
+                //Check if the caller has an authorized role
+                return switchRoles(refreshToken, info);
+
             } catch (err) {
                 if (err.name === "TokenExpiredError") {
                     return { authorized: false, cause: "Perform login again" }
                 } else {
-                    return { authorized: false, cause: err.name }
+                    return { authorized: false, cause: err.name}
                 }
             }
         } else {
-            return { authorized: false, cause: err.name };
+            return { authorized: false, cause: err.name};
         }
     }
 }
@@ -227,7 +213,6 @@ export const handleAmountFilterParams = (req) => {
             }
 
         } catch (error) {
-            console.log(error.message)
             throw Error(error.message);
         }
 
@@ -243,3 +228,24 @@ export const handleAmountFilterParams = (req) => {
     min. Specifies the minimum amount that transactions must have to be retrieved.
     max. Specifies the maximum amount that transactions must have to be retrieved.
  */
+
+const switchRoles = (decodedRefreshToken, info) => {
+    switch (info.authType) {
+        case "Simple":
+            return { authorized: true, cause: "Authorized" }
+        case "Admin":
+            if (decodedRefreshToken.role === "Admin")
+                return { authorized: true, cause: "Authorized" }
+            return { authorized: false, cause: "Unauthorized" };
+        case "User":
+            if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username)
+                return { authorized: true, cause: "Authorized" }
+            return { authorized: false, cause: "Unauthorized" };
+        case "Group":
+            if (info.memberEmails.includes(decodedRefreshToken.email))
+                return { authorized: true, cause: "Authorized" }
+            return { authorized: false, cause: "Unauthorized" };
+        default:
+            return { authorized: false, cause: "Unknown auth type" };
+    }
+}
