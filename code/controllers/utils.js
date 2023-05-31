@@ -41,7 +41,7 @@ export const handleDateFilterParams = (req) => {
                 if (! checkDateValidity(query.upTo)) {
                     throw Error("The string is not a date");
                 }
-                const d = new Date(query.upTo + "T23:59:59.000Z")
+                const d = new Date(query.upTo + "T23:59:59.999Z")
                 matchStage.date = {...matchStage.date, $lte: d}
             }
 
