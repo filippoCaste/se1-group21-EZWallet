@@ -35,13 +35,11 @@ export const getUser = async (req, res) => {
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
     const reqUser = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 });
 
-    if (!reqUser) {
-      return res.status(400).json({ error: "User not found" });
-    }
-
     if (userAuth.authorized || adminAuth.authorized) {
       // User or admin auth successful
-
+      if (!reqUser) {
+        return res.status(400).json({ error: "User not found" });
+      }
       return res.status(200).json({ data: reqUser, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(401).json({ error: adminAuth.cause });
@@ -241,18 +239,17 @@ export const getGroup = async (req, res) => {
  */
 export const addToGroup = async (req, res) => {
   try {
-    // Check for incomplete request body
-    if (!('memberEmails' in req.body)) {
-      return res.status(400).json({ error: "Incomplete request body" });
-    }
-    const { memberEmails } = req.body;
     const name = req.params.name;
     // Find the group by name and populate the 'members' field with 'User' model data
     const group = await Group.findOne({ name });
     if (!group) {
       return res.status(400).json({ error: 'There is no Group with this name' });
     }
-
+    // Check for incomplete request body
+    if (!('memberEmails' in req.body)) {
+      return res.status(400).json({ error: "Incomplete request body" });
+    }
+    const { memberEmails } = req.body;
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
     const route = req.path;
@@ -326,17 +323,19 @@ export const addToGroup = async (req, res) => {
  */
 export const removeFromGroup = async (req, res) => {
   try {
-    // Check for incomplete request body
-    if (!('memberEmails' in req.body)) {
-      return res.status(400).json({ error: "Incomplete request body" });
-    }
-    const { memberEmails } = req.body;
     const name = req.params.name;
     // Find the group by name and populate the 'members' field with 'User' model data
     const group = await Group.findOne({ name });
     if (!group) {
       return res.status(400).json({ error: 'There is no Group with this name' });
     }
+    
+    // Check for incomplete request body
+    if (!('memberEmails' in req.body)) {
+      return res.status(400).json({ error: "Incomplete request body" });
+    }
+    const { memberEmails } = req.body;
+    
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
@@ -484,7 +483,9 @@ export const deleteUser = async (req, res) => {
  */
 export const deleteGroup = async (req, res) => {
   try {
-    
+    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+    if (adminAuth.authorized) {
+      
     // Check for incomplete request body
     if (!('name' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
@@ -495,10 +496,6 @@ export const deleteGroup = async (req, res) => {
     if (name.trim().length === 0) {
       return res.status(400).json({ error: "Empty fields are not allowed" });
     }
-    
-    const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-    if (adminAuth.authorized) {
-
       const group = await Group.findOne({ name });
       if (!group) {
         return res.status(400).json({ error: 'Group does not exist' });
@@ -506,7 +503,7 @@ export const deleteGroup = async (req, res) => {
 
       await Group.deleteOne({ name: group.name });
 
-      return res.status(200).json({data: {message: "Group deleted successfully"} , refreshedTokenMessage: res.locals.refreshedTokenMessage});
+      return res.status(200).json({ data: { message: "Group deleted successfully" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
     } else {
       return res.status(401).json({ error: adminAuth.cause })
     }
