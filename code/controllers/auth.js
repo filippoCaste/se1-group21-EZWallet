@@ -112,7 +112,7 @@ export const registerAdmin = async (req, res) => {
  */
 export const login = async (req, res) => {
     try {
-            // Check for incomplete request body
+    // Check for incomplete request body
     if (!('email' in req.body) || !('password' in req.body)) {
         return res.status(400).json({ error: "Incomplete request body" });
     }
