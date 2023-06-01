@@ -79,11 +79,12 @@ function checkDateValidity(date) {
         yyyy = parseInt(yyyy);
         mm = parseInt(mm);
         dd = parseInt(dd);
-        if(yyyy > 2023 || mm > 12 || mm < 1 || dd > 31 || dd < 0 || yyyy < 0) {
+        if(mm > 12 || mm < 0 || dd > 31 || dd < 0 || yyyy < 0) {
             return false;
         } else {
             if(mm === 2) {
-                if(dd > 28) return false;
+                const ily = !(yyyy & 3 || !(yyyy % 25) && yyyy & 15); //is Leap Year?
+                if((ily && dd > 29) || (!ily && dd>28)) return false;
             } else if(mm === 4 || mm === 6 || mm === 9 || mm === 11) {
                 if(dd > 30) return false;
             }
@@ -227,6 +228,11 @@ export const handleAmountFilterParams = (req) => {
     date. Specifies the date in which transactions must be retrieved.
     min. Specifies the minimum amount that transactions must have to be retrieved.
     max. Specifies the maximum amount that transactions must have to be retrieved.
+ */
+
+/**
+ * @param {*} decodedRefreshToken, info 
+ * @returns different authorize-cause scenarios.
  */
 
 const switchRoles = (decodedRefreshToken, info) => {
