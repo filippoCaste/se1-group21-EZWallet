@@ -4,6 +4,11 @@ import { handleDateFilterParams, verifyAuth, handleAmountFilterParams } from '..
 jest.mock('jsonwebtoken');
 
 describe("handleDateFilterParams", () => {
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     test('should return an empty object for an empty query', () => {
         const req = { query: undefined };
         const result = handleDateFilterParams(req);
@@ -14,6 +19,19 @@ describe("handleDateFilterParams", () => {
         const result = handleDateFilterParams(req);
         expect(result).toEqual({ date: { $gte: new Date('2023-01-01T00:00:00.000Z') } });
     });
+
+    test('should return matchStage with $gte condition for valid "from" parameter', () => {
+        const req = { query: { from: '2024-02-29' } };
+        const result = handleDateFilterParams(req);
+        expect(result).toEqual({ date: { $gte: new Date('2024-02-29T00:00:00.000Z') } });
+    });
+
+    test('should return matchStage with $gte condition for valid "from" parameter', () => {
+        const req = { query: { from: '2000-04-29' } };
+        const result = handleDateFilterParams(req);
+        expect(result).toEqual({ date: { $gte: new Date('2000-04-29T00:00:00.000Z') } });
+    });
+
     test('should throw an error for invalid "from" parameter', () => {
         const req = { query: { from: 'invalid' } };
         expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
@@ -54,7 +72,7 @@ describe("handleDateFilterParams", () => {
         const req = { query: { date: '2023-04-31' } };
         expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
     });
-})
+});
 
 
 
@@ -227,12 +245,57 @@ describe('verifyAuth', () => {
 
 });
 
-/*
-describe("handleAmountFilterParams", () => {
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+describe("handleAmountFilterParams", () => { 
+    // Mock request object
+    const mockReq = {
+        query: {},
+    };
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
+    // Test when no query params are present
+    test('should return an empty object when no query params are present', () => {
+        mockReq.query = undefined;
+        const result = handleAmountFilterParams(mockReq);
+        expect(result).toEqual({});
+    });
 
-})
-*/
+    // Test when `min` query param is present and valid
+    test('should return an object with $gte attribute when min query param is present and valid', () => {
+        mockReq.query = { min: '100' };
+        const result = handleAmountFilterParams(mockReq);
+        expect(result).toEqual({ amount: { $gte: 100 } });
+    });
+
+    // Test when `max` query param is present and valid
+    test('should return an object with $lte attribute when max query param is present and valid', () => {
+        mockReq.query = { max: '500' };
+        const result = handleAmountFilterParams(mockReq);
+        expect(result).toEqual({ amount: { $lte: 500 } });
+    });
+
+    // Test when `min` and `max` query params are present and valid
+    test('should return an object with $gte and $lte attributes when min and max query params are present and valid', () => {
+        mockReq.query = { min: '100', max: '500' };
+        const result = handleAmountFilterParams(mockReq);
+        expect(result).toEqual({ amount: { $gte: 100, $lte: 500 } });
+    });
+
+    // Test when `min` or `max` query param is not a number
+    test('should throw error when min or max query param is not a number', () => {
+        mockReq.query = { min: 'not_a_number' };
+        expect(() => handleAmountFilterParams(mockReq)).toThrow('The input is not a number');
+
+        mockReq.query = { max: 'not_a_number' };
+        expect(() => handleAmountFilterParams(mockReq)).toThrow('The input is not a number');
+    });
+
+    // Test when `min` is greater than `max`
+    test('should throw error when min is greater than max', () => {
+        mockReq.query = { min: '500', max: '100' };
+        expect(() => handleAmountFilterParams(mockReq)).toThrow('Impossible combination');
+    });
+});
+

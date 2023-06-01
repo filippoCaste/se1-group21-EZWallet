@@ -24,44 +24,42 @@ import jwt from 'jsonwebtoken'
  */
 export const handleDateFilterParams = (req) => {
     const query = req.query;
-    if(req.query === undefined) {
+    if (!query) {
         return {};
     } else {
-        console.log(query)
         let matchStage = {};
         try {
-            if(query.from) {
-                if (! checkDateValidity(query.from)) {
+            if (query.from) {
+                if (!checkDateValidity(query.from)) {
                     throw Error("The string is not a date");
                 }
                 const d = new Date(query.from + "T00:00:00.000Z")
                 matchStage = { date: { $gte: d } }
-            } 
-            if(query.upTo) {
-                if (! checkDateValidity(query.upTo)) {
+            }
+            if (query.upTo) {
+                if (!checkDateValidity(query.upTo)) {
                     throw Error("The string is not a date");
                 }
                 const d = new Date(query.upTo + "T23:59:59.999Z")
-                matchStage.date = {...matchStage.date, $lte: d}
+                matchStage.date = { ...matchStage.date, $lte: d }
             }
 
-            if(query.date) {
+            if (query.date) {
                 if (query.upTo || query.from) {
                     throw Error("Impossible combination");
                 }
-                if (! checkDateValidity(query.date)) {
+                if (!checkDateValidity(query.date)) {
                     throw Error("The string is not a date");
                 }
                 const d1 = new Date(query.date)
                 const d2 = new Date(query.date + "T23:59:59.000Z")
-                matchStage.date = {$gte: d1, $lte: d2};
+                matchStage.date = { $gte: d1, $lte: d2 };
             }
-            
-        } catch(error) {
-            console.log(error.message)
+
+        } catch (error) {
             throw Error(error.message);
         }
-        
+
         return matchStage
     }
 }
@@ -72,21 +70,24 @@ export const handleDateFilterParams = (req) => {
  * @returns true if it is a valid date. Otherwise, false.
  */
 function checkDateValidity(date) {
-    if (! date.match(/[0-9]{4}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/)) {
+    if (!date.match(/[0-9]{4}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/)) {
         return false;
     } else {
         let [yyyy, mm, dd] = date.split('-');
         yyyy = parseInt(yyyy);
         mm = parseInt(mm);
         dd = parseInt(dd);
-        if(mm > 12 || mm < 0 || dd > 31 || dd < 0 || yyyy < 0) {
+        const ily = !(yyyy & 3 || !(yyyy % 25) && yyyy & 15);
+        if (mm > 12 || mm < 0 || dd > 31 || dd < 0 || yyyy < 0) {
             return false;
         } else {
-            if(mm === 2) {
-                const ily = !(yyyy & 3 || !(yyyy % 25) && yyyy & 15); //is Leap Year?
-                if((ily && dd > 29) || (!ily && dd>28)) return false;
-            } else if(mm === 4 || mm === 6 || mm === 9 || mm === 11) {
-                if(dd > 30) return false;
+            if (mm === 2) {
+                if ((ily && dd > 29) || (!ily && dd > 28))
+                    return false;
+            } 
+            if (mm === 4 || mm === 6 || mm === 9 || mm === 11) {
+                if (dd > 30)
+                    return false;
             }
         }
     }
@@ -161,7 +162,7 @@ export const verifyAuth = (req, res, info) => {
                 }, process.env.ACCESS_KEY, { expiresIn: '1h' })
                 res.cookie('accessToken', newAccessToken, { httpOnly: true, path: '/api', maxAge: 60 * 60 * 1000, sameSite: 'none', secure: true })
                 res.locals.refreshedTokenMessage = 'Access token has been refreshed. Remember to copy the new one in the headers of subsequent calls'
-                
+
                 //Check if the caller has an authorized role
                 return switchRoles(refreshToken, info);
 
@@ -169,11 +170,11 @@ export const verifyAuth = (req, res, info) => {
                 if (err.name === "TokenExpiredError") {
                     return { authorized: false, cause: "Perform login again" }
                 } else {
-                    return { authorized: false, cause: err.name}
+                    return { authorized: false, cause: err.name }
                 }
             }
         } else {
-            return { authorized: false, cause: err.name};
+            return { authorized: false, cause: err.name };
         }
     }
 }
@@ -186,7 +187,7 @@ export const verifyAuth = (req, res, info) => {
  */
 export const handleAmountFilterParams = (req) => {
     const query = req.query;
-    if (req.query === undefined) {
+    if (!query) {
         return {};
     } else {
         let matchStage = {};
@@ -209,7 +210,7 @@ export const handleAmountFilterParams = (req) => {
                 matchStage.amount = { ...matchStage.amount, $lte: max }
             }
 
-            if(query.min && query.max && min > max) {
+            if (query.min && query.max && min > max) {
                 throw Error("Impossible combination")
             }
 
