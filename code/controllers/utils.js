@@ -245,7 +245,7 @@ const switchRoles = (decodedRefreshToken, info) => {
                 return { authorized: true, cause: "Authorized" }
             return { authorized: false, cause: "Unauthorized" };
         case "User":
-            if (decodedRefreshToken.role === "Regular" && decodedRefreshToken.username === info.username)
+            if (decodedRefreshToken.username === info.username)  //to be tested
                 return { authorized: true, cause: "Authorized" }
             return { authorized: false, cause: "Unauthorized" };
         case "Group":

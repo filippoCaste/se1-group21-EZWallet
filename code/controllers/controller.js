@@ -206,37 +206,43 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
-        const paramUsername = req.params.username;
-        const cookie = req.cookies
-        const user = await userExists(cookie.refreshToken);
-        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
-
+        
+        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        if (!userAuth.authorized){
+            return res.status(401).json({ error: userAuth.cause });
+        }
+        
+        // Check for incomplete request body
+        if (!('username' in req.body)||!('amount' in req.body)||!('type' in req.body)) {
+            return res.status(400).json({ error: "Not enough parameters." });
+        }
         let { username, amount, type } = req.body;
-        if (!username || !amount || !type) {
-            return res.status(400).json({ error: "Some parameters were not provided." })
-        } else {
-            username = username.trim();
-            type = type.trim();
+        if (!checkEmptyParam([username,amount,type])) {
+            return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-        if (!checkEmptyParam(username, amount, type)) {
-            return res.status(400).json({ error: "Empty parameters are not allowed." });
+        if (!(await categoryTypeExists(type))) {
+            return res.status(400).json({ error: "The provided category does not exists." });
         }
-        if (!user || ! await categoryTypeExists(type)) {
-            return res.status(400).json({ error: "Uncorrect username or category not found" });
+        if(username !== req.params.username){
+            return res.status(400).json({ error: "Missmatching users." });
         }
-        if (!simpleAuth.authorized || (user.username !== username || user.username !== paramUsername)) {
-            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided username does not exists." });
         }
-        let fp_amount = 0.0;
-        try {
-            fp_amount = parseFloat(String(amount))
-        } catch (error) {
-            return res.status(400).json({ error: "Cannot parse to Floating point number" })
+        if(!(await userExists(req.params.username))){
+            return res.status(400).json({ error: "The provided URL username does not exists." });
         }
-        const new_transactions = new transactions({ username, amount, type });
-        new_transactions.save()
-            .then(data => res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
+        const amountCheck = parseFloat(amount);
+        if(!isNaN(amountCheck)){
+            return res.status(400).json({ error: "Invalid amount." })
+        }
+
+        const new_transaction = new transactions({ username, amount, type });
+        new_transaction.save()
+            .then(data => res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
+
+    
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -609,7 +615,6 @@ async function categoryTypeExists(type) {
 async function userExistsByUsername(username) {
 
     const user = await User.findOne({ username: username })
-    console.log(user);
     if (!user) return false;
 
     return { username: user.username, role: user.role, email: user.email };
