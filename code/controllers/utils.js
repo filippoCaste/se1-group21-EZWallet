@@ -191,16 +191,14 @@ export const handleAmountFilterParams = (req) => {
             return {};
         }
         let matchStage = {};
-        let min = 0;
-        let max = 99999999;
+        let min = -1;
+        let max = -1;
         if (query.min) {
             if (!query.min.match(/[0-9]+/)) {
                 throw Error("The input is not a number");
             }
             min = Number(query.min);
             matchStage.amount = { ...matchStage.amount, $gte: min }
-            console.log(matchStage.amount)
-            console.log(matchStage)
         }
 
         if (query.max) {
