@@ -240,7 +240,7 @@ export const getGroup = async (req, res) => {
 export const addToGroup = async (req, res) => {
   try {
     const name = req.params.name;
-    // Find the group by name and populate the 'members' field with 'User' model data
+    
     const group = await Group.findOne({ name });
     if (!group) {
       return res.status(400).json({ error: 'There is no Group with this name' });

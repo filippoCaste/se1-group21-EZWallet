@@ -23,44 +23,42 @@ import jwt from 'jsonwebtoken'
  * @throws an error if the query parameters include `date` together with at least one of `from` or `upTo`
  */
 export const handleDateFilterParams = (req) => {
-    const query = req.query;
-    if (!query) {
-        return {};
-    } else {
+    try {
+        const query = req.query;
+        if (!query) {
+            return {};
+        }
         let matchStage = {};
-        try {
-            if (query.from) {
-                if (!checkDateValidity(query.from)) {
-                    throw Error("The string is not a date");
-                }
-                const d = new Date(query.from + "T00:00:00.000Z")
-                matchStage = { date: { $gte: d } }
+        if (query.from) {
+            if (!validDate(query.from)) {
+                throw Error("The string is not a date");
             }
-            if (query.upTo) {
-                if (!checkDateValidity(query.upTo)) {
-                    throw Error("The string is not a date");
-                }
-                const d = new Date(query.upTo + "T23:59:59.999Z")
-                matchStage.date = { ...matchStage.date, $lte: d }
+            const d = new Date(query.from + "T00:00:00.000Z")
+            matchStage = { date: { $gte: d } }
+        }
+        if (query.upTo) {
+            if (!validDate(query.upTo)) {
+                throw Error("The string is not a date");
             }
+            const d = new Date(query.upTo + "T23:59:59.999Z")
+            matchStage.date = { ...matchStage.date, $lte: d }
+        }
 
-            if (query.date) {
-                if (query.upTo || query.from) {
-                    throw Error("Impossible combination");
-                }
-                if (!checkDateValidity(query.date)) {
-                    throw Error("The string is not a date");
-                }
-                const d1 = new Date(query.date)
-                const d2 = new Date(query.date + "T23:59:59.000Z")
-                matchStage.date = { $gte: d1, $lte: d2 };
+        if (query.date) {
+            if (query.upTo || query.from) {
+                throw Error("Impossible combination");
             }
-
-        } catch (error) {
-            throw Error(error.message);
+            if (!validDate(query.date)) {
+                throw Error("The string is not a date");
+            }
+            const d1 = new Date(query.date)
+            const d2 = new Date(query.date + "T23:59:59.000Z")
+            matchStage.date = { $gte: d1, $lte: d2 };
         }
 
         return matchStage
+    } catch (error) {
+        throw Error(error.message);
     }
 }
 
@@ -69,7 +67,7 @@ export const handleDateFilterParams = (req) => {
  * @param {*} date 
  * @returns true if it is a valid date. Otherwise, false.
  */
-function checkDateValidity(date) {
+function validDate(date) {
     if (!date.match(/[0-9]{4}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/)) {
         return false;
     } else {
@@ -84,7 +82,7 @@ function checkDateValidity(date) {
             if (mm === 2) {
                 if ((ily && dd > 29) || (!ily && dd > 28))
                     return false;
-            } 
+            }
             if (mm === 4 || mm === 6 || mm === 9 || mm === 11) {
                 if (dd > 30)
                     return false;
@@ -186,40 +184,43 @@ export const verifyAuth = (req, res, info) => {
  *  Example: {amount: {$gte: 100}} returns all transactions whose `amount` parameter is greater or equal than 100
  */
 export const handleAmountFilterParams = (req) => {
-    const query = req.query;
-    if (!query) {
-        return {};
-    } else {
+
+    try {
+        const query = req.query;
+        if (!query) {
+            return {};
+        }
         let matchStage = {};
-        try {
-            let min = 0;
-            let max = 99999999;
-            if (query.min) {
-                if (!query.min.match(/[0-9]+/)) {
-                    throw Error("The input is not a number");
-                }
-                min = Number(query.min);
-                matchStage.amount = { ...matchStage.amount, $gte: min }
+        let min = 0;
+        let max = 99999999;
+        if (query.min) {
+            if (!query.min.match(/[0-9]+/)) {
+                throw Error("The input is not a number");
             }
+            min = Number(query.min);
+            matchStage.amount = { ...matchStage.amount, $gte: min }
+            console.log(matchStage.amount)
+            console.log(matchStage)
+        }
 
-            if (query.max) {
-                if (!query.max.match(/[0-9]+/)) {
-                    throw Error("The input is not a number");
-                }
-                max = Number(query.max)
-                matchStage.amount = { ...matchStage.amount, $lte: max }
+        if (query.max) {
+            if (!query.max.match(/[0-9]+/)) {
+                throw Error("The input is not a number");
             }
+            max = Number(query.max)
+            matchStage.amount = { ...matchStage.amount, $lte: max }
+        }
 
-            if (query.min && query.max && min > max) {
-                throw Error("Impossible combination")
-            }
-
-        } catch (error) {
-            throw Error(error.message);
+        if (query.min && query.max && min > max) {
+            throw Error("Impossible combination")
         }
 
         return matchStage;
+        
+    } catch (error) {
+        throw Error(error.message);
     }
+
 }
 
 
