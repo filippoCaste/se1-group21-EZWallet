@@ -71,8 +71,12 @@ export const updateCategory = async (req, res) => {
         if (!adminAuth.authorized) {
             return res.status(401).json({ error: adminAuth.cause }) // unauthorized
         }
-        const type_old = req.params.type;
-        let { type, color } = req.body;
+        const old_type = req.params.type
+        if(!await categoryTypeExists(old_type)){
+            return res.status(400).json({ error: "The specified URL category does not exist" });
+        }
+
+        const { type, color } = req.body;
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
@@ -80,11 +84,12 @@ export const updateCategory = async (req, res) => {
         if (!checkEmptyParam([type, color])) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-        const category = await categories.findOne({ type: type })
-        const category_old = await categories.findOne({ type: type_old });
-        if (category_old === null || category) {
-            return res.status(400).json({ error: "The specified category does not exist or the new category is already existing." });
+        
+        if(await categoryTypeExists(type) && type!==old_type){
+            return res.status(400).json({ error: "The specified URL category already exist" });
         }
+
+
         /*
         TO CHECK
         // check if color is valid
@@ -105,7 +110,7 @@ export const updateCategory = async (req, res) => {
             },
         };
 
-        await categories.updateOne({ type: type_old }, updateCat)
+        await categories.updateOne({ type: old_type }, updateCat)
 
         // count of transactions
         const count = (await transactions.countDocuments({ type: type }));
@@ -307,8 +312,12 @@ export const getTransactionsByUser = async (req, res) => {
             if (!(await userExistsByUsername(username))) {
                 return res.status(400).json({ error: "The provided URL username does not exists." });
             }
-            const filterAmount = handleAmountFilterParams(req);
-            const filterDate = handleDateFilterParams(req);
+            let filterAmount = {};
+            let filterDate = {};
+            if(route === `/users/${username}/transactions`){
+            filterAmount =handleAmountFilterParams(req);
+            filterDate = handleDateFilterParams(req);
+            }
             transactions.aggregate([
                 { $match: {...filterDate,...filterAmount} },
                 {
@@ -328,7 +337,8 @@ export const getTransactionsByUser = async (req, res) => {
                 .catch(error => {
                   throw error;
                 });
-            }
+            
+}
         else {
             return res.status(401).json({ error: adminAuth.cause })
         }
@@ -349,47 +359,45 @@ export const getTransactionsByUserByCategory = async (req, res) => {
     try {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
-        const cookie = req.cookies;
-        const user = await userExists(cookie.refreshToken);
-        const paramUsername = req.params.username;
-        const paramCategory = req.params.category;
+        const username = req.params.username;
+        const category = req.params.category;
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        const userAuth = verifyAuth(req, res, { authType: "User", username })
+        const route = req.path;
 
-        if (!user.username || ! await userExistsByUsername(paramUsername)) {
-            return res.status(400).json({ error: "User does not exist" });
-        }
+        // Check authorization
+        if ((adminAuth.authorized && route === `/transactions/users/${username}/category/${category}`) || (userAuth.authorized && route === `/users/${username}/transactions/category/${category}`)) {
 
-        if (! await categoryTypeExists(paramCategory)) {
-            return res.status(400).json({ error: "Category does not exist" });
-        }
-
-        try {
-            const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-            if (adminAuth.authorized && req.url.indexOf("/transactions/users/") >= 0) {
-                //Admin auth successful
-                let data = await transactions.find({ username: user.username, type: paramCategory });
-                res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
-            } else {
-                const userAuth = verifyAuth(req, res, { authType: "User", username: user.username })
-                if (userAuth.authorized && req.url.indexOf("/transactions/users/") !== 0) {
-                    //User auth successful
-                    if (paramUsername !== user.username) {
-                        return res.status(401).json({ error: "You cannot access to these data" });
-                    }
-                    const cats = await categories.find({});
-                    const data = (await transactions.find({ username: user.username, type: paramCategory })).map(
-                        (v) => {
-                            let col = getCategoryColor(v.type, cats);
-                            return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
-                        });;
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
-                } else {
-                    return res.status(401).json({ error: "Unauthorized" })
-                }
+            if (!(await userExistsByUsername(username))) {
+                return res.status(400).json({ error: "The provided URL username does not exists." });
             }
-        } catch (error) {
-            res.status(500).json({ error: error.message })
+            if (!(await categoryTypeExists(category))) {
+                return res.status(400).json({ error: "The provided URL category does not exists." });
+            }
+            transactions.aggregate([
+                { $match: { type: category } },
+                {
+                  $lookup: {
+                    from: "categories",
+                    localField: "type",
+                    foreignField: "type",
+                    as: "categories_info"
+                  }
+                },
+                { $unwind: "$categories_info" }
+              ])
+                .then((result) => {
+                  let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                  res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                })
+                .catch(error => {
+                  throw error;
+                });
+            
+}
+        else {
+            return res.status(401).json({ error: adminAuth.cause })
         }
-
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
