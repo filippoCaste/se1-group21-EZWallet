@@ -52,7 +52,7 @@ export const handleDateFilterParams = (req) => {
                 throw Error("The string is not a date");
             }
             const d1 = new Date(query.date)
-            const d2 = new Date(query.date + "T23:59:59.000Z")
+            const d2 = new Date(query.date + "T23:59:59.999Z")
             matchStage.date = { $gte: d1, $lte: d2 };
         }
 
