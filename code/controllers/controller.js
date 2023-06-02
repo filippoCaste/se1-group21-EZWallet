@@ -211,10 +211,10 @@ export const getCategories = async (req, res) => {
  */
 export const createTransaction = async (req, res) => {
     try {
-
-        const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
+        const usernameURL = req.params.username;
+        const userAuth = verifyAuth(req, res, { authType: "User", username: usernameURL });
         if (!userAuth.authorized) {
-            res.status(401).json({ error: userAuth.cause });
+            return res.status(401).json({ error: userAuth.cause });
         }
 
         // Check for incomplete request body
@@ -228,13 +228,13 @@ export const createTransaction = async (req, res) => {
         if (!(await categoryTypeExists(type))) {
             return res.status(400).json({ error: "The provided category does not exists." });
         }
-        if (username !== req.params.username) {
+        if (username !== usernameURL) {
             return res.status(400).json({ error: "Missmatching users." });
         }
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided username does not exists." });
         }
-        if (!(await userExistsByUsername(req.params.username))) {
+        if (!(await userExistsByUsername(usernameURL))) {
             return res.status(400).json({ error: "The provided URL username does not exists." });
         }
         const amountCheck = parseFloat(amount);
@@ -424,11 +424,11 @@ export const getTransactionsByGroup = async (req, res) => {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: memberEmails })
         const route = req.path;
-        
+
         // Check authorization
         if ((adminAuth.authorized && route === `/transactions/groups/${name}`) || (groupAuth.authorized && route === `/groups/${name}/transactions`)) {
 
-            const membersUsernames = (await User.find({email: {$in: memberEmails}})).map(user=> user.username)
+            const membersUsernames = (await User.find({ email: { $in: memberEmails } })).map(user => user.username)
             transactions.aggregate([
                 { $match: { username: { $in: membersUsernames } } },
                 {
@@ -467,36 +467,46 @@ export const getTransactionsByGroup = async (req, res) => {
  */
 export const getTransactionsByGroupByCategory = async (req, res) => {
     try {
-        const cookie = req.cookies;
-        const user = await userExists(cookie.refreshToken);
-
-        const paramCategory = await categoryTypeExists(req.params.category)
-        if (!paramCategory) {
-            return res.status(400).json({ error: "Category does not exist" })
-        }
-
-        const group = await Group.findOne({ name: req.params.name });
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        const name = req.params.name;
+        const category = req.params.category;
+        const group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "Group does not exist" });
+            return res.status(400).json({ error: 'There is no Group with this name' });
         }
+        const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
-        const cats = await categories.find({});
+        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: memberEmails })
+        const route = req.path;
 
-        if ((adminAuth.authorized && req.url.indexOf("/transactions/groups/") >= 0) || (groupAuth.authorized && req.url.indexOf("/transactions/groups/") !== 0)) {
-            let ids = group.members.map(member => member.email)
-            let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
-            const data = (await transactions.find().where('username').in(usernames).exec())
-                .filter((t) => t.type === req.params.category)
-                .map((v) => {
-                    let col = getCategoryColor(v.type, cats);
-                    return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
+        // Check authorization
+        if ((adminAuth.authorized && route === `/transactions/groups/${name}/category/${category}`) || (groupAuth.authorized && route === `/groups/${name}/transactions/category/${category}`)) {
+
+            const membersUsernames = (await User.find({ email: { $in: memberEmails } })).map(user => user.username)
+            transactions.aggregate([
+                { $match: { username: { $in: membersUsernames }, type: category } },
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                { $unwind: "$categories_info" }
+            ])
+                .then((result) => {
+                    let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                })
+                .catch(error => {
+                    throw error;
                 });
-            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
-        } else {
-            res.status(401).json({ error: "Unauthorized" })
         }
-
+        else {
+            return res.status(401).json({ error: adminAuth.cause })
+        }
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -511,36 +521,32 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
  */
 export const deleteTransaction = async (req, res) => {
     try {
-        const cookie = req.cookies
-        const user = await userExists(cookie.refreshToken);
-        const simpleAuth = verifyAuth(req, res, { authType: "Simple" })
-        if (!simpleAuth.authorized) {
-            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
-        }
-        if (!user) {
-            return res.status(400).json({ error: "User does not exist" });
-        }
-        let id = req.body._id;
-        if (!id) {
-            res.status(400).json({ error: "Missing id." })
-        } else {
-            id = id.trim();
-        }
-        if (!checkEmptyParam(id)) {
-            res.status(400).json({ error: "Invalid empty id." })
-        }
-        const u = await userExistsByUsername(req.params.username);
-        if (!u || u.username !== user.username) {
-            res.status(401).json({ error: "You cannot access to these data." })
+        const username = req.params.username;
+        const userAuth = verifyAuth(req, res, { authType: "User", username });
+        if (!userAuth.authorized) {
+            return res.status(401).json({ error: userAuth.cause });
         }
 
-        let data = await transactions.deleteOne({ _id: id, username: u.username });
-
-        if (data.deletedCount === 0) {
-            return res.status(400).json({ error: "Transaction does not exist." });
+        // Check for incomplete request body
+        if (!('_id' in req.body)) {
+            return res.status(400).json({ error: "Not enough parameters." });
         }
-
-        return res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        let { _id } = req.body;
+        if (!checkEmptyParam(_id)) {
+            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+        }
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided URL username does not exists." });
+        }
+        const transaction = await transactions.findById(_id);
+        if (!transaction) {
+            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+        }
+        if (!transaction.username !== username) {
+            return res.status(400).json({ error: "You cannot delete other user Transactions" });
+        }
+        await transactions.findByIdAndDelete(_id);
+        res.status(200).json({ data: { message: "Transaction deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -555,34 +561,32 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
     try {
-        const cookie = req.cookies
-        const adminAuth = verifyAuth(req, res, { authType: "Admin" })
+        
+        const adminAuth = verifyAuth(req, res, { authType: "Admin"});
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: adminAuth.cause });
         }
-
-        const idList = req.body._ids;
-        if (!idList || idList.length === 0) {
-            return res.status(400).json({ error: "No ids provided" })
+        
+        // Check for incomplete request body
+        if (!('_ids' in req.body)) {
+            return res.status(400).json({ error: "Not enough parameters." });
         }
-        for (let id of idList) {
-            id = id.trim();
-            if (!checkEmptyParam(id)) {
-                return res.status(400).json({ error: "Empty strings are invalid." })
-            }
-            if (! await transactions.findOne({ _id: id })) {
-                return res.status(400).json({ error: "Transaction does not exist" });
-            }
+        let { _ids } = req.body;
+        if (!checkEmptyParam(_ids)) {
+            return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-
-        for (let id of idList) {
-            id = id.trim();
-            await transactions.deleteOne({ _id: id });
+        for(const _id of _ids){
+        const transaction = await transactions.findById(_id);
+        if(!transaction){
+            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
-
-        return res.status(200).json({ data: { message: "Transactions deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-
-    } catch (error) {
+        }
+        for(const _id of _ids){
+        const transaction = await transactions.findById(_id);
+        await transactions.findByIdAndDelete(_id);
+        }
+        res.status(200).json({data: {message: "Transactions deleted"}, refreshedTokenMessage: res.locals.refreshedTokenMessage})
+        } catch (error) {
         res.status(500).json({ error: error.message })
     }
 }
@@ -631,10 +635,3 @@ function checkEmptyParam(inputs) {
     return true;
 }
 
-function getCategoryColor(type, categories) {
-    for (let c of categories) {
-        if (c.type === type) {
-            return c.color;
-        }
-    }
-}
