@@ -72,7 +72,7 @@ export const updateCategory = async (req, res) => {
             return res.status(401).json({ error: adminAuth.cause }) // unauthorized
         }
         const old_type = req.params.type
-        if(!await categoryTypeExists(old_type)){
+        if (!await categoryTypeExists(old_type)) {
             return res.status(400).json({ error: "The specified URL category does not exist" });
         }
 
@@ -84,8 +84,8 @@ export const updateCategory = async (req, res) => {
         if (!checkEmptyParam([type, color])) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-        
-        if(await categoryTypeExists(type) && type!==old_type){
+
+        if (await categoryTypeExists(type) && type !== old_type) {
             return res.status(400).json({ error: "The specified URL category already exist" });
         }
 
@@ -214,7 +214,7 @@ export const createTransaction = async (req, res) => {
 
         const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
         if (!userAuth.authorized) {
-             res.status(401).json({ error: userAuth.cause });
+            res.status(401).json({ error: userAuth.cause });
         }
 
         // Check for incomplete request body
@@ -244,7 +244,7 @@ export const createTransaction = async (req, res) => {
 
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
-            .then(data => res.status(200).json({ data: {username: data.username, amount:data.amount, type: data.type, date: data.date}, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
+            .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
 
 
@@ -314,31 +314,31 @@ export const getTransactionsByUser = async (req, res) => {
             }
             let filterAmount = {};
             let filterDate = {};
-            if(route === `/users/${username}/transactions`){
-            filterAmount =handleAmountFilterParams(req);
-            filterDate = handleDateFilterParams(req);
+            if (route === `/users/${username}/transactions`) {
+                filterAmount = handleAmountFilterParams(req);
+                filterDate = handleDateFilterParams(req);
             }
             transactions.aggregate([
-                { $match: {...filterDate,...filterAmount} },
+                { $match: { ...filterDate, ...filterAmount } },
                 {
-                  $lookup: {
-                    from: "categories",
-                    localField: "type",
-                    foreignField: "type",
-                    as: "categories_info"
-                  }
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
                 },
                 { $unwind: "$categories_info" }
-              ])
+            ])
                 .then((result) => {
-                  let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                  res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
-                  throw error;
+                    throw error;
                 });
-            
-}
+
+        }
         else {
             return res.status(401).json({ error: adminAuth.cause })
         }
@@ -377,24 +377,24 @@ export const getTransactionsByUserByCategory = async (req, res) => {
             transactions.aggregate([
                 { $match: { type: category } },
                 {
-                  $lookup: {
-                    from: "categories",
-                    localField: "type",
-                    foreignField: "type",
-                    as: "categories_info"
-                  }
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
                 },
                 { $unwind: "$categories_info" }
-              ])
+            ])
                 .then((result) => {
-                  let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                  res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
-                  throw error;
+                    throw error;
                 });
-            
-}
+
+        }
         else {
             return res.status(401).json({ error: adminAuth.cause })
         }
@@ -413,31 +413,45 @@ export const getTransactionsByUserByCategory = async (req, res) => {
  */
 export const getTransactionsByGroup = async (req, res) => {
     try {
-        const cookie = req.cookies;
-        const user = await userExists(cookie.refreshToken);
-
-        const group = await Group.findOne({ name: req.params.name });
+        //Distinction between route accessed by Admins or Regular users for functions that can be called by both
+        //and different behaviors and access rights
+        const name = req.params.name;
+        const group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "Group does not exist" });
+            return res.status(400).json({ error: 'There is no Group with this name' });
         }
+        const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
-        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
+        const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: memberEmails })
+        const route = req.path;
+        
+        // Check authorization
+        if ((adminAuth.authorized && route === `/transactions/groups/${name}`) || (groupAuth.authorized && route === `/groups/${name}/transactions`)) {
 
-        if ((adminAuth.authorized && req.url.indexOf("/transactions/groups/") >= 0) || (groupAuth.authorized && req.url.indexOf("/transactions/groups/") !== 0)) {
-            let ids = group.members.map(member => member.email)
-            let usernames = (await User.find().where('email').in(ids).exec()).map((u) => u.username);
-
-            const cats = await categories.find({});
-            const data = (await transactions.find().where('username').in(usernames).exec()).map(
-                (v) => {
-                    let col = getCategoryColor(v.type, cats);
-                    return Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: col })
+            const membersUsernames = (await User.find({email: {$in: memberEmails}})).map(user=> user.username)
+            transactions.aggregate([
+                { $match: { username: { $in: membersUsernames } } },
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "type",
+                        foreignField: "type",
+                        as: "categories_info"
+                    }
+                },
+                { $unwind: "$categories_info" }
+            ])
+                .then((result) => {
+                    let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                })
+                .catch(error => {
+                    throw error;
                 });
-            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage })
-        } else {
-            res.status(401).json({ error: "Unauthorized" })
         }
-
+        else {
+            return res.status(401).json({ error: adminAuth.cause })
+        }
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
