@@ -281,7 +281,7 @@ export const getAllTransactions = async (req, res) => {
             { $unwind: "$categories_info" }
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-            res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+            res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
         }).catch(error => { throw (error) })
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -332,7 +332,7 @@ export const getTransactionsByUser = async (req, res) => {
             ])
                 .then((result) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
                     throw error;
@@ -340,7 +340,7 @@ export const getTransactionsByUser = async (req, res) => {
 
         }
         else {
-            return res.status(401).json({ error: adminAuth.cause })
+            return res.status(401).json({ error: "Unauthorized" })
         }
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -388,7 +388,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
             ])
                 .then((result) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
                     throw error;
@@ -443,7 +443,7 @@ export const getTransactionsByGroup = async (req, res) => {
             ])
                 .then((result) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
                     throw error;
@@ -498,7 +498,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
             ])
                 .then((result) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
-                    res.json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+                    res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
                 .catch(error => {
                     throw error;
@@ -561,12 +561,12 @@ export const deleteTransaction = async (req, res) => {
  */
 export const deleteTransactions = async (req, res) => {
     try {
-        
-        const adminAuth = verifyAuth(req, res, { authType: "Admin"});
+
+        const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
             return res.status(401).json({ error: adminAuth.cause });
         }
-        
+
         // Check for incomplete request body
         if (!('_ids' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
@@ -575,18 +575,18 @@ export const deleteTransactions = async (req, res) => {
         if (!checkEmptyParam(_ids)) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-        for(const _id of _ids){
-        const transaction = await transactions.findById(_id);
-        if(!transaction){
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+        for (const _id of _ids) {
+            const transaction = await transactions.findById(_id);
+            if (!transaction) {
+                return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            }
         }
+        for (const _id of _ids) {
+            const transaction = await transactions.findById(_id);
+            await transactions.findByIdAndDelete(_id);
         }
-        for(const _id of _ids){
-        const transaction = await transactions.findById(_id);
-        await transactions.findByIdAndDelete(_id);
-        }
-        res.status(200).json({data: {message: "Transactions deleted"}, refreshedTokenMessage: res.locals.refreshedTokenMessage})
-        } catch (error) {
+        res.status(200).json({ data: { message: "Transactions deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage })
+    } catch (error) {
         res.status(500).json({ error: error.message })
     }
 }

@@ -46,10 +46,10 @@ describe("createCategory", () => {
     let statusSpy;
     let jsonSpy;
     beforeEach(() => {
-    
-    categories.findOne.mockClear();
-    categories.prototype.save.mockClear();
-    
+
+        categories.findOne.mockClear();
+        categories.prototype.save.mockClear();
+
         testReq = {
             body: {
                 type: "type",
@@ -110,13 +110,13 @@ describe("createCategory", () => {
     });
 
     test("Should return 500 if there is a Server Error", async () => {
-        categories.prototype.save.mockImplementation(() => { throw new Error('Category creation error') });
+        categories.prototype.save.mockImplementation(() => { throw new Error('Server error') });
         await createCategory(testReq, testRes);
         expect(testRes.status).toHaveBeenCalledWith(500);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Category creation error" });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
     });
 
-   
+
 
 })
 
@@ -471,58 +471,51 @@ describe("getCategories", () => {
   //Continuar por aquí-------------------------------------------
 */
 
-/*
-describe("createTransaction", () => {
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-    });
-})
 
-*/
 describe("createTransaction", () => {
     let testReq;
     let testRes;
     let statusSpy;
     let jsonSpy;
-    
+
     beforeEach(() => {
-  
-      statusSpy = jest.fn().mockReturnThis();
-      jsonSpy = jest.fn();
-  
-      testReq = {
-        params: { username: "testUser" },
-        body: { username: "testUser", amount: 10.0, type: "testCategory", date: Date.now() },
-        cookies: { refreshToken: "testRefreshToken" }
-      };
-  
-      testRes = {
-        status: statusSpy,
-        json: jsonSpy,
-        locals: {
-          refreshedTokenMessage: "Token message"
-        }
-      };
-  
-      verifyAuth.mockReturnValue({ authorized: true });
-      User.findOne.mockResolvedValue({ username: "testUser" });
-      categories.findOne.mockResolvedValue({ type: "testCategory" });
-      transactions.prototype.save.mockResolvedValue(testReq.body);
+
+        statusSpy = jest.fn().mockReturnThis();
+        jsonSpy = jest.fn();
+
+        testReq = {
+            params: { username: "testUser" },
+            body: { username: "testUser", amount: 10.0, type: "testCategory", date: Date.now() },
+            cookies: { refreshToken: "testRefreshToken" }
+        };
+
+        testRes = {
+            status: statusSpy,
+            json: jsonSpy,
+            locals: {
+                refreshedTokenMessage: "Token message"
+            }
+        };
+
+        verifyAuth.mockReturnValue({ authorized: true });
+        User.findOne.mockResolvedValue({ username: "testUser" });
+        categories.findOne.mockResolvedValue({ type: "testCategory" });
+        transactions.prototype.save.mockResolvedValue(testReq.body);
     });
-  
+
     afterEach(() => {
-      jest.clearAllMocks();
+        jest.clearAllMocks();
     });
-  
+
     test("Should successfully create a transaction", async () => {
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(200);
-      expect(testRes.json).toHaveBeenCalledWith({
-        data: testReq.body,
-        refreshedTokenMessage: testRes.locals.refreshedTokenMessage
-      });
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(200);
+        expect(testRes.json).toHaveBeenCalledWith({
+            data: testReq.body,
+            refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+        });
     });
-    
+
     test("Should return 401 if the User is not an authorized", async () => {
         verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
         await createTransaction(testReq, testRes)
@@ -531,404 +524,267 @@ describe("createTransaction", () => {
     })
 
     test("Should return 400 if some parameters are missing", async () => {
-      testReq.body = { username: "testUser", amount: 10.0 };
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
-    });
-  
-    test("Should return 400 if some parameters are empty", async () => {
-      testReq.body = { username: "", amount: 10.0, type: "testCategory" };
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
-    });
-  
-    test("Should return 400 if username does not exist", async () => {
-      User.findOne.mockResolvedValue(null);
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "The provided username does not exists." });
-    });
-  
-    test("Should return 400 if URL username does not exist", async () => {
-      User.findOne.mockResolvedValueOnce({ username: "testUser" });
-      User.findOne.mockResolvedValueOnce(null);
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "The provided URL username does not exists." });
-    });
-  
-    test("Should return 400 if category does not exist", async () => {
-      categories.findOne.mockResolvedValue(null);
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "The provided category does not exists." });
-    });
-  
-    test("Should return 400 if username and URL username mismatch", async () => {
-      testReq.params.username = "differentUser";
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Missmatching users." });
-    });
-  
-    test("Should return 400 if amount is invalid", async () => {
-      testReq.body.amount = "invalidAmount";
-      await createTransaction(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Invalid amount." });
-    });
-  
-    
-    test("Should return 500 if there is a Server Error", async () => {
-        transactions.prototype.save.mockImplementation(() => { throw new Error('Transaction creation error') });
+        testReq.body = { username: "testUser", amount: 10.0 };
         await createTransaction(testReq, testRes);
-       // expect(testRes.status).toHaveBeenCalledWith(500);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Transaction creation error" });
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
+    });
+
+    test("Should return 400 if some parameters are empty", async () => {
+        testReq.body = { username: "", amount: 10.0, type: "testCategory" };
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
+    });
+
+    test("Should return 400 if username does not exist", async () => {
+        User.findOne.mockResolvedValue(null);
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided username does not exists." });
+    });
+
+    test("Should return 400 if URL username does not exist", async () => {
+        User.findOne.mockResolvedValueOnce({ username: "testUser" });
+        User.findOne.mockResolvedValueOnce(null);
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided URL username does not exists." });
+    });
+
+    test("Should return 400 if category does not exist", async () => {
+        categories.findOne.mockResolvedValue(null);
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided category does not exists." });
+    });
+
+    test("Should return 400 if username and URL username mismatch", async () => {
+        testReq.params.username = "differentUser";
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Missmatching users." });
+    });
+
+    test("Should return 400 if amount is invalid", async () => {
+        testReq.body.amount = "invalidAmount";
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Invalid amount." });
+    });
+
+
+    test("Should return 500 if there is a Server Error", async () => {
+        transactions.prototype.save.mockImplementation(() => { throw new Error('Server error') });
+        await createTransaction(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(500);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
     });
 });
-  
 
 
-/*
-describe("createTransaction", () => {
-    test("Some parameters were not provided", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: {},
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Some parameters were not provided." });
-    });
-  
-    test("Empty parameters are not allowed", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "", amount: 10.0, type: "testCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-      jest.spyOn(Utils, "checkEmptyParam").mockReturnValue(false);
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
-    });
-  
-    test("Uncorrect username or category not found", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "testUser", amount: 10.0, type: "nonExistingCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-      jest.spyOn(Utils, "categoryTypeExists").mockResolvedValue(false);
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Uncorrect username or category not found" });
-    });
-  
-    test("Unauthorized user", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "otherUser", amount: 10.0, type: "testCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: false });
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(401);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
-    });
-  
-    test("Cannot parse to Floating point number", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "testUser", amount: "invalidAmount", type: "testCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Cannot parse to Floating point number" });
-    });
-  
-    test("Creates transaction successfully", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "testUser", amount: 10.0, type: "testCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-        locals: { refreshedTokenMessage: "Token refreshed" },
-      };
-      const transaction = {
-        username: "testUser",
-        amount: 10.0,
-        type: "testCategory",
-      };
-      jest.spyOn(Utils, "userExists").mockResolvedValue(true);
-      jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-      jest.spyOn(Utils, "checkEmptyParam").mockReturnValue(true);
-      jest.spyOn(Utils, "categoryTypeExists").mockResolvedValue(true);
-      jest.spyOn(TransactionModel.prototype, "save").mockResolvedValue(transaction);
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(200);
-      expect(testRes.json).toHaveBeenCalledWith({
-        data: transaction,
-        refreshedTokenMessage: "Token refreshed",
-      });
-    });
-  
-    test("Internal server error", async () => {
-      const testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        body: { username: "testUser", amount: 10.0, type: "testCategory" },
-      };
-      const testRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      jest.spyOn(Utils, "userExists").mockRejectedValue(new Error("Internal server error"));
-  
-      await createTransaction(testReq, testRes);
-  
-      expect(testRes.status).toHaveBeenCalledWith(500);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Internal server error" });
-    });
-  });
-  
-*/
-
-
-/*
 describe("getAllTransactions", () => {
     let testReq;
     let testRes;
     let statusSpy;
     let jsonSpy;
-  
-    beforeEach(() => {
-      statusSpy = jest.fn().mockReturnThis();
-      jsonSpy = jest.fn();
-  
-      testReq = {
-        cookies: { refreshToken: "testRefreshToken" }
-      };
-  
-      testRes = {
-        status: statusSpy,
-        json: jsonSpy,
-        locals: {
-          refreshedTokenMessage: "Token refreshed"
-        }
-      };
-  
-      verifyAuth.mockReturnValue({ authorized: true, isAdmin: true });
-      transactions.aggregate.mockResolvedValue([
-        {
-          username: "testUser",
-          amount: 10.0,
-          type: "testCategory",
-          date: "2023-06-02",
-          categories_info: { color: "testColor" }
-        }
-      ]);
-    });
-  
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-  
-    test("Should return all transactions with category information", async () => {
-      await getAllTransactions(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(200);
-      expect(testRes.json).toHaveBeenCalledWith({
-        data: [
-          {
-            username: "testUser",
-            amount: 10.0,
-            type: "testCategory",
-            date: "2023-06-02",
-            color: "testColor"
-          }
-        ],
-        refreshedTokenMessage: testRes.locals.refreshedTokenMessage
-      });
-    });
-  
-    test("Should return 401 if not authorized", async () => {
-      verifyAuth.mockReturnValue({ authorized: false });
-      await getAllTransactions(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(401);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
-    });
-  
-    test("Should return 500 if there is a server error", async () => {
-      transactions.aggregate.mockRejectedValue(new Error("Server error"));
-      await getAllTransactions(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(500);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
-    });
-  });
-  
-*/
 
-/*
+    beforeEach(() => {
+        statusSpy = jest.fn().mockReturnThis();
+        jsonSpy = jest.fn();
+
+        testReq = {
+            cookies: { refreshToken: "testRefreshToken" }
+        };
+
+        testRes = {
+            status: statusSpy,
+            json: jsonSpy,
+            locals: {
+                refreshedTokenMessage: "Token message"
+            }
+        };
+
+
+        transactions.aggregate.mockResolvedValue([
+            {
+                username: "testUser",
+                amount: 10.0,
+                type: "testCategory",
+                date: "2023-06-02",
+                categories_info: { color: "testColor" }
+            }
+        ]);
+        verifyAuth.mockReturnValue({ authorized: true });
+        User.findOne.mockResolvedValue({ username: "testUser" });
+        categories.findOne.mockResolvedValue({ type: "testCategory" });
+
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    test("Should return transactions data if the User is authorized", async () => {
+        await getAllTransactions(testReq, testRes);
+
+        expect(transactions.aggregate).toHaveBeenCalled();
+        expect(testRes.json).toHaveBeenCalledWith({
+            data: [
+                {
+                    username: "testUser",
+                    amount: 10.0,
+                    type: "testCategory",
+                    date: "2023-06-02",
+                    color: "testColor"
+                }
+            ],
+            refreshedTokenMessage: "Token message"
+        });
+    });
+
+    test("Should return 401 if the User is not an authorized", async () => {
+        verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
+        await getAllTransactions(testReq, testRes)
+        expect(testRes.status).toHaveBeenCalledWith(401)
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" })
+    })
+
+    test("Should return 500 if there is a Server Error", async () => {
+        transactions.aggregate.mockImplementation(() => { throw new Error('Server error') })
+        await getAllTransactions(testReq, testRes);
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
+
+    });
+
+
+});
+
+
+
+
 describe("getTransactionsByUser", () => {
     let testReq;
     let testRes;
     let statusSpy;
     let jsonSpy;
-  
+
     beforeEach(() => {
-      statusSpy = jest.fn().mockReturnThis();
-      jsonSpy = jest.fn();
-  
-      testReq = {
-        params: { username: "testUser" },
-        cookies: { refreshToken: "testRefreshToken" },
-        url: "/transactions/users/testUser"
-      };
-  
-      testRes = {
-        status: statusSpy,
-        json: jsonSpy,
-        locals: {
-          refreshedTokenMessage: "Token refreshed"
-        }
-      };
-  
-      verifyAuth.mockReturnValue({ authorized: true, isAdmin: false });
-      userExistsByUsername.mockResolvedValue({ username: "testUser" });
-      userExistsByUsername.mockResolvedValue(true);
-      transactions.find.mockResolvedValue([
-        {
-          username: "testUser",
-          amount: 10.0,
-          type: "testCategory",
-          date: "2023-06-02"
-        }
-      ]);
-      getCategoryColor.mockReturnValue("testColor");
+        statusSpy = jest.fn().mockReturnThis();
+        jsonSpy = jest.fn();
+
+        testReq = {
+            params: { username: "testUser" },
+            cookies: { refreshToken: "testRefreshToken" },
+            path: "/users/testUser/transactions"
+        };
+
+        testRes = {
+            status: statusSpy,
+            json: jsonSpy,
+            locals: {
+                refreshedTokenMessage: "Token message"
+            }
+        };
+
+        verifyAuth.mockReturnValue({ authorized: true });
+        User.findOne.mockResolvedValue({ username: "testUser" });
+        categories.findOne.mockResolvedValue({ type: "testCategory" });
+
+        transactions.aggregate.mockResolvedValue([
+            {
+                username: "testUser",
+                amount: 10.0,
+                type: "testCategory",
+                date: Date.now,
+                categories_info: {
+                    type: "testType",
+                    color: "testColor"
+                }
+            }
+        ]);
+
     });
-  
+
     afterEach(() => {
-      jest.clearAllMocks();
+        jest.clearAllMocks();
     });
-  
-    test("Should return all transactions for the specified user", async () => {
-      await getTransactionsByUser(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(200);
-      expect(testRes.json).toHaveBeenCalledWith({
-        data: [
-          {
-            username: "testUser",
-            amount: 10.0,
-            type: "testCategory",
-            date: "2023-06-02",
-            color: "testColor"
-          }
-        ],
-        refreshedTokenMessage: testRes.locals.refreshedTokenMessage
-      });
+
+    test("Should return all transactions for the specified regular user", async () => {
+        await getTransactionsByUser(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(200);
+        expect(testRes.json).toHaveBeenCalledWith({
+            data: [
+                {
+                    username: "testUser",
+                    amount: 10.0,
+                    type: "testCategory",
+                    date: Date.now,
+                    color: "testColor"
+                }
+            ],
+            refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+        });
+    });
+
+    test("Should return 401 if not authorized", async () => {
+        verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
+        await getTransactionsByUser(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(401);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+    });
+
+    test("Should return 401 if authorized but in the wrong path", async () => {
+        verifyAuth.mockReturnValueOnce({ authorized: false, cause: "Unauthorized" });
+        testReq.path= "/transactions/users/testUser";
+        await getTransactionsByUser(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(401);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
     });
 
     
-  
-    test("Should return 400 if the user does not exist", async () => {
-      userExistsByUsername.mockResolvedValue(false);
-      await getTransactionsByUser(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "User does not exist" });
-    });
-  
-    test("Should return 401 if not authorized as the user", async () => {
-      verifyAuth.mockReturnValue({ authorized: false });
-      await getTransactionsByUser(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(401);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
-    });
-  
-    test("Should return 401 if trying to access another user's transactions", async () => {
-      testReq.params.username = "otherUser";
-      await getTransactionsByUser(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(401);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "You cannot access these data" });
-    });
-  
-    test("Should return filtered transactions based on query parameters", async () => {
-      testReq.url = "/transactions";
-      testReq.query = { date: "2023-06-02" };
-      await getTransactionsByUser(testReq, testRes);
-      expect(testRes.status).toHaveBeenCalledWith(200);
-      expect(testRes.json).toHaveBeenCalledWith({
-        data: [
-          {
-            username: "testUser",
-            amount: 10.0,
-            type: "testCategory",
-            date: "2023-06-02",
-            color: "testColor"
-          }
-        ],
-        refreshedTokenMessage: testRes.locals.refreshedTokenMessage
-      });
-    });
-  
-    test("Should return 500 if there is a server error", async () => {
-        transactions.find.mockRejectedValue(new Error("Server error"));
+      test("Should return 400 if the user does not exist", async () => {
+        testReq.path= "/transactions/users/testUser";
+        User.findOne.mockResolvedValue(false);
         await getTransactionsByUser(testReq, testRes);
-        expect(testRes.status).toHaveBeenCalledWith(500);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided URL username does not exists." });
       });
+    
+      test("Should return filtered transactions based on query parameters", async () => {
+        
+        testReq.query = "aVeryComplicateQuery"
+
+        Utils.handleAmountFilterParams.mockResolvedValue();
+        Utils.handleDateFilterParams.mockResolvedValue();
+
+        await getTransactionsByUser(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(200);
+        expect(testRes.json).toHaveBeenCalledWith({
+          data: [
+            {
+              username: "testUser",
+              amount: 10.0,
+              type: "testCategory",
+              date: Date.now,
+              color: "testColor"
+            }
+          ],
+          refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+        });
+      });
+    
+      test("Should return 500 if there is a Server Error", async () => {
+        transactions.aggregate.mockImplementation(() => { throw new Error('Server error') })
+        await getTransactionsByUser(testReq, testRes);
+        expect(statusSpy).toHaveBeenCalledWith(500);
+        expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
+
     });
-  
-*/
-
-
+      
+ 
+});
 describe("getTransactionsByUserByCategory", () => {
     test('Dummy test, change it', () => {
         expect(true).toBe(true);
