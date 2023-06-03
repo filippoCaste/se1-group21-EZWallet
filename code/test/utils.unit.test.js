@@ -49,7 +49,7 @@ describe("handleDateFilterParams", () => {
         const req = { query: { date: '2023-01-15' } };
         const result = handleDateFilterParams(req);
         const expectedDate = new Date('2023-01-15');
-        const expectedDateEnd = new Date('2023-01-15T23:59:59.000Z');
+        const expectedDateEnd = new Date('2023-01-15T23:59:59.999Z');
         expect(result).toEqual({ date: { $gte: expectedDate, $lte: expectedDateEnd } });
     });
     test('should throw an error for "date" parameter with conflicting parameters', () => {
