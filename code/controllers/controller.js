@@ -223,7 +223,7 @@ export const createTransaction = async (req, res) => {
         }
         let { username, amount, type } = req.body;
         if (!checkEmptyParam([username, amount, type])) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         if (!(await categoryTypeExists(type))) {
             return res.status(400).json({ error: "The provided category does not exists." });
@@ -628,7 +628,7 @@ async function userExistsByUsername(username) {
  */
 function checkEmptyParam(inputs) {
     for (let inp of inputs) {
-        if (inp.trim().length === 0) {
+        if (inp.toString().trim().length === 0) {
             return false;
         }
     }
