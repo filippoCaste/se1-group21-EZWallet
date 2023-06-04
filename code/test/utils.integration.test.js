@@ -3,7 +3,6 @@ import { categories } from '../models/model';
 import { transactions } from '../models/model';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import "jest-extended"
 import { User, Group } from '../models/User';
 import jwt from 'jsonwebtoken';
 import { handleDateFilterParams, verifyAuth } from '../controllers/utils.js';
