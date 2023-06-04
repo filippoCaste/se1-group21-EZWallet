@@ -1,3 +1,4 @@
+import { type } from "os";
 import { categories, transactions } from "../models/model.js";
 import { Group, User } from "../models/User.js";
 import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./utils.js";
@@ -28,6 +29,8 @@ export const createCategory = async (req, res) => {
         if (!('type' in req.body) || !('color' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
+        type = type.trim();
+        color = color.trim();
         if (!checkEmptyParam([type, color])) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
@@ -76,11 +79,13 @@ export const updateCategory = async (req, res) => {
             return res.status(400).json({ error: "The specified URL category does not exist" });
         }
 
-        const { type, color } = req.body;
+        let { type, color } = req.body;
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
+        type = type.trim();
+        color = color.trim();
         if (!checkEmptyParam([type, color])) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
@@ -153,7 +158,7 @@ export const deleteCategory = async (req, res) => {
         }
 
         const catT = types.length;
-
+        types = types.map((t) => t.trim());
         for (let type of types) {
             if (!await categoryTypeExists(type)) {
                 return res.status(400).json({ error: "The specified category does not exist." });
@@ -222,6 +227,9 @@ export const createTransaction = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { username, amount, type } = req.body;
+        username = username.trim();
+        amount = amount.trim();
+        type = type.trim();
         if (!checkEmptyParam([username, amount, type])) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
@@ -532,6 +540,7 @@ export const deleteTransaction = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { _id } = req.body;
+        _id = _id.trim();
         if (!checkEmptyParam(_id)) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
@@ -572,16 +581,17 @@ export const deleteTransactions = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { _ids } = req.body;
+        _ids = _ids.map((id) => id.trim());
         if (!checkEmptyParam(_ids)) {
             return res.status(400).json({ error: "Empty parameteres are not allowed." });
         }
-        for(const _id of _ids){
+        for(let _id of _ids){
         const transaction = await transactions.findById(_id);
         if(!transaction){
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
         }
-        for(const _id of _ids){
+        for(let _id of _ids){
         const transaction = await transactions.findById(_id);
         await transactions.findByIdAndDelete(_id);
         }
