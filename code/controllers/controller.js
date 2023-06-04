@@ -29,12 +29,12 @@ export const createCategory = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         if (!checkEmptyParam([type, color])) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         // Check if a category with the same type already exists
         const existingCategory = await categories.findOne({ type: type });
         if (existingCategory) {
-            return res.status(400).json({ error: "This category already exists." })
+            return res.status(400).json({ error: "This category already exist." })
         }
 
         /* TO CHECK
@@ -82,7 +82,7 @@ export const updateCategory = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         if (!checkEmptyParam([type, color])) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
 
         if (await categoryTypeExists(type) && type !== old_type) {
@@ -141,7 +141,7 @@ export const deleteCategory = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         if (!checkEmptyParam(types)) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
 
         const catN = await categories.countDocuments();
@@ -226,16 +226,16 @@ export const createTransaction = async (req, res) => {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         if (!(await categoryTypeExists(type))) {
-            return res.status(400).json({ error: "The provided category does not exists." });
+            return res.status(400).json({ error: "The provided category does not exist." });
         }
         if (username !== usernameURL) {
             return res.status(400).json({ error: "Missmatching users." });
         }
         if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided username does not exists." });
+            return res.status(400).json({ error: "The provided username does not exist." });
         }
         if (!(await userExistsByUsername(usernameURL))) {
-            return res.status(400).json({ error: "The provided URL username does not exists." });
+            return res.status(400).json({ error: "The provided URL username does not exist." });
         }
         const amountCheck = parseFloat(amount);
         if (isNaN(amountCheck)) {
@@ -310,7 +310,7 @@ export const getTransactionsByUser = async (req, res) => {
         if ((adminAuth.authorized && route === `/transactions/users/${username}`) || (userAuth.authorized && route === `/users/${username}/transactions`)) {
 
             if (!(await userExistsByUsername(username))) {
-                return res.status(400).json({ error: "The provided URL username does not exists." });
+                return res.status(400).json({ error: "The provided URL username does not exist." });
             }
             let filterAmount = {};
             let filterDate = {};
@@ -369,10 +369,10 @@ export const getTransactionsByUserByCategory = async (req, res) => {
         if ((adminAuth.authorized && route === `/transactions/users/${username}/category/${category}`) || (userAuth.authorized && route === `/users/${username}/transactions/category/${category}`)) {
 
             if (!(await userExistsByUsername(username))) {
-                return res.status(400).json({ error: "The provided URL username does not exists." });
+                return res.status(400).json({ error: "The provided URL username does not exist." });
             }
             if (!(await categoryTypeExists(category))) {
-                return res.status(400).json({ error: "The provided URL category does not exists." });
+                return res.status(400).json({ error: "The provided URL category does not exist." });
             }
             transactions.aggregate([
                 { $match: { type: category } },
@@ -396,7 +396,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
 
         }
         else {
-            return res.status(401).json({ error: adminAuth.cause })
+            return res.status(401).json({ error: "Unauthorized" })
         }
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -450,7 +450,7 @@ export const getTransactionsByGroup = async (req, res) => {
                 });
         }
         else {
-            return res.status(401).json({ error: adminAuth.cause })
+            return res.status(401).json({ error: "Unauthorized" })
         }
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -531,18 +531,19 @@ export const deleteTransaction = async (req, res) => {
         if (!('_id' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
-        let { _id } = req.body;
-        if (!checkEmptyParam(_id)) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+
+        const { _id } = req.body;
+        if (!checkEmptyParam([_id])) {
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exists." });
+            return res.status(400).json({ error: "The provided URL username does not exist." });
         }
         const transaction = await transactions.findById(_id);
         if (!transaction) {
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
-        if (!transaction.username !== username) {
+        if (transaction.username !== username) {
             return res.status(400).json({ error: "You cannot delete other user Transactions" });
         }
         await transactions.findByIdAndDelete(_id);
@@ -573,7 +574,7 @@ export const deleteTransactions = async (req, res) => {
         }
         let { _ids } = req.body;
         if (!checkEmptyParam(_ids)) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         for (const _id of _ids) {
             const transaction = await transactions.findById(_id);
