@@ -5,9 +5,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { User, Group } from '../models/User';
 import jwt from 'jsonwebtoken';
-import { handleDateFilterParams, verifyAuth } from '../controllers/utils.js';
-import { register, login, logout } from '../controllers/auth.js';
-
+import { handleDateFilterParams, handleAmountFilterParams, verifyAuth, userExistsByUsername } from '../controllers/utils.js';
+import { getTransactionsByUser } from '../controllers/controller.js';
 
 dotenv.config();
 
@@ -89,6 +88,27 @@ describe("verifyAuth", () => {
         expect(Object.values(response).includes(true)).toBe(true)
     })
 
+    test("User tries to access as admin not granted", () => {
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Admin", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(false)
+    })
+
+    test("Admin accesses as simple user", () => {
+        const req = { cookies: { accessToken: adminAccessTokenValid, refreshToken: adminAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple", username: "admin" })
+        expect(Object.values(response).includes(true)).toBe(true)
+    })
+
+    test("User accesses as simple user", () => {
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(true)
+    })
+
     test("Undefined tokens", () => {
         const req = { cookies: {} }
         const res = {}
@@ -131,145 +151,45 @@ describe("verifyAuth", () => {
     })
 })
 
-// describe("handleDateFilterParams", () => { 
-//     it('should handle valid date range and authenticate user', () => {
+describe("handleDateFilterParams", () => { 
+    it('should handle valid date range and authenticated user', () => {
+        const req = {
+            cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid }, 
+            query: { from: '2023-01-01', upTo: '2023-12-31' }
+        }
+        const res = {}
 
-//         // Simulate user registration
-//         const req = {
-//             cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid }, 
-//             query: { startDate: '2023-01-01', endDate: '2023-12-31' },
-//             body: { username: 'tester', email: 'test@test.com', password: 'password' } }
-//         const res = {}
-//         register(req, res)
-//             .then((result) => {
-//                 expect(result).toEqual({ data: { message: "User added successfully" } });
-//             })
-//             .catch((err) => {throw err});
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(true)
 
-//         // Simulate user authentication
-//         const accessToken = res.data.accessToken;
+        const matchStage = handleDateFilterParams(req);
+        const d1 = new Date('2023-01-01T00:00:00.000Z');
+        const d2 = new Date('2023-12-31T23:59:59.999Z')
+        expect(matchStage.date).toStrictEqual({ "$gte": d1, "$lte": d2 });
+    })
 
-//         // Set the authenticated user's access token in the request header
-//         req.headers = { authorization: `Bearer ${accessToken}` };
+    it('should handle invalid date range and authenticated user', () => {
+        const req = {
+            cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid },
+            query: { from: '2023-01-32' }
+        }
+        const res = {}
 
-//         // Simulate handling date filter params
-//         handleDateFilterParams(req, res, () => { });
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(true)
 
-//         expect(req.query.startDate).toBe('2023-01-01');
-//         expect(req.query.endDate).toBe('2023-12-31');
-//         // Add additional assertions based on the expected behavior
-//     });
-// })
+        expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
+    })
 
-// utils.integration.test.js
+});
 
-// Mocked User module
-// jest.mock('../models/User.js', () => ({
-//     User: {
-//         findOne: jest.fn(),
-//     },
-// }));
+// describe('handleAmountFilterParams', () => {
+//   beforeEach(() => {
+//     jest.clearAllMocks(); // Reset mock function calls before each test
+//   });
 
-// // Mocked res object
-// const res = {
-//     status: jest.fn().mockReturnThis(),
-//     json: jest.fn(),
-// };
+//   test("Correctly filtering data", () => {
 
-// describe('handleDateFilterParams Integration Tests', () => {
-//     beforeAll(() => {
-//         // Mocked User.findOne method implementation
-//         const User = require('../models/User.js').User;
-//         User.findOne.mockResolvedValue(null); // Mocked user not found
-//     });
+//   })
 
-//     beforeEach(() => {
-//         jest.clearAllMocks(); // Reset mock function calls before each test
-//     });
-
-//     test('should return filtered data when valid date filter params are provided', async () => {
-//         const req = {
-//             query: {
-//                 startDate: '2023-01-01',
-//                 endDate: '2023-12-31',
-//             },
-//         };
-
-//         // Mocked controller method
-//         const controller = require('../controllers/controller.js');
-//         controller.getData = jest.fn().mockResolvedValue(['data1', 'data2']);
-
-//         await handleDateFilterParams(req, res);
-
-//         expect(controller.getData).toHaveBeenCalledWith('2023-01-01', '2023-12-31');
-//         expect(res.status).toHaveBeenCalledWith(200);
-//         expect(res.json).toHaveBeenCalledWith(['data1', 'data2']);
-//     });
-
-//     test('should return error when invalid start date is provided', async () => {
-//         const req = {
-//             query: {
-//                 startDate: 'invalid',
-//                 endDate: '2023-12-31',
-//             },
-//         };
-
-//         await handleDateFilterParams(req, res);
-
-//         expect(res.status).toHaveBeenCalledWith(400);
-//         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid start date' });
-//     });
-
-//     test('should return error when invalid end date is provided', async () => {
-//         const req = {
-//             query: {
-//                 startDate: '2023-01-01',
-//                 endDate: 'invalid',
-//             },
-//         };
-
-//         await handleDateFilterParams(req, res);
-
-//         expect(res.status).toHaveBeenCalledWith(400);
-//         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid end date' });
-//     });
-
-//     test('should return error when start date is greater than end date', async () => {
-//         const req = {
-//             query: {
-//                 startDate: '2023-12-31',
-//                 endDate: '2023-01-01',
-//             },
-//         };
-
-//         await handleDateFilterParams(req, res);
-
-//         expect(res.status).toHaveBeenCalledWith(400);
-//         expect(res.json).toHaveBeenCalledWith({ error: 'Start date cannot be greater than end date' });
-//     });
-
-//     test('should return error when user is not authenticated', async () => {
-//         const req = {
-//             query: {
-//                 startDate: '2023-01-01',
-//                 endDate: '2023-12-31',
-//             },
-//         };
-
-//         // Mocked controller method
-//         const controller = require('../controller.js');
-//         controller.getData = jest.fn().mockRejectedValue(new Error('User not authenticated'));
-
-//         await handleDateFilterParams(req, res);
-
-//         expect(res.status).toHaveBeenCalledWith(401);
-//         expect(res.json).toHaveBeenCalledWith({ error: 'User not authenticated' });
-//     });
 // });
-
-
-// describe("handleAmountFilterParams", () => { 
-//     test('Dummy test, change it', () => {  
-//         expect(true).toBe(true);  
-//     });
-// })
