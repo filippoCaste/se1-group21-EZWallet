@@ -1,19 +1,276 @@
-import { handleDateFilterParams, verifyAuth, handleAmountFilterParams } from '../controllers/utils';
+import { app } from '../app';
+import { categories } from '../models/model';
+import { transactions } from '../models/model';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import "jest-extended"
+import { User, Group } from '../models/User';
+import jwt from 'jsonwebtoken';
+import { handleDateFilterParams, verifyAuth } from '../controllers/utils.js';
+import { register, login, logout } from '../controllers/auth.js';
 
-describe("handleDateFilterParams", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
+
+dotenv.config();
+
+beforeAll(async () => {
+    const dbName = "testingDatabaseController";
+    const url = `${process.env.MONGO_URI}/${dbName}`;
+
+    await mongoose.connect(url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
     });
+
+});
+
+afterAll(async () => {
+    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.close();
+});
+
+//necessary setup to ensure that each test can insert the data it needs
+beforeEach(async () => {
+    await categories.deleteMany({})
+    await transactions.deleteMany({})
+    await User.deleteMany({})
+    await Group.deleteMany({})
 })
 
-describe("verifyAuth", () => { 
-    test('Dummy test, change it', () => {  
-        expect(true).toBe(true);  
-    });
+/**
+ * Alternate way to create the necessary tokens for authentication without using the website
+ */
+const adminAccessTokenValid = jwt.sign({
+    email: "admin@email.com",
+    //id: existingUser.id, The id field is not required in any check, so it can be omitted
+    username: "admin",
+    role: "Admin"
+}, process.env.ACCESS_KEY, { expiresIn: '1y' })
+
+const testerAccessTokenValid = jwt.sign({
+    email: "tester@test.com",
+    username: "tester",
+    role: "Regular"
+}, process.env.ACCESS_KEY, { expiresIn: '1y' })
+
+//These tokens can be used in order to test the specific authentication error scenarios inside verifyAuth (no need to have multiple authentication error tests for the same route)
+const testerAccessTokenExpired = jwt.sign({
+    email: "tester@test.com",
+    username: "tester",
+    role: "Regular"
+}, process.env.ACCESS_KEY, { expiresIn: '0s' })
+const testerAccessTokenEmpty = jwt.sign({}, process.env.ACCESS_KEY, { expiresIn: "1y" })
+
+describe("verifyAuth", () => {
+    /**
+     * When calling verifyAuth directly, we do not have access to the req and res objects created by express, so we must define them manually
+     * An object with a "cookies" field that in turn contains "accessToken" and "refreshToken" is sufficient for the request
+     * The response object is untouched in most cases, so it can be a simple empty object
+     */
+    test("Tokens are both valid and belong to the requested user", () => {
+        //The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+        //Meaning that the same object can be used for both
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        //The function is called in the same way as in the various methods, passing the necessary authType and other information
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        //The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+        //Checks on the "cause" field are omitted since it can be any string
+        expect(Object.values(response).includes(true)).toBe(true)
+    })
+
+    test("Tokens are both valid and belong to the requested admin", () => {
+        //The only difference between access and refresh token is (in practice) their duration, but the payload is the same
+        //Meaning that the same object can be used for both
+        const req = { cookies: { accessToken: adminAccessTokenValid, refreshToken: adminAccessTokenValid } }
+        const res = {}
+        //The function is called in the same way as in the various methods, passing the necessary authType and other information
+        const response = verifyAuth(req, res, { authType: "Admin", username: "admin" })
+        //The response object must contain a field that is a boolean value equal to true, it does not matter what the actual name of the field is
+        //Checks on the "cause" field are omitted since it can be any string
+        expect(Object.values(response).includes(true)).toBe(true)
+    })
+
+    test("Undefined tokens", () => {
+        const req = { cookies: {} }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple" })
+        //The test is passed if the function returns an object with a false value, no matter its name
+        expect(Object.values(response).includes(false)).toBe(true)
+    })
+
+    /**
+     * The only situation where the response object is actually interacted with is the case where the access token must be refreshed
+     */
+    test("Access token expired and refresh token belonging to the requested user", () => {
+        const req = { cookies: { accessToken: testerAccessTokenExpired, refreshToken: testerAccessTokenValid } }
+        //The inner working of the cookie function is as follows: the response object's cookieArgs object values are set
+        const cookieMock = (name, value, options) => {
+            res.cookieArgs = { name, value, options };
+        }
+        //In this case the response object must have a "cookie" function that sets the needed values, as well as a "locals" object where the message must be set 
+        const res = {
+            cookie: cookieMock,
+            locals: {},
+        }
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        //The response must have a true value (valid refresh token and expired access token)
+        expect(Object.values(response).includes(true)).toBe(true)
+        expect(res.cookieArgs).toEqual({
+            name: 'accessToken', //The cookie arguments must have the name set to "accessToken" (value updated)
+            value: expect.any(String), //The actual value is unpredictable (jwt string), so it must exist
+            options: { //The same options as during creation
+                httpOnly: true,
+                path: '/api',
+                maxAge: 60 * 60 * 1000,
+                sameSite: 'none',
+                secure: true,
+            },
+        })
+        //The response object must have a field that contains the message, with the name being either "message" or "refreshedTokenMessage"
+        const message = res.locals.refreshedTokenMessage ? true : res.locals.message ? true : false
+        expect(message).toBe(true)
+    })
 })
 
-describe("handleAmountFilterParams", () => { 
-    test('Dummy test, change it', () => {  
-        expect(true).toBe(true);  
-    });
-})
+// describe("handleDateFilterParams", () => { 
+//     it('should handle valid date range and authenticate user', () => {
+
+//         // Simulate user registration
+//         const req = {
+//             cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid }, 
+//             query: { startDate: '2023-01-01', endDate: '2023-12-31' },
+//             body: { username: 'tester', email: 'test@test.com', password: 'password' } }
+//         const res = {}
+//         register(req, res)
+//             .then((result) => {
+//                 expect(result).toEqual({ data: { message: "User added successfully" } });
+//             })
+//             .catch((err) => {throw err});
+
+//         // Simulate user authentication
+//         const accessToken = res.data.accessToken;
+
+//         // Set the authenticated user's access token in the request header
+//         req.headers = { authorization: `Bearer ${accessToken}` };
+
+//         // Simulate handling date filter params
+//         handleDateFilterParams(req, res, () => { });
+
+//         expect(req.query.startDate).toBe('2023-01-01');
+//         expect(req.query.endDate).toBe('2023-12-31');
+//         // Add additional assertions based on the expected behavior
+//     });
+// })
+
+// utils.integration.test.js
+
+// Mocked User module
+// jest.mock('../models/User.js', () => ({
+//     User: {
+//         findOne: jest.fn(),
+//     },
+// }));
+
+// // Mocked res object
+// const res = {
+//     status: jest.fn().mockReturnThis(),
+//     json: jest.fn(),
+// };
+
+// describe('handleDateFilterParams Integration Tests', () => {
+//     beforeAll(() => {
+//         // Mocked User.findOne method implementation
+//         const User = require('../models/User.js').User;
+//         User.findOne.mockResolvedValue(null); // Mocked user not found
+//     });
+
+//     beforeEach(() => {
+//         jest.clearAllMocks(); // Reset mock function calls before each test
+//     });
+
+//     test('should return filtered data when valid date filter params are provided', async () => {
+//         const req = {
+//             query: {
+//                 startDate: '2023-01-01',
+//                 endDate: '2023-12-31',
+//             },
+//         };
+
+//         // Mocked controller method
+//         const controller = require('../controllers/controller.js');
+//         controller.getData = jest.fn().mockResolvedValue(['data1', 'data2']);
+
+//         await handleDateFilterParams(req, res);
+
+//         expect(controller.getData).toHaveBeenCalledWith('2023-01-01', '2023-12-31');
+//         expect(res.status).toHaveBeenCalledWith(200);
+//         expect(res.json).toHaveBeenCalledWith(['data1', 'data2']);
+//     });
+
+//     test('should return error when invalid start date is provided', async () => {
+//         const req = {
+//             query: {
+//                 startDate: 'invalid',
+//                 endDate: '2023-12-31',
+//             },
+//         };
+
+//         await handleDateFilterParams(req, res);
+
+//         expect(res.status).toHaveBeenCalledWith(400);
+//         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid start date' });
+//     });
+
+//     test('should return error when invalid end date is provided', async () => {
+//         const req = {
+//             query: {
+//                 startDate: '2023-01-01',
+//                 endDate: 'invalid',
+//             },
+//         };
+
+//         await handleDateFilterParams(req, res);
+
+//         expect(res.status).toHaveBeenCalledWith(400);
+//         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid end date' });
+//     });
+
+//     test('should return error when start date is greater than end date', async () => {
+//         const req = {
+//             query: {
+//                 startDate: '2023-12-31',
+//                 endDate: '2023-01-01',
+//             },
+//         };
+
+//         await handleDateFilterParams(req, res);
+
+//         expect(res.status).toHaveBeenCalledWith(400);
+//         expect(res.json).toHaveBeenCalledWith({ error: 'Start date cannot be greater than end date' });
+//     });
+
+//     test('should return error when user is not authenticated', async () => {
+//         const req = {
+//             query: {
+//                 startDate: '2023-01-01',
+//                 endDate: '2023-12-31',
+//             },
+//         };
+
+//         // Mocked controller method
+//         const controller = require('../controller.js');
+//         controller.getData = jest.fn().mockRejectedValue(new Error('User not authenticated'));
+
+//         await handleDateFilterParams(req, res);
+
+//         expect(res.status).toHaveBeenCalledWith(401);
+//         expect(res.json).toHaveBeenCalledWith({ error: 'User not authenticated' });
+//     });
+// });
+
+
+// describe("handleAmountFilterParams", () => { 
+//     test('Dummy test, change it', () => {  
+//         expect(true).toBe(true);  
+//     });
+// })
