@@ -1,4 +1,3 @@
-import { type } from "os";
 import { categories, transactions } from "../models/model.js";
 import { Group, User } from "../models/User.js";
 import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./utils.js";
@@ -23,12 +22,11 @@ export const createCategory = async (req, res) => {
         if (!adminAuth.authorized) {
             return res.status(401).json({ error: adminAuth.cause }) // unauthorized
         }
-
-        let { type, color } = req.body;
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
+        let { type, color } = req.body;
         type = type.trim();
         color = color.trim();
         if (!checkEmptyParam([type, color])) {
@@ -78,12 +76,11 @@ export const updateCategory = async (req, res) => {
         if (!await categoryTypeExists(old_type)) {
             return res.status(400).json({ error: "The specified URL category does not exist" });
         }
-
-        let { type, color } = req.body;
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
+        let { type, color } = req.body;
         type = type.trim();
         color = color.trim();
         if (!checkEmptyParam([type, color])) {
@@ -140,11 +137,13 @@ export const deleteCategory = async (req, res) => {
         if (!adminAuth.authorized) {
             return res.status(401).json({ error: adminAuth.cause }) // unauthorized
         }
-        let { types } = req.body;
+
         // Check for incomplete request body
         if (!('types' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
+        let { types } = req.body;
+        types = types.map((t) => t.trim());
         if (!checkEmptyParam(types)) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
@@ -156,9 +155,7 @@ export const deleteCategory = async (req, res) => {
         if (catN === 0) {
             return res.status(400).json({ error: "Missing categories to be deleted" })
         }
-
         const catT = types.length;
-        types = types.map((t) => t.trim());
         for (let type of types) {
             if (!await categoryTypeExists(type)) {
                 return res.status(400).json({ error: "The specified category does not exist." });
@@ -341,9 +338,7 @@ export const getTransactionsByUser = async (req, res) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
                     res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
-                .catch(error => {
-                    throw error;
-                });
+
 
         }
         else {
@@ -397,9 +392,7 @@ export const getTransactionsByUserByCategory = async (req, res) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
                     res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
-                .catch(error => {
-                    throw error;
-                });
+
 
         }
         else {
@@ -452,9 +445,7 @@ export const getTransactionsByGroup = async (req, res) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
                     res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
-                .catch(error => {
-                    throw error;
-                });
+
         }
         else {
             return res.status(401).json({ error: "Unauthorized" })
@@ -507,9 +498,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
                     let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
                     res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
-                .catch(error => {
-                    throw error;
-                });
+
         }
         else {
             return res.status(401).json({ error: adminAuth.cause })
@@ -584,15 +573,15 @@ export const deleteTransactions = async (req, res) => {
         if (!checkEmptyParam(_ids)) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
-        for(let _id of _ids){
-        const transaction = await transactions.findById(_id);
-        if(!transaction){
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+        for (let _id of _ids) {
+            const transaction = await transactions.findById(_id);
+            if (!transaction) {
+                return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            }
         }
-        }
-        for(let _id of _ids){
-        const transaction = await transactions.findById(_id);
-        await transactions.findByIdAndDelete(_id);
+        for (let _id of _ids) {
+            const transaction = await transactions.findById(_id);
+            await transactions.findByIdAndDelete(_id);
         }
         res.status(200).json({ data: { message: "Transactions deleted" }, refreshedTokenMessage: res.locals.refreshedTokenMessage })
     } catch (error) {
