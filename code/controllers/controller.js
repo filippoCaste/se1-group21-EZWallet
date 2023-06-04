@@ -228,7 +228,6 @@ export const createTransaction = async (req, res) => {
         }
         let { username, amount, type } = req.body;
         username = username.trim();
-        amount = amount.trim();
         type = type.trim();
         if (!checkEmptyParam([username, amount, type])) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });

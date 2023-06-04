@@ -75,7 +75,9 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ error: "Incomplete request body" });
     }
 
-    const { name, memberEmails } = req.body;
+    let { name, memberEmails } = req.body;
+    name = name.trim();
+    memberEmails = memberEmails.map((e) => e.trim());
     const reqUserMail = await User.findOne({ refreshToken: req.cookies.refreshToken }).email;
 
     // If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
@@ -267,8 +269,8 @@ export const addToGroup = async (req, res) => {
         return res.status(400).json({ error: "Invalid memberEmail format" });
       }
 
-      for (const email of memberEmails) {
-
+      for (let email of memberEmails) {
+        email = email.trim();
         // Check if all memberEmails exist and are not already in a group
         const user = await User.findOne({ email });
         if (!user) {
@@ -334,8 +336,8 @@ export const removeFromGroup = async (req, res) => {
     if (!('memberEmails' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
-    const { memberEmails } = req.body;
-    
+    let { memberEmails } = req.body;
+    memberEmails = memberEmails.map((e) => e.trim())
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
@@ -421,7 +423,8 @@ export const deleteUser = async (req, res) => {
       if (!('email' in req.body)) {
         return res.status(400).json({ error: "Incomplete request body" });
       }
-      const { email } = req.body;
+      let { email } = req.body;
+      email = email.trim();
       // Check if  the member email is not in a valid email format or empty
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const validFormatCheck = emailRegex.test(email);
@@ -490,10 +493,11 @@ export const deleteGroup = async (req, res) => {
     if (!('name' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
-    const { name } = req.body;
+    let { name } = req.body;
+    name = name.trim();
 
     // Check for empty strings
-    if (name.trim().length === 0) {
+    if (name.length === 0) {
       return res.status(400).json({ error: "Empty fields are not allowed" });
     }
       const group = await Group.findOne({ name });
