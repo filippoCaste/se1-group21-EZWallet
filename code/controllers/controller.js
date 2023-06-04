@@ -541,7 +541,7 @@ export const deleteTransaction = async (req, res) => {
         let { _id } = req.body;
         _id = _id.trim();
         if (!checkEmptyParam([_id])) {
-            return res.status(400).json({ error: "Empty parameteres are not allowed." });
+            return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided URL username does not exist." });
