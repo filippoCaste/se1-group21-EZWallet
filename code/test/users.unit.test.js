@@ -374,7 +374,89 @@ describe("getGroups", () => {
 });
 
 
-describe("getGroup", () => { })
+describe("getGroup", () => {
+  let testReq;
+  let testRes;
+  let statusSpy;
+  let jsonSpy;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    testReq = {
+      params: {
+        name: "Group 1"
+      }
+    };
+    statusSpy = jest.fn().mockReturnThis();
+    jsonSpy = jest.fn();
+    testRes = {
+      status: statusSpy,
+      json: jsonSpy,
+      locals: {
+        refreshedTokenMessage: "Token message"
+      }
+    };
+  });
+
+  test("Should successfully retrieve a group by name", async () => {
+    const group = {
+      name: "Group 1",
+      members: [{ email: "user1@test.com" }, { email: "user2@test.com" }]
+    };
+    Group.findOne.mockResolvedValueOnce(group);
+
+    verifyAuth.mockReturnValueOnce({ authorized: true });
+    verifyAuth.mockReturnValueOnce({ authorized: true });
+
+    const responseData = {
+      name: group.name,
+      members: group.members.map(member => member.email)
+    };
+
+    await getGroup(testReq, testRes);
+
+    expect(testRes.status).toHaveBeenCalledWith(200);
+    expect(testRes.json).toHaveBeenCalledWith({
+      data: responseData,
+      refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+    });
+  });
+
+  test("Should return 400 if the group does not exist", async () => {
+    Group.findOne.mockResolvedValueOnce(null);
+
+    await getGroup(testReq, testRes);
+
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "The group does not exist" });
+  });
+
+  test("Should return 401 if not authorized as an admin or a group member", async () => {
+    const group = {
+      name: "Group 1",
+      members: [{ email: "user1@test.com" }, { email: "user2@test.com" }]
+    };
+    Group.findOne.mockResolvedValueOnce(group);
+
+    verifyAuth.mockReturnValueOnce({ authorized: false, cause: "Unauthorized" });
+    verifyAuth.mockReturnValueOnce({ authorized: false, cause: "Unauthorized" });
+
+    await getGroup(testReq, testRes);
+
+    expect(statusSpy).toHaveBeenCalledWith(401);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Unauthorized" });
+  });
+
+  test("Should return 500 if there is a Server Error", async () => {
+    Group.findOne.mockRejectedValueOnce(new Error("Server error"));
+
+    await getGroup(testReq, testRes);
+
+    expect(statusSpy).toHaveBeenCalledWith(500);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
+  });
+});
+
 
 describe("addToGroup", () => { })
 
