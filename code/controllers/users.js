@@ -78,6 +78,10 @@ export const createGroup = async (req, res) => {
 
     let { name, memberEmails } = req.body;
     name = name.trim();
+    // Check for empty strings
+    if (name.trim().length === 0) {
+      return res.status(400).json({ error: "Empty fields are not allowed" });
+    }
     memberEmails = memberEmails.map((e) => e.trim());
     const reqUser = (await User.findOne({ refreshToken: req.cookies.refreshToken }));
     const reqUserMail = reqUser.email;
@@ -86,10 +90,7 @@ export const createGroup = async (req, res) => {
     if (!memberEmails.includes(reqUserMail)) {
       memberEmails.push(reqUserMail);
     }
-    // Check for empty strings
-    if (name.trim().length === 0) {
-      return res.status(400).json({ error: "Empty fields are not allowed" });
-    }
+    
 
     // Check if a group with the same name already exists
     const existingGroup = await Group.findOne({ name });

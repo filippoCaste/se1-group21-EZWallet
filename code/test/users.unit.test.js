@@ -171,7 +171,9 @@ describe("createGroup", () => {
   let testRes;
   let statusSpy;
   let jsonSpy;
+  
   beforeEach(() => {
+    jest.clearAllMocks();
     testReq = {
       body: {
         name: "testGroup",
@@ -180,7 +182,7 @@ describe("createGroup", () => {
       cookies: {
         refreshToken: "aValidToken"
       }
-    }
+    };
     statusSpy = jest.fn().mockReturnThis();
     jsonSpy = jest.fn();
     testRes = {
@@ -189,17 +191,14 @@ describe("createGroup", () => {
       locals: {
         refreshedTokenMessage: "Token message"
       }
-
     };
-    verifyAuth.mockReturnValueOnce({ authorized: true });
-
+    
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   test("Should successfully create a Group", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
     User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
     Group.findOne.mockResolvedValueOnce();
     Group.exists.mockResolvedValueOnce();
@@ -213,7 +212,7 @@ describe("createGroup", () => {
         email:
           ["userTest1@test.ut", "userTest2@test.ut"]
       }]
-    }
+    };
     Group.create.mockResolvedValueOnce(group);
     const responseData = {
       group: {
@@ -222,12 +221,89 @@ describe("createGroup", () => {
       },
       alreadyInGroup: [],
       membersNotFound: []
-    }
+    };
     await createGroup(testReq, testRes);
-    // expect(testRes.status).toHaveBeenCalledWith(200);
+    expect(testRes.status).toHaveBeenCalledWith(200);
     expect(testRes.json).toHaveBeenCalledWith({ data: responseData, refreshedTokenMessage: testRes.locals.refreshedTokenMessage });
   });
+
+  test("Should return 401 if not authorized", async () => {
+    verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(401);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Unauthorized" });
+  });
+
+  test("Should return 400 if request body is incomplete", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
+    testReq.body = {name: "testGroup"};
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Incomplete request body" });
+  });
+
+  test("Should return 400 if name field is empty", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
+    testReq.body.name = "";
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Empty fields are not allowed" });
+  });
+
+  test("Should return 400 if a group with the same name already exists", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
+    User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
+    Group.findOne.mockResolvedValueOnce(true);
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "A group with the same name already exists." });
+  });
+
+  test("Should return 400 if the user calling the API is already in a group", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
+    User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
+    Group.findOne.mockResolvedValueOnce();
+    Group.exists.mockResolvedValue(true);
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "You are already in a Group" });
+  });
+
+  test("Should return 400 if invalid memberEmail format", async () => {
+    testReq.body.memberEmails = ["userTest1@test", "userTest2@test"];
+    verifyAuth.mockReturnValue({ authorized: true });
+    User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
+    Group.findOne.mockResolvedValueOnce();
+    Group.exists.mockResolvedValueOnce(false);
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Invalid memberEmail format" });
+  });
+
+  test("Should return 400 if all memberEmails are already in a group or do not exist in the database", async () => {
+    verifyAuth.mockReturnValue({ authorized: true });
+    User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
+    Group.findOne.mockResolvedValueOnce();
+    Group.exists.mockResolvedValueOnce(false);
+    
+    
+    User.findOne.mockResolvedValueOnce(null);
+    User.findOne.mockResolvedValueOnce(true);
+    Group.exists.mockResolvedValueOnce(true);
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(400);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "All the provided emails represent users that are already in a group or do not exist in the database" });
+  });
+
+  test("Should return 500 if there is a Server Error", async () => {
+    User.findOne.mockRejectedValueOnce(new Error('Server error'));
+    await createGroup(testReq, testRes);
+    expect(statusSpy).toHaveBeenCalledWith(500);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
+  });
+  
 });
+
 
 describe("getGroups", () => { })
 
