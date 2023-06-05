@@ -227,67 +227,98 @@ describe('registerAdmin', () => {
 });
 
 
-
-describe('login', () => {
-  // Test if all necessary parameters are supplied
-  it('should return 400 error if request body is missing required parameters', async () => {
-    const response = await request(app)
+describe('POST /api/login', () => {
+  
+  // Test for missing parameters
+  it('should return 400 if email or password are missing', async () => {
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'test@mail.com' }); // password is missing
-    expect(response.status).toBe(400);
+      .send({ email: "mario.red@email.com" });
+    expect(res.statusCode).toEqual(400);
   });
 
-  // Test if parameters are empty strings
-  it('should return 400 error if any parameter is an empty string', async () => {
-    const response = await request(app)
+  // Test for empty string parameters
+  it('should return 400 if email or password are empty strings', async () => {
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'test@mail.com', password: '' }); // password is empty string
-    expect(response.status).toBe(400);
+      .send({ email: "", password: "" });
+    expect(res.statusCode).toEqual(400);
   });
 
-  // Test if email is in correct format
-  it('should return 400 error if email is in invalid format', async () => {
-    const response = await request(app)
+  // Test for invalid email format
+  it('should return 400 if email is not in a valid format', async () => {
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'invalidEmail', password: 'pass' }); // invalid email format
-    expect(response.status).toBe(400);
+      .send({ email: "invalid.email", password: "securePass" });
+    expect(res.statusCode).toEqual(400);
   });
 
-  // Test if email does not exist in the database
-  it('should return 400 error if email does not exist in the database', async () => {
-    const response = await request(app)
+  // Test for non-existing user
+  it('should return 400 if the user does not exist', async () => {
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'nonexistent@mail.com', password: 'pass' }); // nonexistent email
-    expect(response.status).toBe(400);
+      .send({ email: "non.existing@email.com", password: "securePass" });
+    expect(res.statusCode).toEqual(400);
   });
 
-  // Test if supplied password does not match the one in the database
-  it('should return 400 error if supplied password does not match with the one in the database', async () => {
-    const response = await request(app)
+  // Test for wrong password
+  it('should return 400 if the supplied password does not match with the one in the database', async () => {
+    // Add a user to the database
+    const hashedPassword = await bcrypt.hash("securePass", 12);
+    await User.create({ username: "Mario", email: "mario.red@email.com", password: hashedPassword });
+
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'test@mail.com', password: 'wrongPass' }); // incorrect password
-    expect(response.status).toBe(400);
+      .send({ email: "mario.red@email.com", password: "wrongPassword" });
+    expect(res.statusCode).toEqual(400);
   });
 
-  // Test if login is successful with correct email and password
-  it('should return accessToken and refreshToken with successful login', async () => {
-    const response = await request(app)
+  // Test for successful user login
+  it('should return 200 and create an accessToken and refreshToken', async () => {
+    // Add a user to the database
+    const hashedPassword = await bcrypt.hash("securePass", 12);
+    await User.create({ username: "Mario", email: "mario.red@email.com", password: hashedPassword });
+
+    const res = await request(app)
       .post('/api/login')
-      .send({ email: 'test@mail.com', password: 'pass' }); // correct email and password
-    expect(response.status).toBe(200);
-    expect(response.body.data).toHaveProperty('accessToken');
-    expect(response.body.data).toHaveProperty('refreshToken');
+      .send({ email: "mario.red@email.com", password: "securePass" });
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.data).toHaveProperty("accessToken");
+    expect(res.body.data).toHaveProperty("refreshToken");
   });
 });
 
 
-describe('logout', () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-        //delete the created accessToken and refreshToken from DB
-        // A message confirming successful logout
-        //display logIn screen
-    });
+describe('POST /api/logout', () => {
+  // Test for missing refresh token
+  it('should return 400 if no refresh token is provided', async () => {
+    const res = await request(app)
+      .post('/api/logout')
+    expect(res.statusCode).toEqual(400);
+  });
+
+  // Test for non-existing user
+  it('should return 400 if refresh token does not represent a user in the database', async () => {
+    // Set an invalid refreshToken
+    const res = await request(app)
+      .post('/api/logout')
+      .set('Cookie', ['refreshToken=invalidToken'])
+    expect(res.statusCode).toEqual(400);
+  });
+
+  // Test for successful user logout
+  it('should return 200 and confirm user was logged out successfully', async () => {
+    // Add a user to the database with a refresh token
+    const refreshToken = jwt.sign({ id: "testId" }, process.env.REFRESH_KEY, { expiresIn: '7d' })
+    await User.create({ username: "Mario", email: "mario.red@email.com", password: "securePass", refreshToken: refreshToken });
+
+    const res = await request(app)
+      .post('/api/logout')
+      .set('Cookie', [`refreshToken=${refreshToken}`])
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.data.message).toEqual("User logged out");
+  });
 });
+
 
 
