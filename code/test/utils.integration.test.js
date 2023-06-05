@@ -133,12 +133,47 @@ describe("verifyAuth", () => {
         expect(Object.values(response).includes(true)).toBe(true)
     })
 
+    test("Invalid authType access", () => {
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Invalid", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(false)
+    })
+
     test("Undefined tokens", () => {
         const req = { cookies: {} }
         const res = {}
         const response = verifyAuth(req, res, { authType: "Simple" })
         //The test is passed if the function returns an object with a false value, no matter its name
         expect(Object.values(response).includes(false)).toBe(true)
+    })
+
+    test("Missing parameters in refresh token", () => {
+        const req = { cookies: { accessToken: testerAccessTokenEmpty, refreshToken: testerAccessTokenEmpty } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(false)
+    })
+
+    test("Refresh token empty", () => {
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenEmpty } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(false)
+    })
+
+    test("Access token username does not correspond to refresh token's one", () => {
+        const req = { cookies: { accessToken: adminAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "Simple", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(false)
+    })
+
+    test("Access token username does not correspond to refresh token's one", () => {
+        const req = { cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid } }
+        const res = {}
+        const response = verifyAuth(req, res, { authType: "User", username: "unreal" })
+        expect(Object.values(response).includes(true)).toBe(false)
     })
 
     /**
@@ -230,6 +265,33 @@ describe("handleDateFilterParams", () => {
 
         expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
     })
+
+    it('should handle invalid from and authenticated user', () => {
+        const req = {
+            cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid },
+            query: { from: '2023-13-29' }
+        }
+        const res = {}
+
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(true)
+
+        expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
+    })
+
+    it('should handle invalid from and authenticated user', () => {
+        const req = {
+            cookies: { accessToken: testerAccessTokenValid, refreshToken: testerAccessTokenValid },
+            query: { from: '2023-04-31' }
+        }
+        const res = {}
+
+        const response = verifyAuth(req, res, { authType: "User", username: "tester" })
+        expect(Object.values(response).includes(true)).toBe(true)
+
+        expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
+    })
+
 
     it('should handle invalid upTo and authenticated user', () => {
         const req = {
