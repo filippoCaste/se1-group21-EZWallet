@@ -185,8 +185,8 @@ export const getGroups = async (req, res) => {
       return res.status(401).json({ error: adminAuth.cause })
     }
 
-  } catch (error) {
-    res.status(500).json(error.message);
+  } catch (err) {
+    res.status(500).json({error: err.message});
   }
 };
 

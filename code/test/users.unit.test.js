@@ -2,7 +2,7 @@ import request from 'supertest';
 import { app } from '../app';
 import { Group, User } from '../models/User.js';
 import { verifyAuth } from '../controllers/utils';
-import { createGroup, getUser, getUsers } from '../controllers/users';
+import { createGroup, getGroups, getUser, getUsers, getGroup } from '../controllers/users';
 
 /**
  * In order to correctly mock the calls to external modules it is necessary to mock them using the following line.
@@ -305,7 +305,74 @@ describe("createGroup", () => {
 });
 
 
-describe("getGroups", () => { })
+describe("getGroups", () => {
+  let testReq;
+  let testRes;
+  let statusSpy;
+  let jsonSpy;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    testReq = {};
+    statusSpy = jest.fn().mockReturnThis();
+    jsonSpy = jest.fn();
+    testRes = {
+      status: statusSpy,
+      json: jsonSpy,
+      locals: {
+        refreshedTokenMessage: "Token message"
+      }
+    };
+  });
+
+  test("Should successfully retrieve all groups", async () => {
+    const groups = [
+      {
+        name: "Group 1",
+        members: [{ email: "user1@test.com" }, { email: "user2@test.com" }]
+      },
+      {
+        name: "Group 2",
+        members: [{ email: "user3@test.com" }, { email: "user4@test.com" }]
+      }
+    ];
+    Group.find.mockResolvedValueOnce(groups);
+
+    const responseData = groups.map(group => ({
+      name: group.name,
+      members: group.members.map(member => member.email)
+    }));
+
+    await getGroups(testReq, testRes);
+
+    expect(testRes.status).toHaveBeenCalledWith(200);
+    expect(testRes.json).toHaveBeenCalledWith({
+      data: responseData,
+      refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+    });
+  });
+
+  test("Should return 401 if not authorized", async () => {
+    const adminAuth = { authorized: false, cause: "Unauthorized" };
+    verifyAuth.mockReturnValueOnce(adminAuth);
+
+    await getGroups(testReq, testRes);
+
+    expect(statusSpy).toHaveBeenCalledWith(401);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: adminAuth.cause });
+  });
+
+  test("Should return 500 if there is a Server Error", async () => {
+    verifyAuth.mockReturnValueOnce({ authorized: true });
+    Group.find.mockRejectedValueOnce(new Error("Server error"));
+
+    await getGroups(testReq, testRes);
+
+    expect(statusSpy).toHaveBeenCalledWith(500);
+    expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
+  });
+});
+
 
 describe("getGroup", () => { })
 
