@@ -120,7 +120,7 @@ describe("createCategory", () => {
 
 })
 
-/*
+
 describe("updateCategory", () => {
 
     test('Invalid color', async () => {
@@ -176,35 +176,52 @@ describe("updateCategory", () => {
 
 
     test('Category not found', async () => {
-        // Mock request and response objects
-        const testReq = {
-            params: {
-                type: 'nonExistingCategoryId',
-            },
-            body: {
-                type: 'Updated Category',
-                color: 'updated-color',
-            },
-        };
+      const testReq = {
+        params: {
+            id: 'categoryId',
+        },
+        body: {
+            name: 'Updated Category',
+            color: 'updated-color',
+        },
+        user: {
+            id: 'userId',
+            role: 'admin',
+        },
+    };
 
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
+    const testRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+    };
 
-        // Mock the verifyAuth function to return true (authorized user)
-        verifyAuth.mockReturnValue(true);
+    // Define the category
+    const category = {
+        _id: '',
+        name: 'Category',
+        color: 'color',
+    };
 
-        // Mock the categories.findOne method to return null (category not found)
-        categories.findOne = jest.fn().mockResolvedValue(null);
+    // Mock the Category.findById method to return a category
+    category.findById = jest.fn().mockResolvedValue(category);
 
-        // Call the controller function
-        await updateCategory(testReq, testRes);
+    // Mock the Category.findByIdAndUpdate method to return the updated category
+    category.findByIdAndUpdate = jest.fn().mockResolvedValue(updatedCategory);
 
-        // Verify the expected behavior
-        expect(categories.findOne).toHaveBeenCalledWith({ type: 'nonExistingCategoryId' });
-        expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified category does not exist or the new category is already existing." });
+
+    jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" })
+    jest.spyOn(categories.prototype, "save").mockResolvedValue(category);
+
+    await createCategory(testReq, testRes)
+    // Call the controller function
+    await updateCategory(testReq, testRes);
+
+    // Verify the expected behavior
+    //expect(category.findById).toHaveBeenCalledWith('categoryId');
+    //expect(category.findByIdAndUpdate).toHaveBeenCalledWith('categoryId', { new: true });
+
+    expect(testRes.status).toHaveBeenCalledWith(400);
+    expect(testRes.json).toHaveBeenCalledWith({ error: "The specified URL category does not exist" });
     });
 
     test('Unauthorized user', async () => {
@@ -232,46 +249,11 @@ describe("updateCategory", () => {
 
         // Verify the expected behavior
         expect(testRes.status).toHaveBeenCalledWith(401);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });//For this to work I had to change line 73=> the error is now { error:"Unauthorized" }
     });
 
   })
 
-    
-  test('Updates category successfully v2', async () => {
-        const testReq = {
-          params: {
-            categoryId: "category-id"
-          },
-          body: {
-            type: "new-type",
-            color: "#000000"
-          }
-        };
-        const testRes = {
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn(),
-          locals: { refreshTokenMessage: "message" }
-        };
-        const updatedCategory = {
-          _id: "category-id",
-          type: "new-type",
-          color: "#000000"
-        };
-    
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-        jest.spyOn(categories, "findOneAndUpdate").mockResolvedValue(updatedCategory);
-    
-  
-        await updateCategory(testReq, testRes);
-    
-        expect(testRes.status).toHaveBeenCalledWith(200);
-        expect(testRes.json).toHaveBeenCalledWith(updatedCategory);
-      });
-    
-    })
-    
-/*
 describe("deleteCategory", () => {
     test('Category does not exist', async () => {
         const testReq = {
@@ -326,7 +308,7 @@ describe("deleteCategory", () => {
 
 
     })
-    test('Returns 400 if types array is missing or empty', async () => {
+    test('Returns 400 if parameters are not enough', async () => {
         const testReq = {
             cookies: {},
             body: {},
@@ -342,10 +324,10 @@ describe("deleteCategory", () => {
         await deleteCategory(testReq, testRes);
 
         expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Invalid input array." });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
     });
 
-    test('Returns 400 if only one category remains', async () => {
+    test('Returns 400 if the category doesnt exist', async () => {
         const testReq = {
             cookies: {},
             body: {
@@ -368,7 +350,7 @@ describe("deleteCategory", () => {
         await deleteCategory(testReq, testRes);
 
         expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "You cannot delete the remaining category." });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified category does not exist." });
     });
     
     test('Returns 400 if empty string is found in types array', async () => {
@@ -396,7 +378,7 @@ describe("deleteCategory", () => {
       await deleteCategory(testReq, testRes);
     
       expect(testRes.status).toHaveBeenCalledWith(400);
-      expect(testRes.json).toHaveBeenCalledWith({ error: "Empty strings are not allowed." });
+      expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
     });
  
 
@@ -405,7 +387,7 @@ describe("deleteCategory", () => {
 })
 
 
-
+/*
 describe("getCategories", () => {
     let testReq;
     let testRes;

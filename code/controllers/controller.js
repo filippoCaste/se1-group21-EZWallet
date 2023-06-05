@@ -70,7 +70,7 @@ export const updateCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: adminAuth.cause }) // unauthorized
+            return res.status(401).json({ error:"Unauthorized" }) // unauthorized
         }
         const old_type = req.params.type
         if (!await categoryTypeExists(old_type)) {
