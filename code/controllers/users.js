@@ -18,7 +18,7 @@ export const getUsers = async (req, res) => {
     }
     return res.status(401).json({ error: adminAuth.cause });
   } catch (error) {
-    res.status(500).json(error.message);
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -33,10 +33,11 @@ export const getUser = async (req, res) => {
   try {
     const userAuth = verifyAuth(req, res, { authType: "User", username: req.params.username });
     const adminAuth = verifyAuth(req, res, { authType: "Admin" });
-    const reqUser = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 });
+    
 
     if (userAuth.authorized || adminAuth.authorized) {
       // User or admin auth successful
+      const reqUser = await User.findOne({ username: req.params.username }, { username: 1, email: 1, role: 1, _id: 0 });
       if (!reqUser) {
         return res.status(400).json({ error: "User not found" });
       }
@@ -46,7 +47,7 @@ export const getUser = async (req, res) => {
     }
 
   } catch (error) {
-    res.status(500).json(error.message);
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -78,7 +79,8 @@ export const createGroup = async (req, res) => {
     let { name, memberEmails } = req.body;
     name = name.trim();
     memberEmails = memberEmails.map((e) => e.trim());
-    const reqUserMail = await User.findOne({ refreshToken: req.cookies.refreshToken }).email;
+    const reqUser = (await User.findOne({ refreshToken: req.cookies.refreshToken }));
+    const reqUserMail = reqUser.email;
 
     // If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
     if (!memberEmails.includes(reqUserMail)) {
@@ -132,10 +134,7 @@ export const createGroup = async (req, res) => {
     }
 
     // Create the new group
-    const group = new Group({ name });
-    group.members = validMembers;
-
-    await group.save();
+    const group = await Group.create( {name,validMembers} );
 
     // Prepare and send the response
     const responseData = {
@@ -151,7 +150,7 @@ export const createGroup = async (req, res) => {
 
 
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({error: err.message});
   }
 };
 
@@ -224,7 +223,7 @@ export const getGroup = async (req, res) => {
       return res.status(401).json({ error: groupAuth.cause })
     }
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({error: err.message});
   }
 };
 
@@ -308,7 +307,7 @@ export const addToGroup = async (req, res) => {
       return res.status(401).json({ error: groupAuth.cause })
     }
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({error: err.message});
   }
 };
 
@@ -402,7 +401,7 @@ export const removeFromGroup = async (req, res) => {
       return res.status(401).json({ error: groupAuth.cause })
     }
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
 
@@ -472,7 +471,7 @@ export const deleteUser = async (req, res) => {
       return res.status(401).json({ error: adminAuth.cause })
     }
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
 
@@ -512,6 +511,6 @@ export const deleteGroup = async (req, res) => {
       return res.status(401).json({ error: adminAuth.cause })
     }
   } catch (err) {
-    res.status(500).json(err.message)
+    res.status(500).json({error: err.message})
   }
 }
