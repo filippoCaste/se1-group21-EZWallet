@@ -426,9 +426,12 @@ export const getTransactionsByGroup = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const name = req.params.name;
-        const group = await Group.findOne({ name });
+        let group = null;
+        if (name) {
+            group = await Group.findOne({ name });
+        }
         if (!group) {
-            return res.status(400).json({ error: 'There is no Group with this name' });
+            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
@@ -479,9 +482,16 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         const name = req.params.name;
         const category = req.params.category;
-        const group = await Group.findOne({ name });
+        let group = null;
+        if (name) {
+            group = await Group.findOne({ name });
+        }
         if (!group) {
-            return res.status(400).json({ error: 'There is no Group with this name' });
+            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+        }
+
+        if(! await categoryTypeExists(category)) {
+            return res.status(400).json({error: "Category type does not exist"})
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
