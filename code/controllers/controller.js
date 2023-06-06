@@ -72,7 +72,7 @@ export const updateCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error:"Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         const old_type = req.params.type
         if (!await categoryTypeExists(old_type)) {
@@ -117,7 +117,7 @@ export const updateCategory = async (req, res) => {
         await categories.updateOne({ type: old_type }, updateCat)
 
         // count of transactions
-        const count = (await transactions.updateMany({ type: old_type }, {$set: {type: type} })).modifiedCount;
+        const count = (await transactions.updateMany({ type: old_type }, { $set: { type: type } })).modifiedCount;
 
         res.status(200).json({ data: { message: "Category updated", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
@@ -137,9 +137,8 @@ export const deleteCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: adminAuth.cause }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
-
         // Check for incomplete request body
         if (!('types' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
@@ -164,20 +163,23 @@ export const deleteCategory = async (req, res) => {
             }
         }
 
-        const oldestCategoryType = await categories.findOne({}, {}, { sort: { createdAt: 1 } }).type;
+        let oldestCategory = await categories.findOne({ type: { $nin: types } }, {}, { sort: { createdAt: 1 } });
 
-        await transactions.updateMany(
-            { type: { $in: types, $ne: oldestCategoryType } },
-            { $set: { type: oldestCategoryType } }
-        );
 
         if (catT === catN) {
-            await categories.deleteMany({ type: { $ne: oldestCategoryType } });
+            oldestCategory = await categories.findOne({}, {}, { sort: { createdAt: 1 } });
+            await categories.deleteMany({ type: { $ne: oldestCategory.type } });
         } else {
             await categories.deleteMany({ type: { $in: types } });
         }
 
-        res.status(200).json({ data: { message: "Categories deleted", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        const update = await transactions.updateMany(
+            { type: { $in: types, $ne: oldestCategory.type } },
+            { $set: { type: oldestCategory.type } }
+        );
+
+
+        res.status(200).json({ data: { message: "Categories deleted", count: update.modifiedCount }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
