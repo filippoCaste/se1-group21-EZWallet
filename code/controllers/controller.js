@@ -20,7 +20,7 @@ export const createCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: adminAuth.cause }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
@@ -29,7 +29,9 @@ export const createCategory = async (req, res) => {
         let { type, color } = req.body;
         type = type.trim();
         color = color.trim();
+        console.log("HERE")
         if (!checkEmptyParam([type, color])) {
+            console.log("THEY ARE EMPTY")
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         // Check if a category with the same type already exists
@@ -51,7 +53,7 @@ export const createCategory = async (req, res) => {
         */
         const new_categories = new categories({ type, color });
         new_categories.save()
-            .then(data => res.status(200).json({ data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
+            .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
