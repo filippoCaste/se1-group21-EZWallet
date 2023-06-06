@@ -44,6 +44,12 @@ export const handleDateFilterParams = (req) => {
             matchStage.date = { ...matchStage.date, $lte: d }
         }
 
+        if(query.upTo && query.from) {
+            if (isAfter(query.from, query.upTo)) {
+                throw Error("Impossible combination");
+            }
+        }
+
         if (query.date) {
             if (query.upTo || query.from) {
                 throw Error("Impossible combination");
@@ -90,6 +96,28 @@ function validDate(date) {
         }
     }
     return true;
+}
+
+/**
+ * Is date 1 after date2?
+ * @param {*} date1 
+ * @param {*} date2 
+ */
+function isAfter(p1, p2) {
+    const date1 = new Date(p1);
+    const date2 = new Date(p2);
+    if (date1.getFullYear() > date2.getFullYear()) {
+        return true;
+    } else if (date1.getFullYear() === date2.getFullYear()) {
+        if (date1.getMonth() > date2.getMonth()) {
+            return true;
+        } else if (date1.getMonth() === date2.getMonth()) {
+            if (date1.getDate() > date2.getDate()) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 // HOW TO USE VERIFYAUTH

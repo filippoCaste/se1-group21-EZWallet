@@ -78,6 +78,10 @@ export const createGroup = async (req, res) => {
 
     let { name, memberEmails } = req.body;
     name = name.trim();
+    // Check for empty strings
+    if (name.trim().length === 0) {
+      return res.status(400).json({ error: "Empty fields are not allowed" });
+    }
     memberEmails = memberEmails.map((e) => e.trim());
     const reqUser = (await User.findOne({ refreshToken: req.cookies.refreshToken }));
     const reqUserMail = reqUser.email;
@@ -86,10 +90,7 @@ export const createGroup = async (req, res) => {
     if (!memberEmails.includes(reqUserMail)) {
       memberEmails.push(reqUserMail);
     }
-    // Check for empty strings
-    if (name.trim().length === 0) {
-      return res.status(400).json({ error: "Empty fields are not allowed" });
-    }
+    
 
     // Check if a group with the same name already exists
     const existingGroup = await Group.findOne({ name });
@@ -149,8 +150,8 @@ export const createGroup = async (req, res) => {
     res.status(200).json({ data: responseData, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
 
-  } catch (err) {
-    res.status(500).json({error: err.message});
+  } catch (error) {
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -185,7 +186,7 @@ export const getGroups = async (req, res) => {
     }
 
   } catch (error) {
-    res.status(500).json(error.message);
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -222,8 +223,8 @@ export const getGroup = async (req, res) => {
     } else {
       return res.status(401).json({ error: groupAuth.cause })
     }
-  } catch (err) {
-    res.status(500).json({error: err.message});
+  } catch (error) {
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -287,16 +288,20 @@ export const addToGroup = async (req, res) => {
         return res.status(400).json({ error: 'Member emails either do not exist or are already in a group' });
       }
 
-      group.members = [...group.members, ...validMembers];
-
+      const newGroupMembers = [...group.members, ...validMembers];
+      const groupUpdate = {
+        name: name,
+        members : newGroupMembers
+      }
+      await Group.updateOne({name: name}, groupUpdate)
       // Save the updated group
-      await group.save();
+      
 
       // Prepare the response data
       const responseData = {
         group: {
-          name: group.name,
-          members: group.members.map(member => member.email)
+          name: groupUpdate.name,
+          members: groupUpdate.members.map(member => member.email)
         },
         alreadyInGroup,
         membersNotFound
@@ -306,8 +311,8 @@ export const addToGroup = async (req, res) => {
     } else {
       return res.status(401).json({ error: groupAuth.cause })
     }
-  } catch (err) {
-    res.status(500).json({error: err.message});
+  } catch (error) {
+    res.status(500).json({error: error.message});
   }
 };
 
@@ -381,16 +386,17 @@ export const removeFromGroup = async (req, res) => {
         remainingMembers = group.members.filter(member => !memberEmails.includes(member.email));
       }
 
-      group.members = remainingMembers;
+      const groupUpdate = {
+        name: name,
+        members : remainingMembers
+      }
+      await Group.updateOne({name: name}, groupUpdate)
+      
 
-      // Save the updated group
-      await group.save();
-
-      // Prepare the response data
       const responseData = {
         group: {
-          name: group.name,
-          members: remainingMembers.map(member => member.email)
+          name: groupUpdate.name,
+          members: groupUpdate.members.map(member => member.email)
         },
         notInGroup,
         membersNotFound
@@ -400,8 +406,8 @@ export const removeFromGroup = async (req, res) => {
     } else {
       return res.status(401).json({ error: groupAuth.cause })
     }
-  } catch (err) {
-    res.status(500).json({error: err.message})
+  } catch (error) {
+    res.status(500).json({error: error.message})
   }
 }
 
@@ -452,7 +458,11 @@ export const deleteUser = async (req, res) => {
           await Group.deleteOne({ name: group.name })
         } else {
           group.members = group.members.filter(member => member.email !== email);
-          await group.save();
+          const groupUpdate = {
+            name: group.name,
+            members : group.members
+          }
+          await Group.updateOne({name: group.name}, groupUpdate)
         }
         deletedFromGroup = true;
       }
@@ -470,12 +480,10 @@ export const deleteUser = async (req, res) => {
     } else {
       return res.status(401).json({ error: adminAuth.cause })
     }
-  } catch (err) {
-    res.status(500).json({error: err.message})
+  } catch (error) {
+    res.status(500).json({error: error.message})
   }
 }
-
-
 /**
  * Delete a group
   - Request Body Content: A string equal to the `name` of the group to be deleted
@@ -510,7 +518,7 @@ export const deleteGroup = async (req, res) => {
     } else {
       return res.status(401).json({ error: adminAuth.cause })
     }
-  } catch (err) {
-    res.status(500).json({error: err.message})
+  } catch (error) {
+    res.status(500).json({error: error.message})
   }
 }

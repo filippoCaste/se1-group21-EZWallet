@@ -20,7 +20,7 @@ export const createCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: adminAuth.cause }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         // Check for incomplete request body
         if (!('type' in req.body) || !('color' in req.body)) {
@@ -51,7 +51,7 @@ export const createCategory = async (req, res) => {
         */
         const new_categories = new categories({ type, color });
         new_categories.save()
-            .then(data => res.status(200).json({ data, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
+            .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
             .catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -70,7 +70,7 @@ export const updateCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error:"Unauthorized" }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
         const old_type = req.params.type
         if (!await categoryTypeExists(old_type)) {
@@ -115,7 +115,7 @@ export const updateCategory = async (req, res) => {
         await categories.updateOne({ type: old_type }, updateCat)
 
         // count of transactions
-        const count = (await transactions.countDocuments({ type: type }));
+        const count = (await transactions.updateMany({ type: old_type }, { $set: { type: type } })).modifiedCount;
 
         res.status(200).json({ data: { message: "Category updated", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
@@ -135,14 +135,16 @@ export const deleteCategory = async (req, res) => {
     try {
         const adminAuth = verifyAuth(req, res, { authType: "Admin" });
         if (!adminAuth.authorized) {
-            return res.status(401).json({ error: adminAuth.cause }) // unauthorized
+            return res.status(401).json({ error: "Unauthorized" }) // unauthorized
         }
-
         // Check for incomplete request body
         if (!('types' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { types } = req.body;
+        if (types.length===0){
+            return res.status(400).json({ error: "The array passed in the request body is empty" });
+        }
         types = types.map((t) => t.trim());
         if (!checkEmptyParam(types)) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
@@ -162,20 +164,23 @@ export const deleteCategory = async (req, res) => {
             }
         }
 
-        const oldestCategoryType = await categories.findOne({}, {}, { sort: { createdAt: 1 } }).type;
+        let oldestCategory = await categories.findOne({ type: { $nin: types } }, {}, { sort: { createdAt: 1 } });
 
-        await transactions.updateMany(
-            { type: { $in: types, $ne: oldestCategoryType } },
-            { $set: { type: oldestCategoryType } }
-        );
 
         if (catT === catN) {
-            await categories.deleteMany({ type: { $ne: oldestCategoryType } });
+            oldestCategory = await categories.findOne({}, {}, { sort: { createdAt: 1 } });
+            await categories.deleteMany({ type: { $ne: oldestCategory.type } });
         } else {
             await categories.deleteMany({ type: { $in: types } });
         }
 
-        res.status(200).json({ data: { message: "Categories deleted", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
+        const update = await transactions.updateMany(
+            { type: { $in: types, $ne: oldestCategory.type } },
+            { $set: { type: oldestCategory.type } }
+        );
+
+
+        res.status(200).json({ data: { message: "Categories deleted", count: update.modifiedCount }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -214,6 +219,10 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const usernameURL = req.params.username;
+        if (!(await userExistsByUsername(usernameURL))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
+
         const userAuth = verifyAuth(req, res, { authType: "User", username: usernameURL });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
@@ -238,14 +247,15 @@ export const createTransaction = async (req, res) => {
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided username does not exist." });
         }
-        if (!(await userExistsByUsername(usernameURL))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-        const amountCheck = parseFloat(amount);
-        if (isNaN(amountCheck)) {
+        let amountCheck = NaN;
+        try {
+            amountCheck = parseFloat(amount);
+            if (isNaN(amountCheck) || amountCheck == undefined) {
+                throw Error("nok")
+            }
+        } catch(error) {
             return res.status(400).json({ error: "Invalid amount." })
         }
-
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
