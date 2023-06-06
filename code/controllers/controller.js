@@ -144,6 +144,9 @@ export const deleteCategory = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { types } = req.body;
+        if (types.length===0){
+            return res.status(400).json({ error: "The array passed in the request body is empty" });
+        }
         types = types.map((t) => t.trim());
         if (!checkEmptyParam(types)) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
