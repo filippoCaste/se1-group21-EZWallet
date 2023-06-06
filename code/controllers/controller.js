@@ -115,7 +115,7 @@ export const updateCategory = async (req, res) => {
         await categories.updateOne({ type: old_type }, updateCat)
 
         // count of transactions
-        const count = (await transactions.countDocuments({ type: type }));
+        const count = (await transactions.updateMany({ type: old_type }, {$set: {type: type} })).modifiedCount;
 
         res.status(200).json({ data: { message: "Category updated", count: count }, refreshedTokenMessage: res.locals.refreshedTokenMessage });
 
