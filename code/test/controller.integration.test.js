@@ -46,6 +46,12 @@ const testerAccessTokenValid = jwt.sign({
     role: "Regular"
 }, process.env.ACCESS_KEY, { expiresIn: '1y' })
 
+const newAccessTokenValid = jwt.sign({
+    email: "new@email.com",
+    username: "new",
+    role: "Regular"
+}, process.env.ACCESS_KEY, { expiresIn: '1y' })
+
 //These tokens can be used in order to test the specific authentication error scenarios inside verifyAuth (no need to have multiple authentication error tests for the same route)
 const testerAccessTokenExpired = jwt.sign({
     email: "tester@test.com",
@@ -1718,37 +1724,777 @@ describe("createTransaction", () => {
 })
 
 describe("getAllTransactions", () => { 
-    test('Dummy test, change it', () => {
-                expect(true).toBe(true);
-        /*
-        //Check permissions to get Transactions
-        //Show error if no permission 
-        //Show error if no transaction
-        //Display All type transactions
-        
-*/
+
+    test('getAllTransactions: returns status 200 if okay', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getAllTransactions: returns status 401 if user is not admin', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/admin/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
     });
 })
 
 describe("getTransactionsByUser", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-        //Check permissions to get Transactions
-        //Show error if no permission 
-        //Check selected user transactions exist
-        //Show error if user transactions doesnt exist
-        //Display only user transactions
+
+    test('getTransactionsByUser: returns status 200 if okay - admin route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/tester") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data.length).toBe(2);
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUser: returns status 400 if user dooes not exist - admin route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/ghost") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUser: returns status 200 if okay - user route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data.length).toBe(2);
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUser: returns status 200 if okay - user route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions?max=50") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data.length).toBe(1);
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUser: returns status 400 if user dooes not exist - user route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/ghost/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+
+    test('getTransactionsByUser: returns status 401 if user is not admin', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/tester") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUser: returns status 401 if user is not the same as the one provided in the route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+                }, {
+                    username: "new",
+                    email: "new@email.com",
+                    password: "new",
+                    refreshToken: adminAccessTokenValid,
+                }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
     });
 })
 
 describe("getTransactionsByUserByCategory", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-        //Check permissions to get Transactions
-        //Show error if no permission 
-        //Check selected category transactions exist
-        //Show error if category transactions doesnt exist
-        //Display only user transactions
+
+    test('getTransactionsByUserByCategory: returns status 200 if okay - user route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions/category/food") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data.length).toBe(2);
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+
+    test('getTransactionsByUserByCategory: returns status 401 if user is not admin - admin route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/ghost/category/food") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUserByCategory: returns status 400 if cateogry does not exist - admin route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/tester/category/unreal") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUserByCategory: returns status 400 if user is not existing - admin route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/transactions/users/ghost/category/food") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUserByCategory: returns status 400 if category does not exist - user route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions/category/unreal") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('getTransactionsByUserByCategory: returns status 401 if user is not the same as the one provided in the route - user', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }, {
+                username: "new",
+                email: "new@email.com",
+                password: "new",
+                refreshToken: adminAccessTokenValid,
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .get("/api/users/tester/transactions/category/food") //Route to call
+                        .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
     });
 })
 
@@ -1775,28 +2521,668 @@ describe("getTransactionsByGroupByCategory", () => {
 })
 
 describe("deleteTransaction", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-        //Check permissions to delete Transactions
-        //Show error if no permission
-        //Show error if no transaction
-        //Delete only selected transaction
 
-        
+    test('deleteTransaction: returns status 200 if okay', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    const testData = await transactions.findOne({username: "tester"})
+                    request(app)
+                        .delete("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _id: testData.id })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data).toHaveProperty("message");
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransaction: returns status 400 if the request body does not contain all the necessary attributes', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .delete("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({  })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransaction: returns status 400 if the _id in the request body is an empty string', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .delete("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _id: "" })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransaction: returns status 400 if the username passed as a route parameter does not represent a user in the database', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    const testData = await transactions.findOne({ username: "tester" })
+                    request(app)
+                        .delete("/api/users/Ghost/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _id: testData.id })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransaction: returns status 400 if the _id in the request body does not represent a transaction in the database', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    request(app)
+                        .delete("/api/users/tester/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _id: "fakeid" })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+    
+    test('deleteTransaction: returns status 400 if the _id in the request body represents a transaction made by a different user than the one in the route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    const testData = await transactions.findOne({ username: "tester" })
+                    request(app)
+                        .delete("/api/users/admin/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _id: testData.id })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    
+    test('deleteTransaction: returns status 401 if user is not the same as the one in the route', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .delete("/api/users/admin/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({_id: "fakeid"})
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
     });
 })
 
 describe("deleteTransactions", () => { 
-    test('Dummy test, change it', () => {
-        expect(true).toBe(true);
-          //Check permissions to delete Transactions
-        //Show error if no permission
-        //Show error if no transaction
-        //Delete ALL transactions
 
+    test('deleteTransactions: returns status 200 if okay', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    let testData = (await transactions.find({ username: "tester" }))
+                    testData = testData.map((d) => d._id)
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _ids: testData })
+                        .then(async (response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data).toHaveProperty("message");
+                            expect((await transactions.find({ })).length).toBe(1)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransactions: returns status 200 if okay', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    let testData = (await transactions.find({ username: "admin" }))
+                    testData = testData.map((d) => d._id)
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _ids: testData })
+                        .then(async (response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(200)
+                            expect(response.body.data).toHaveProperty("message");
+                            expect((await transactions.find({})).length).toBe(2)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransactions: returns status 400 if the request body does not contain all the necessary attributes', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ unusefuldata: "i feel invisible" })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransactions: returns status 400 if at least one of the ids in the array is an empty string', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    let testData = (await transactions.find({ username: "admin" }))
+                    testData = [...testData.map((d) => d._id), ""]
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _ids: testData })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransactions: returns status 400 if at least one of the ids in the array does not represent a transaction in the database', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(async () => {
+                    let testData = (await transactions.find({ username: "admin" }))
+                    testData = [...testData.map((d) => d._id), "plants are awesome"]
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _ids: testData })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(400)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
+    });
+
+    test('deleteTransactions: returns status 401 if user is not admin', (done) => {
+        categories.create([{
+            type: "food",
+            color: "red"
+        }, {
+            type: "drinks",
+            color: "blue"
+        }]).then(() => {
+            //We insert two users in the datbase: an Admin and a user that made two transactions
+            User.insertMany([{
+                username: "tester",
+                email: "tester@test.com",
+                password: "tester",
+                refreshToken: testerAccessTokenValid
+            }, {
+                username: "admin",
+                email: "admin@email.com",
+                password: "admin",
+                refreshToken: adminAccessTokenValid,
+                role: "Admin"
+            }]).then(() => {
+                //We want to see that the function changes the type of existing transactions of the same type, so we create two transactions
+                transactions.insertMany([{
+                    username: "tester",
+                    type: "food",
+                    amount: 20
+                }, {
+                    username: "tester",
+                    type: "food",
+                    amount: 100
+                }, {
+                    username: "admin",
+                    type: "drinks",
+                    amount: 10000
+                }]).then(() => {
+                    request(app)
+                        .delete("/api/transactions") //Route to call
+                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .send({ _ids: ["fakeid", "noId here"] })
+                        .then((response) => { //After obtaining the response, we check its actual body content
+                            expect(response.status).toBe(401)
+                            const errorMessage = response.body.error ? true : response.body.message ? true : false
+                            expect(errorMessage).toBe(true)
+                            done()
+                        })
+                })
+            })
+        })
     });
 })
-
-
-
-//STILL MISSING NEW IMPLEMENTED FUNCTIONS TESTS
