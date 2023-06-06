@@ -528,6 +528,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const username = req.params.username;
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
+
         const userAuth = verifyAuth(req, res, { authType: "User", username });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
@@ -541,9 +545,6 @@ export const deleteTransaction = async (req, res) => {
         _id = _id.trim();
         if (!checkEmptyParam([_id])) {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
-        }
-        if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
         }
         let transaction = null;
         if (isValidObjectId(_id)) {
