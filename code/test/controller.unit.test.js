@@ -387,7 +387,7 @@ describe("deleteCategory", () => {
 })
 
 
-/*
+
 describe("getCategories", () => {
     let testReq;
     let testRes;
@@ -447,13 +447,6 @@ describe("getCategories", () => {
     });
   });
   
-
-//ESTAS SON LAS QUE NO ME HAN SALIDO HASTA AHORA. ESTOY INTENTANDO HACERLAS TODAS
-
-  //Continuar por aquí-------------------------------------------
-*/
-
-
 describe("createTransaction", () => {
     let testReq;
     let testRes;
