@@ -53,7 +53,7 @@ export const createCategory = async (req, res) => {
         const new_categories = new categories({ type, color });
         new_categories.save()
             .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            .catch(err => { throw err })
+            //.catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -143,7 +143,7 @@ export const deleteCategory = async (req, res) => {
             return res.status(400).json({ error: "Not enough parameters." });
         }
         let { types } = req.body;
-        if (types.length===0){
+        if (types.length === 0) {
             return res.status(400).json({ error: "The array passed in the request body is empty" });
         }
         types = types.map((t) => t.trim());
@@ -166,7 +166,6 @@ export const deleteCategory = async (req, res) => {
         }
 
         let oldestCategory = await categories.findOne({ type: { $nin: types } }, {}, { sort: { createdAt: 1 } });
-
 
         if (catT === catN) {
             oldestCategory = await categories.findOne({}, {}, { sort: { createdAt: 1 } });
@@ -254,14 +253,13 @@ export const createTransaction = async (req, res) => {
             if (isNaN(amountCheck) || amountCheck == undefined) {
                 throw Error("nok")
             }
-        } catch(error) {
+        } catch (error) {
             return res.status(400).json({ error: "Invalid amount." })
         }
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            .catch(err => { throw err })
-
+          //  .catch(err => { throw err })
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -297,7 +295,7 @@ export const getAllTransactions = async (req, res) => {
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
             res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-        }).catch(error => { throw (error) })
+        })//.catch(error => { throw (error) })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -530,10 +528,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const username = req.params.username;
-        /*const userAuth = verifyAuth(req, res, { authType: "User", username });
+        const userAuth = verifyAuth(req, res, { authType: "User", username });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
-        }*/
+        }
 
         // Check for incomplete request body
         if (!('_id' in req.body)) {
@@ -547,9 +545,9 @@ export const deleteTransaction = async (req, res) => {
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided URL username does not exist." });
         }
-        const transaction = null;
-        if(isValidObjectId(_id)){
-         transaction = await transactions.findById(_id);
+        let transaction = null;
+        if (isValidObjectId(_id)) {
+            transaction = await transactions.findById(_id);
         }
         if (!transaction) {
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
@@ -590,10 +588,10 @@ export const deleteTransactions = async (req, res) => {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         for (let _id of _ids) {
-        const transaction = null;
-        if(isValidObjectId(_id)){
-         transaction = await transactions.findById(_id);
-        }
+            let transaction = null;
+            if (isValidObjectId(_id)) {
+                transaction = await transactions.findById(_id);
+            }
             if (!transaction) {
                 return res.status(400).json({ error: "One of the provided ids does not match with any transaction in the db." });
             }
