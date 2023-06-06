@@ -317,16 +317,15 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const username = req.params.username;
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const userAuth = verifyAuth(req, res, { authType: "User", username })
         const route = req.path;
 
         // Check authorization
         if ((adminAuth.authorized && route === `/transactions/users/${username}`) || (userAuth.authorized && route === `/users/${username}/transactions`)) {
-
-            if (!(await userExistsByUsername(username))) {
-                return res.status(400).json({ error: "The provided URL username does not exist." });
-            }
             let filterAmount = {};
             let filterDate = {};
             if (route === `/users/${username}/transactions`) {
@@ -346,7 +345,9 @@ export const getTransactionsByUser = async (req, res) => {
                 { $unwind: "$categories_info" }
             ])
                 .then((result) => {
-                    let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                    let data = result
+                        .map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
+                        .filter((v) => v.username === username)
                     res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
                 })
 
