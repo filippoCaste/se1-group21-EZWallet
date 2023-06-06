@@ -29,9 +29,7 @@ export const createCategory = async (req, res) => {
         let { type, color } = req.body;
         type = type.trim();
         color = color.trim();
-        console.log("HERE")
         if (!checkEmptyParam([type, color])) {
-            console.log("THEY ARE EMPTY")
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         // Check if a category with the same type already exists
@@ -221,6 +219,10 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const usernameURL = req.params.username;
+        if (!(await userExistsByUsername(usernameURL))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
+
         const userAuth = verifyAuth(req, res, { authType: "User", username: usernameURL });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
@@ -245,14 +247,15 @@ export const createTransaction = async (req, res) => {
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided username does not exist." });
         }
-        if (!(await userExistsByUsername(usernameURL))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-        const amountCheck = parseFloat(amount);
-        if (isNaN(amountCheck)) {
+        let amountCheck = NaN;
+        try {
+            amountCheck = parseFloat(amount);
+            if (isNaN(amountCheck) || amountCheck == undefined) {
+                throw Error("nok")
+            }
+        } catch(error) {
             return res.status(400).json({ error: "Invalid amount." })
         }
-
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
