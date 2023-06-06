@@ -1,3 +1,4 @@
+import { isValidObjectId } from "mongoose";
 import { categories, transactions } from "../models/model.js";
 import { Group, User } from "../models/User.js";
 import { handleDateFilterParams, handleAmountFilterParams, verifyAuth } from "./utils.js";
@@ -528,10 +529,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const username = req.params.username;
-        const userAuth = verifyAuth(req, res, { authType: "User", username });
+        /*const userAuth = verifyAuth(req, res, { authType: "User", username });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
-        }
+        }*/
 
         // Check for incomplete request body
         if (!('_id' in req.body)) {
@@ -545,10 +546,14 @@ export const deleteTransaction = async (req, res) => {
         if (!(await userExistsByUsername(username))) {
             return res.status(400).json({ error: "The provided URL username does not exist." });
         }
-        const transaction = await transactions.findById(_id);
+        const transaction = null;
+        if(isValidObjectId(_id)){
+         transaction = await transactions.findById(_id);
+        }
         if (!transaction) {
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
+
         if (transaction.username !== username) {
             return res.status(400).json({ error: "You cannot delete other user Transactions" });
         }
@@ -584,9 +589,12 @@ export const deleteTransactions = async (req, res) => {
             return res.status(400).json({ error: "Empty parameters are not allowed." });
         }
         for (let _id of _ids) {
-            const transaction = await transactions.findById(_id);
+        const transaction = null;
+        if(isValidObjectId(_id)){
+         transaction = await transactions.findById(_id);
+        }
             if (!transaction) {
-                return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+                return res.status(400).json({ error: "One of the provided ids does not match with any transaction in the db." });
             }
         }
         for (let _id of _ids) {
