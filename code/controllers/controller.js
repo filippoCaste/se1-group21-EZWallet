@@ -53,7 +53,7 @@ export const createCategory = async (req, res) => {
         const new_categories = new categories({ type, color });
         new_categories.save()
             .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            .catch(err => { throw err })
+            //.catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -167,7 +167,6 @@ export const deleteCategory = async (req, res) => {
 
         let oldestCategory = await categories.findOne({ type: { $nin: types } }, {}, { sort: { createdAt: 1 } });
 
-
         if (catT === catN) {
             oldestCategory = await categories.findOne({}, {}, { sort: { createdAt: 1 } });
             await categories.deleteMany({ type: { $ne: oldestCategory.type } });
@@ -260,8 +259,7 @@ export const createTransaction = async (req, res) => {
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            .catch(err => { throw err })
-
+          //  .catch(err => { throw err })
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -297,7 +295,7 @@ export const getAllTransactions = async (req, res) => {
         ]).then((result) => {
             let data = result.map(v => Object.assign({}, { username: v.username, amount: v.amount, type: v.type, date: v.date, color: v.categories_info.color }))
             res.status(200).json({ data: data, refreshedTokenMessage: res.locals.refreshedTokenMessage });
-        }).catch(error => { throw (error) })
+        })//.catch(error => { throw (error) })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }

@@ -5,16 +5,13 @@ import { createCategory, categoryTypeExists, userExistsByUsername, updateCategor
 import * as Utils from '../controllers/utils'
 import { verifyAuth } from '../controllers/utils.js';
 import { Group, User } from '../models/User';
-import mongoose, { isValidObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 
 // Mock the dependencies
 jest.mock('../models/User.js');
 jest.mock('../controllers/utils.js');
 jest.mock('../models/model.js');
-
-
-
 
 /*
 
@@ -121,273 +118,209 @@ describe("createCategory", () => {
 
 })
 
-
 describe("updateCategory", () => {
+    let testReq;
+    let testRes;
+    let statusSpy;
+    let jsonSpy;
+    beforeEach(() => {
+        jest.clearAllMocks();
+        categories.findOne.mockClear();
+        categories.updateOne.mockClear();
+        transactions.updateMany.mockClear();
+        verifyAuth.mockClear();
 
-    test('Invalid color', async () => {
-        // Mock request and response objects
-        const testReq = {
+        testReq = {
             params: {
-                id: 'categoryId',
+                type: "old_type"
             },
             body: {
-                name: 'Updated Category',
-                color: 'updated-color',
-            },
-            user: {
-                id: 'userId',
-                role: 'admin',
-            },
+                type: "new_type",
+                color: "new_color"
+            }
+        }
+        statusSpy = jest.fn().mockReturnThis();
+        jsonSpy = jest.fn();
+        testRes = {
+            status: statusSpy,
+            json: jsonSpy,
+            locals: {
+                refreshedTokenMessage: "Token message"
+            }
         };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        // Define the category
-        const category = {
-            _id: 'categoryId',
-            name: 'Category',
-            color: 'color',
-        };
-
-        // Mock the Category.findById method to return a category
-        category.findById = jest.fn().mockResolvedValue(category);
-
-        // Mock the Category.findByIdAndUpdate method to return the updated category
-        category.findByIdAndUpdate = jest.fn().mockResolvedValue(updatedCategory);
-
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" })
-        jest.spyOn(categories.prototype, "save").mockResolvedValue(category);
-
-        await createCategory(testReq, testRes)
-        // Call the controller function
-        await updateCategory(testReq, testRes);
-
-        // Verify the expected behavior
-        //expect(category.findById).toHaveBeenCalledWith('categoryId');
-        //expect(category.findByIdAndUpdate).toHaveBeenCalledWith('categoryId', { new: true });
-
-        expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
+        verifyAuth.mockReturnValue({ authorized: true });
+        categories.updateOne.mockResolvedValue({ nModified: 1 });
+        transactions.updateMany.mockResolvedValue({ modifiedCount: 2 });
     });
 
-
-
-    test('Category not found', async () => {
-        const testReq = {
-            params: {
-                id: 'categoryId',
-            },
-            body: {
-                name: 'Updated Category',
-                color: 'updated-color',
-            },
-            user: {
-                id: 'userId',
-                role: 'admin',
-            },
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        // Define the category
-        const category = {
-            _id: '',
-            name: 'Category',
-            color: 'color',
-        };
-
-        // Mock the Category.findById method to return a category
-        category.findById = jest.fn().mockResolvedValue(category);
-
-        // Mock the Category.findByIdAndUpdate method to return the updated category
-        category.findByIdAndUpdate = jest.fn().mockResolvedValue(updatedCategory);
-
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" })
-        jest.spyOn(categories.prototype, "save").mockResolvedValue(category);
-
-        await createCategory(testReq, testRes)
-        // Call the controller function
+    test("Should successfully update a Category", async () => {
+        categories.findOne.mockResolvedValueOnce({});
         await updateCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(200);
+        expect(testRes.json).toHaveBeenCalledWith({
+            data: {
+                message: "Category updated",
+                count: 2
+            },
+            refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+        });
+    });
+    test("Should return 401 if the User is not authorized", async () => {
+        verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
+        await updateCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(401);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+    });
+    test("Should return 400 if the specified URL category does not exist", async () => {
 
-        // Verify the expected behavior
-        //expect(category.findById).toHaveBeenCalledWith('categoryId');
-        //expect(category.findByIdAndUpdate).toHaveBeenCalledWith('categoryId', { new: true });
+        categories.findOne.mockResolvedValueOnce(null);
 
+        await updateCategory(testReq, testRes);
         expect(testRes.status).toHaveBeenCalledWith(400);
         expect(testRes.json).toHaveBeenCalledWith({ error: "The specified URL category does not exist" });
     });
-
-    test('Unauthorized user', async () => {
-        // Mock request and response objects
-        const testReq = {
-            params: {
-                type: 'categoryId',
-            },
-            body: {
-                type: 'Updated Category',
-                color: 'updated-color',
-            },
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        // Mock the verifyAuth function to return false (unauthorized user)
-        verifyAuth.mockReturnValue(false);
-
-        // Call the controller function
+    test("Should return 400 if not enough parameters are provided in the request body", async () => {
+        testReq.body = { type: "new_type" };
+        categories.findOne.mockResolvedValueOnce({});
         await updateCategory(testReq, testRes);
-
-        // Verify the expected behavior
-        expect(testRes.status).toHaveBeenCalledWith(401);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });//For this to work I had to change line 73=> the error is now { error:"Unauthorized" }
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
     });
-
-})
+    test("Should return 400 if any parameter in the request body is an empty string", async () => {
+        testReq.body.type = "";
+        categories.findOne.mockResolvedValueOnce({});
+        await updateCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
+    });
+    test("Should return 400 if the specified URL category already exists", async () => {
+        categories.findOne.mockResolvedValueOnce({});
+        categories.findOne.mockResolvedValueOnce({});
+        await updateCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified URL category already exist" });
+    });
+    test("Should return 500 if there is a Server Error", async () => {
+        categories.findOne.mockRejectedValue(new Error('Server error'));
+        await updateCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(500);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
+    });
+});
 
 describe("deleteCategory", () => {
-    test('Category does not exist', async () => {
-        const testReq = {
+    let testReq;
+    let testRes;
+    let statusSpy;
+    let jsonSpy;
+    beforeEach(() => {
+        jest.clearAllMocks();
+        verifyAuth.mockClear();
+        categories.countDocuments.mockClear();
+        categories.deleteMany.mockClear();
+        categories.findOne.mockClear();
+        transactions.updateMany.mockClear();
+
+        testReq = {
             body: {
-                types: ["investment", "investment"],
-            },
+                types: ["type1", "type2"]
+            }
+        }
+        statusSpy = jest.fn().mockReturnThis();
+        jsonSpy = jest.fn();
+        testRes = {
+            status: statusSpy,
+            json: jsonSpy,
+            locals: {
+                refreshedTokenMessage: "Token message"
+            }
         };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: { refreshedTokenMessage: "message" },
-        };
-
-        const mockCategories = [
-            { type: "investment" },
-            { type: "investment" },
-        ];
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-        jest.spyOn(categories, "find").mockResolvedValue(mockCategories);
-        jest.spyOn(categories, "deleteMany").mockResolvedValue({ deletedCount: 1 });
-        jest.spyOn(transactions, "updateMany").mockResolvedValue({ modifiedCount: 5 });
-
-        await deleteCategory(testReq, testRes);
-
-        expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified category does not exist." });
+        verifyAuth.mockReturnValue({ authorized: true });
+        categories.countDocuments.mockResolvedValue(2);
+        categories.deleteMany.mockResolvedValue({ nModified: 2 });
+        categories.findOne.mockResolvedValue({});
+        transactions.updateMany.mockResolvedValue({ modifiedCount: 2 });
     });
 
-
-    test('Deletes categories successfully', async () => {
-        const testReq = {
-            body: {
-                types: ["category1", "category2"],
-            },
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            locals: { refreshedTokenMessage: "message" },
-        };
-
-        const mockCategories = [
-            { type: "category1" },
-            { type: "category2" },
-        ];
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-
-
-
-    })
-    test('Returns 400 if parameters are not enough', async () => {
-        const testReq = {
-            cookies: {},
-            body: {},
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-
+    test("Should successfully delete categories", async () => {
         await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(200);
+        expect(testRes.json).toHaveBeenCalledWith({
+            data: {
+                message: "Categories deleted",
+                count: 2
+            },
+            refreshedTokenMessage: testRes.locals.refreshedTokenMessage
+        });
+    });
 
+    test("Should return 401 if the User is not authorized", async () => {
+        verifyAuth.mockReturnValue({ authorized: false, cause: "Unauthorized" });
+        await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(401);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+    });
+
+    test("Should return 400 if not enough parameters are provided in the request body", async () => {
+        testReq.body = {};
+        await deleteCategory(testReq, testRes);
         expect(testRes.status).toHaveBeenCalledWith(400);
         expect(testRes.json).toHaveBeenCalledWith({ error: "Not enough parameters." });
     });
 
-    test('Returns 400 if the category doesnt exist', async () => {
-        const testReq = {
-            cookies: {},
-            body: {
-                types: ["category1"],
-            },
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        const mockCategories = [
-            { type: "category1" },
-        ];
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-        jest.spyOn(categories, "find").mockResolvedValue(mockCategories);
-
+    test("Should return 400 if the array passed in the request body is empty", async () => {
+        testReq.body.types = [];
         await deleteCategory(testReq, testRes);
-
         expect(testRes.status).toHaveBeenCalledWith(400);
-        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified category does not exist." });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The array passed in the request body is empty" });
     });
 
-    test('Returns 400 if empty string is found in types array', async () => {
-        const testReq = {
-            cookies: {},
-            body: {
-                types: ["category1", ""],
-            },
-        };
-
-        const testRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        const mockCategories = [
-            { type: "category1" },
-            { type: "category2" },
-        ];
-
-        jest.spyOn(Utils, "verifyAuth").mockReturnValue({ authorized: true, cause: "Authorized" });
-        jest.spyOn(categories, "find").mockResolvedValue(mockCategories);
-        // jest.replaceProperty(Utils, "checkEmptyParam", jest.fn().mockReturnValue(false));
-
+    test("Should return 400 if any parameter in the request body is an empty string", async () => {
+        testReq.body.types = ["type1", ""];
         await deleteCategory(testReq, testRes);
-
         expect(testRes.status).toHaveBeenCalledWith(400);
         expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
     });
 
+    test("Should return 400 if the specified category does not exist", async () => {
+        categories.findOne.mockResolvedValueOnce(null);
+        await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The specified category does not exist." });
+    });
 
+    test("Should return 400 if there is only one category remaining", async () => {
+        categories.countDocuments.mockResolvedValueOnce(1);
+        await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "You cannot delete the remaining category." });
+    });
 
+    test("Should return 400 if there are missing categories to be deleted", async () => {
+        categories.countDocuments.mockResolvedValueOnce(0);
+        await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Missing categories to be deleted" });
+    });
 
-})
+    test("Should delete specified categories and update transactions with the oldest category if not all categories are to be deleted", async () => {
+        categories.countDocuments.mockResolvedValue(3);
 
+        await deleteCategory(testReq, testRes);
+        expect(categories.deleteMany).toHaveBeenCalledWith({ type: { $in: ["type1", "type2"] } });
+        expect(transactions.updateMany).toHaveBeenCalledWith(
+            { type: { $in: ["type1", "type2"], $ne: undefined } },
+            { $set: { type: undefined } }
+        );
+    });
 
+    test("Should return 500 if there is a Server Error", async () => {
+        categories.countDocuments.mockRejectedValue(new Error('Server error'));
+        await deleteCategory(testReq, testRes);
+        expect(testRes.status).toHaveBeenCalledWith(500);
+        expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
+    });
+});
 
 describe("getCategories", () => {
     let testReq;
@@ -1223,7 +1156,6 @@ describe("deleteTransactions", () => {
         expect(jsonSpy).toHaveBeenCalledWith({ error: "Server error" });
     });
 });
-
 
 
 
