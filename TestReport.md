@@ -26,6 +26,22 @@
     (ex: step1: unit A, step 2: unit A+B, step 3: unit A+B+C, etc)> 
     <Some steps may  correspond to unit testing (ex step1 in ex above)>
     <One step will  correspond to API testing, or testing unit route.js>
+
+
+    The integration sequence followed was the mixed one since the units were developed following the integration sequence order, in this way:
+
+    - For some cases Bottom up was applied, following the sequence: 
+            step 1: function A
+            step 2: function B
+            step 3: testing function A + B as if they were a single unit.
+            step 4: test all. If defects are found, they will come from the interaction between fucntions.
+
+    - For some other cases, Top down was applied, following the sequence:
+            step 1: function A
+            step 2: interaction function A-B and A-C
+            step 3: testing function D, and interaction to previous functions.
+            
+
     
 
 
@@ -150,31 +166,43 @@ MISSING THE TECHNIQUE USED!!!
 
 -- controller.unit.test.js
 
-|'createCategory'|'Should successfully create a Category'|unit|--|
-|'createCategory'|'Should return 400 error if the body is missing a parameter'|unit|--|
-|'createCategory'|'Should return 400 if at least one of the parameters in the request body is an empty string'|unit|--|
-|'createCategory'|'Should return 401 if the User is not an authorized'|unit|--|
-|'createCategory'|'Should return 400 if a category with the same type already exists'|unit|--|
-|'createCategory'|'Should return 500 if there is a Server Error'|unit|--|
+|'createCategory'|'Should successfully create a Category'|unit|White Box|
+|'createCategory'|'Should return 400 error if the body is missing a parameter'|unit|White Box|
+|'createCategory'|'Should return 400 if at least one of the parameters in the request body is an empty string'|unit|White Box|
+|'createCategory'|'Should return 401 if the User is not an authorized'|unit|White Box|
+|'createCategory'|'Should return 400 if a category with the same type already exists'|unit|White Box|
+|'createCategory'|'Should return 500 if there is a Server Error'|unit|White Box|
 
-|'updateCategory'|'Invalid color'|unit|--|
-|'updateCategory'|'Category not found'|unit|--|
-|'updateCategory'|'Unauthorized user'|unit|--|
-
-
-|'deleteCategory'|'Category does not exist'|unit|--|
-|'deleteCategory'|'Deletes categories successfully'|unit|--|
-|'deleteCategory'|'Returns 400 if parameters are not enough'|unit|--|
-|'deleteCategory'|'Returns 400 if the category doesnt exist'|unit|--|
-|'deleteCategory'|'Returns 400 if empty string is found in types array'|unit|--|
+|'updateCategory'|'Invalid color'|unit|White Box|
+|'updateCategory'|'Category not found'|unit|White Box|
+|'updateCategory'|'Unauthorized user'|unit|White Box|
 
 
-|'getCategories'|'Should return all categories'|unit|--|
-|'getCategories'|'Should return empty array if there are no categories'|unit|--|
-|'getCategories'|'Should return 401 if User is not authorized'|unit|--|
-|'getCategories'|'Should return 500 if there is a Server Error'|unit|--|
+|'deleteCategory'|'Category does not exist'|unit|White Box|
+|'deleteCategory'|'Deletes categories successfully'|unit|White Box|
+|'deleteCategory'|'Returns 400 if parameters are not enough'|unit|White Box|
+|'deleteCategory'|'Returns 400 if the category doesnt exist'|unit|White Box|
+|'deleteCategory'|'Returns 400 if empty string is found in types array'|unit|White Box|
 
-//KEEP ON WITH CreateTransaction()...
+
+|'getCategories'|'Should return all categories'|unit|White Box|
+|'getCategories'|'Should return empty array if there are no categories'|unit|White Box|
+|'getCategories'|'Should return 401 if User is not authorized'|unit|White Box|
+|'getCategories'|'Should return 500 if there is a Server Error'|unit|White Box|
+
+
+|'createTransaction'|'Should successfully create a transaction'|unit|White Box|
+|'createTransaction'|'Should return 401 if the User is not an authorized'|unit|White Box|
+|'createTransaction'|'Should return 400 if some parameters are missing'|unit|White Box|
+|'createTransaction'|'Should return 400 if some parameters are empty'|unit|White Box|
+|'createTransaction'|'Should return 400 if category does not exist'|unit|White Box|
+|'createTransaction'|'Should return 400 if username and URL username mismatch'|unit|White Box|
+|'createTransaction'|'Should return 400 if amount is invalid'|unit|White Box|
+|'createTransaction'|'Should return 500 if there is a Server Error'|unit|White Box|
+
+CONTINUE WITH GET ALL TRANSACTIONS
+
+
 
 
 
