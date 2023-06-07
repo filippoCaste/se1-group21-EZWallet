@@ -1,14 +1,164 @@
 import request from 'supertest';
-import { app } from '../app'; // Your express app
+import { app } from '../app'; 
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { User } from '../models/User'; // Your User model
+import { User } from '../models/User'; 
 
 dotenv.config();
 
+describe('POST /register', () => {
+  
+  beforeAll(async () => {
+    const dbName = "testDatabase";
+    const url = `${process.env.MONGO_URI}/${dbName}`;
 
+    await mongoose.connect(url, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.close();
+  });
+
+  // Test Case 1: Successful registration
+  it('should successfully register a user', async () => {
+    const res = await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "mario.red@email.com", password: "securePass"});
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('message', 'User added successfully');
+  });
+
+  // Test Case 2: Failure due to lack of necessary attributes in the request body
+  it('should fail to register due to missing attributes', async () => {
+    const res = await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "mario.red@email.com"}); // Missing password
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 3: Failure due to empty string parameter
+  it('should fail to register due to empty string parameter', async () => {
+    const res = await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "", password: "securePass"}); // Email is empty
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Empty fields are not allowed');
+  });
+
+  // Test Case 4: Failure due to invalid email format
+  it('should fail to register due to invalid email format', async () => {
+    const res = await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "mario.red", password: "securePass"}); // Invalid email
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Invalid email format');
+  });
+
+  // Test Case 5: Failure due to username or email already existing
+  it('should fail to register due to username or email already existing', async () => {
+    // First create a user
+    await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "mario.red@email.com", password: "securePass"});
+
+    // Then try to create the same user again
+    const res = await request(app)
+      .post('/api/register')
+      .send({username: "Mario", email: "mario.red@email.com", password: "securePass"}); // Username and email already exist
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Username or email already in use');
+  });
+
+});
+
+describe('POST /admin', () => {
+  
+  beforeAll(async () => {
+    const dbName = "testDatabase";
+    const url = `${process.env.MONGO_URI}/${dbName}`;
+
+    await mongoose.connect(url, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.close();
+  });
+
+  // Test Case 1: Successful registration
+  it('should successfully register an admin', async () => {
+    const res = await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "admin@email.com", password: "securePass"});
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('message', 'Admin added successfully');
+  });
+
+  // Test Case 2: Failure due to lack of necessary attributes in the request body
+  it('should fail to register an admin due to missing attributes', async () => {
+    const res = await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "admin@email.com"}); // Missing password
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 3: Failure due to empty string parameter
+  it('should fail to register an admin due to empty string parameter', async () => {
+    const res = await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "", password: "securePass"}); // Email is empty
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Empty fields are not allowed');
+  });
+
+  // Test Case 4: Failure due to invalid email format
+  it('should fail to register an admin due to invalid email format', async () => {
+    const res = await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "admin", password: "securePass"}); // Invalid email
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Invalid email format');
+  });
+
+  // Test Case 5: Failure due to username or email already existing
+  it('should fail to register an admin due to username or email already existing', async () => {
+    // First create an admin
+    await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "admin@email.com", password: "securePass"});
+
+    // Then try to create the same admin again
+    const res = await request(app)
+      .post('/api/admin')
+      .send({username: "admin", email: "admin@email.com", password: "securePass"}); // Username and email already exist
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Username or email already in use');
+  });
+
+});
 
 
 
