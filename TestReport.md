@@ -162,28 +162,28 @@ WB# Contents
 |'getTransactionsByUser'|'Should return 401 if authorized as User but in the admin path'|unit|WB/ statement coverage|
 |'getTransactionsByUser'|'Should return 500 if there is a server error'|unit|WB/ statement coverage|
 |'getTransactionsByGroup'|'Should return transactions for the specified group|unit||WB/ statement coverage|
-|'getTransactionsByGroup'||'Should return 400 if the group does not exist'|unit||WB/ statement coverage|
+|'getTransactionsByGroup'|'Should return 400 if the group does not exist'|unit|WB/ statement coverage|
 |'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit||WB/ statement coverage|
 |'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit||WB/ statement coverage|
 |'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit||WB/ statement coverage|
-|'getTransactionsByGroupByCategory'|'Should return 400 if the group does not exist'|unit||WB/ statement coverage|
-|'getTransactionsByGroupByCategory'|'Should return 500 if there is a Server Error'|unit||WB/ statement coverage|
-|'deleteTransaction'|'Should delete the transaction for the specified user'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 401 if not authorized'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 400 if '_id' is not provided in the request body'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 400 if '_id' is empty'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 400 if the user does not exist'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 400 if the provided id does not match any transaction'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 400 if the user tries to delete other user's transaction'|WB/ statement coverage|
-|'deleteTransaction'|'Should return 500 if there is a Server Error'|WB/ statement coverage|
-|'deleteTransactions'|'Should delete multiple transactions when authorized and valid parameters are provided'|unit||WB/ statement coverage|
-|'deleteTransactions'|'Should return 401 if not authorized'|unit||WB/ statement coverage|
-|'deleteTransactions'|'Should return 400 if '_ids' is not provided in the request body'|unit||WB/ statement coverage|
-|'deleteTransactions'|'Should return 400 if there is at least one id empty'|unit||WB/ statement coverage|
+|'getTransactionsByGroupByCategory'|'Should return 400 if the group does not exist'|unit|WB/ statement coverage|
+|'getTransactionsByGroupByCategory'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should delete the transaction for the specified user'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 401 if not authorized'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 400 if '_id' is not provided in the request body'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 400 if '_id' is empty'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 400 if the user does not exist'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 400 if the provided id does not match any transaction'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 400 if the user tries to delete other user's transaction'|unit|WB/ statement coverage|
+|'deleteTransaction'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
+|'deleteTransactions'|'Should delete multiple transactions when authorized and valid parameters are provided'|unit|WB/ statement coverage|
+|'deleteTransactions'|'Should return 401 if not authorized'|unit|WB/ statement coverage|
+|'deleteTransactions'|'Should return 400 if '_ids' is not provided in the request body'|unit|WB/ statement coverage|
+|'deleteTransactions'|'Should return 400 if there is at least one id empty'|unit|WB/ statement coverage|
 |'deleteTransactions'|'Should return 400 if any of the provided ids do not match any transaction'|unit||WB/ statement coverage|
-|'deleteTransactions'|'Should return 500 if there is a Server Error'|unit||WB/ statement coverage|
-|'getUsers'|'should return empty list if there are no users'|Integration||BB/ boundary|
-|'getUsers'|'should retrieve list of all users'|integration||BB/ boundary|
+|'deleteTransactions'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
+|'getUsers'|'should return empty list if there are no users'|Integration|BB/ boundary|
+|'getUsers'|'should retrieve list of all users'|integration|BB/ boundary|
 |'getUsers'|'Should return an array of users when called by an authenticated admin|unit|WB/ statement coverage|
 |'getUsers'|'Should return 401 if called by an authenticated user who is not an admin'|unit|WB/ statement coverage|
 |'getUsers'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
