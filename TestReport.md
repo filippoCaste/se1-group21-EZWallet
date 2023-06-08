@@ -163,7 +163,7 @@
 |'getTransactionsByUser'|'Should return 401 if authorized as User but in the admin path'|unit|White Box|
 |'getTransactionsByUser'|'Should return 500 if there is a server error'|unit|White Box|
 |'getTransactionsByGroup'|'Should return transactions for the specified group|unit||White Box|
-|'getTransactionsByGroup'|'Should return 400 if the group does not exist'|unit||White Box|
+|'getTransactionsByGroup'|unit||'Should return 400 if the group does not exist'|unit||White Box|
 |'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit||White Box|
 |'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit||White Box|
 |'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit||White Box|
@@ -320,51 +320,40 @@
 
 <Report in the following table the coverage of  functional requirements (from official requirements) >
 
---HERE I JUST WROTE DOWN ALL THE REQUIREMENTS OF THE LIST, TO COMPLETE WHICH ONES ARE FULLFILLED...--
-
-| Functional Requirements covered |   Test(s) | 
-| ------------------------------- | ----------- | 
-| FRx                             |             |             
-| FRy                             |             | 
-| ... ||
-
-| FR1-Manage users   | |
-|-----------------------|---------|  
-| FR12-login-authorize access for a given user           |   Test(s) | 
-|FR13-logout-stop authorization for a given user        |   Test(s) | 
-|FR14-registerAdmin-create a new Admin                  |   Test(s) | 
-|FR15-getUsers-return all users                         |   Test(s) | 
-|FR16-getUser-return info about a specific user         |   Test(s) | 
-|FR17-deleteUser-cancel a user                          |   Test(s) | 
-
-|FR20-Manage groups      ||                               
-| ----------------------- | --------- |
-|FR21-createGroup-create a new group                    |   Test(s) | 
-|FR22-getGroups-return all groups                       |   Test(s) | 
-|FR23-getGroup-return info about a specific group       |   Test(s) | 
-|FR24-addToGroup-add many users to a given group        |   Test(s) | 
-|FR26-removeFromGroup-remove many users from a given group|   Test(s) | 
-|FR28-deleteGroup-cancel a group, users members of the group remain unchanged|   Test(s) | 
-
-|FR30-Manage  transactions ||
-|-----------------------|---------|
-|FR31-createTransaction-create a new transaction|   Test(s) | 
-|FR32-getAllTransactions-return all transactions (by all users)|   Test(s) | 
-|FR33-getTransactionsByUser-return transactions of a given user. transactions may be filtered by date, by period by max / min amount|   Test(s) | 
-|FR34-getTransactionsByUserByCategory-return transactions of a given user and a given category|   Test(s) | 
-|FR35-getTransactionsByGroup-return all transactions of all users of a given group|  Test(s) | 
-|FR36-getTransactionsByGroupByCategory-return all transactions of all users of a given group, filtered by a given category|   Test(s) | 
-|FR37-deleteTransaction-delete a given transaction|   Test(s) | 
-|FR38-deleteTransactions-delete many transactions|   Test(s) | 
-
-|FR40-Manage categories||
-|-----------------------|---------|
-|FR41-createCategory-create a new category |   Test(s) | 
-|FR42-updateCategory-modify existing category|   Test(s) | 
-|FR43-deleteCategory-delete a given category|   Test(s) | 
-|FR44-getCategories-list all categories|   Test(s) | 
+FR1-Manage users
+-------------
+FR11-register-create a new user |'POST /api/register, 'register'| 
+FR12-login-authorize access for a given user|  'POST /api/login'| 
+FR13-logout-stop authorization for a given user|  'POST /api/logout''registerAdmin' | 
+FR14-registerAdmin-create a new Admin|   'registerAdmin' | 
+FR15-getUsers-return all users|  'getUsers'| 
+FR16-getUser-return info about a specific user|  getUser | 
+FR17-deleteUser-cancel a user|  deleteUser | 
+FR20-Manage groups|  'createGroup,getGroup,addToGroup, removeFromGroup | 
+------------
+FR21-createGroup-create a new group|   createGroup | 
+FR22-getGroups-return all groups| getGroup| 
+FR23-getGroup-return info about a specific group|   getGroup| 
+FR24-addToGroup-add many users to a given group|   addToGroup| 
+FR26-removeFromGroup-remove many users from a given group|  addToGroup | 
+FR28-deleteGroup-cancel a group, users members of the group remain unchanged|  removeFromGroup | 
+FR30-Manage  transactions
+--------------
+FR31-createTransaction-create a new transaction|   createTransaction | 
+FR32-getAllTransactions-return all transactions (by all users)|  getAllTransactions | 
+FR33-getTransactionsByUser-return transactions of a given user. transactions may be filtered by date, by period by max / min amount| getTransactionsByUser| 
+FR34-getTransactionsByUserByCategory-return transactions of a given user and a given category|   getTransactionsByUserByCategory | 
+FR35-getTransactionsByGroup-return all transactions of all users of a given group|  getTransactionsByGroup | 
+FR36-getTransactionsByGroupByCategory-return all transactions of all users of a given group, filtered by a given category| getTransactionsByGroupByCategory | 
+FR37-deleteTransaction-delete a given transaction|  deleteTransaction- | 
+FR38-deleteTransactions-delete many transactions|  deleteTransactions | 
+FR40-Manage categories|   Test(s) | 
+-------------
+FR41-createCategory-create a new category |  createCategory | 
+FR42-updateCategory-modify existing category|   updateCategory | 
+FR43-deleteCategory-delete a given category|  deleteCategory- | 
+FR44-getCategories-list all categories| getCategories| 
 
 ## Coverage white box
-
 Report here the screenshot of coverage values obtained with jest-- coverage 
 
