@@ -148,13 +148,172 @@
 |'createTransaction'|'Should return 400 if username and URL username mismatch'|unit|White Box|
 |'createTransaction'|'Should return 400 if amount is invalid'|unit|White Box|
 |'createTransaction'|'Should return 500 if there is a Server Error'|unit|White Box|
-
-CONTINUE WITH GET ALL TRANSACTIONS
-
+|'getAllTransactions'|'Should return transactions data if the User is authorized'|unit|White Box|
+|'getAllTransactions'|'Should return 401 if the User is not an authorized'|unit|White Box|
+|'getAllTransactions'|'Should return 500 if there is a Server Error'|unit|White Box|
+|'getTransactionsByUser'|'Should return all transactions for the specified regular user'|unit|White Box|
+|'getTransactionsByUser'|' "Should return 401 if authorized but in the wrong path'|unit|White Box|
+|'getTransactionsByUser'|'Should return 400 if the user does not exist'|unit|White Box|
+|'getTransactionsByUser'|'Should return filtered transactions based on query parameters'|unit|White Box|
+|'getTransactionsByUser'|'Should return 500 if there is a Server Error'|unit|White Box|
+|'getTransactionsByUserByCategory'|'Should return transactions for the specified user and category'|unit|White Box|
+|'getTransactionsByUser'|'Should return 400 if the user does not exist'|unit|White Box|
+|'getTransactionsByUser'|'"Should return 400 if the category does not exist"'|unit|White Box|
+|'getTransactionsByUser'|'Should return 401 if not authorized as admin'|unit|White Box|
+|'getTransactionsByUser'|'Should return 401 if authorized as User but in the admin path'|unit|White Box|
+|'getTransactionsByUser'|'Should return 500 if there is a server error'|unit|White Box|
+|'getTransactionsByGroup'|'Should return transactions for the specified group|unit||White Box|
+|'getTransactionsByGroup'|unit||'Should return 400 if the group does not exist'|unit||White Box|
+|'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit||White Box|
+|'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit||White Box|
+|'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit||White Box|
+|'getTransactionsByGroupByCategory'|'Should return 400 if the group does not exist'|unit||White Box|
+|'getTransactionsByGroupByCategory'|'Should return 500 if there is a Server Error'|unit||White Box|
+|'deleteTransaction'|'Should delete the transaction for the specified user'|White Box|
+|'deleteTransaction'|'Should return 401 if not authorized'|White Box|
+|'deleteTransaction'|'Should return 400 if '_id' is not provided in the request body'|White Box|
+|'deleteTransaction'|'Should return 400 if '_id' is empty'|White Box|
+|'deleteTransaction'|'Should return 400 if the user does not exist'|White Box|
+|'deleteTransaction'|'Should return 400 if the provided id does not match any transaction'|White Box|
+|'deleteTransaction'|'Should return 400 if the user tries to delete other user's transaction'|White Box|
+|'deleteTransaction'|'Should return 500 if there is a Server Error'|White Box|
+|'deleteTransactions'|'Should delete multiple transactions when authorized and valid parameters are provided'|unit||White Box|
+|'deleteTransactions'|'Should return 401 if not authorized'|unit||White Box|
+|'deleteTransactions'|'Should return 400 if '_ids' is not provided in the request body'|unit||White Box|
+|'deleteTransactions'|'Should return 400 if there is at least one id empty'|unit||White Box|
+|'deleteTransactions'|'Should return 400 if any of the provided ids do not match any transaction'|unit||White Box|
+|'deleteTransactions'|'Should return 500 if there is a Server Error'|unit||White Box|
+|'getUsers'|'should return empty list if there are no users'|Integration||Black Box|
+|'getUsers'|'should retrieve list of all users'|integration||Black Box|
+|'getUsers'|'Should return an array of users when called by an authenticated admin|unit|White box|
+|'getUsers'|'Should return 401 if called by an authenticated user who is not an admin'|unit|White box|
+|'getUsers'|'Should return 500 if there is a Server Error'|unit|White box|
+|'getUser'|'Should return user data when called by an authenticated user'|unit|White box|
+|'getUser'|'Should return user not found error if user does not exist'|unit|White box|
+|'getUser'|'Should return user data when called by an authenticated admin'|unit|White box|
+|'getUser'|'Should return unauthorized error if both user and admin auth fail'|unit|White box|
+|'getUser'|'Should return 500 if there is a Server Error'|unit|White box|
+|'createGroup|'Should successfully create a Group'|unit|White box|
+|'createGroup'|Should return 401 if not authorized'|unit|White box|
+|'createGroup'|Should return 400 if request body is incomplete'|unit|White box|
+|'createGroup'|Should return 401 if not authorized'|unit|White box|
+|'createGroup'|Should return 400 if name field is empty'|unit|White box|
+|'createGroup'|"Should return 400 if a group with the same name already exists'|unit|White box|
+|'createGroup'|"Should return 400 if the user calling the API is already in a group'|unit|White box|
+|'createGroup'|"Should return 400 if invalid memberEmail format'|unit|White box|
+|'createGroup'|"Should return 400 if all memberEmails are already in a group or do not exist in the database'|unit|White box|
+|'createGroup'|"Should return 500 if there is a Server Error'|unit|White box|
+|'getGroups'|"Should successfully retrieve all groups'|unit|White box|
+|'getGroups'|"Should successfully retrieve a group by name'|unit|White box|
+|'getGroups'|"Should return 400 if the group does not exist'|unit|White box|
+|'getGroup'|"Should return 401 if not authorized as an admin or a group member'|unit|White box|
+|'getGroup'|"Should return 500 if there is a Server Error'|unit|White box|
+|'addToGroup'|"Should add members to the specified group'|unit|White box|
+|'addToGroup'|"Should return 400 if the group does not exist'|unit|White box|
+|'addToGroup'|"Should return 400 if something is missing in the request body'|unit|White box|
+|'addToGroup'|"Should return 400 if some of memberEmails are not in valid format'|unit|White box|
+|'addToGroup'|"Should return 400 if all memberEmails do not exist or are already in a group'|unit|White box|
+|'addToGroup'|"Should return 401 if not authorized as an admin or a group member'|unit|White box|
+|'addToGroup'|"Should return 400 if something is missing in the request body'|unit|White box|
+|'addToGroup'|"Should return 500 if there is a Server Error'|unit|White box|
+|'removeFromGroup'|"Should remove members from the specified group'|unit|White box|
+|'removeFromGroup'|"Should return 400 if the group does not exist'|unit|White box|
+|'removeFromGroup'|"Should return 400 if memberEmails is missing in the request body'|unit|White box|
+'removeFromGroup'|"Should remove members from the specified group'|unit|White box|
+|'removeFromGroup'|"Should return 400 if memberEmails are not in valid format'|unit|White box|
+|'removeFromGroup'|"Should return 400 if removing the last member of the group'|unit|White box|
+|'removeFromGroup'|"Should return 400 if memberEmails do not exist or are not in the group'|unit|White box|
+|'removeFromGroup'|"Should return 401 if not authorized as an admin or a group member'|unit|White box|
+|'removeFromGroup'|"Should return 500 if there is a Server Error|unit|White box|
+|'removeFromGroup'|"Should keep the first member when removing all members from the group"|unit|White box|
+|'deleteUser'|"Should delete a user and remove from group"|unit|White box|
+|'deleteUser'|"Should delete a user and remove from group"|unit|White box|
+|'deleteUser'|"Should return 400 if email is missing in the request body"|unit|White box|
+|'deleteUser'|"Should return 400 if email is not in valid format"|unit|White box|
+|'deleteUser'|"Should return 400 if the user does not exist"|unit|White box|
+|'deleteUser'|"Should return 400 if trying to delete an admin"|unit|White box|
+|'deleteUser'|"Should return 500 if there is a Server Error"|unit|White box|
+|'deleteUser'|"Should return 401 if not authorized as an admin"|unit|White box|
+|'deleteGroup'|"Should delete a group"|unit|White box|
+|'deleteUser'|"Should return 400 if name is missing in the request body"|unit|White box|
+|'deleteUser'|"Should return 400 if name is an empty string"|unit|White box|
+|'deleteUser'|"Should return 400 if the group does not exist"|unit|White box|
+|'deleteUser'|"Should return 500 if there is a Server Error"|unit|White box|
+|'deleteUser'|"Should return 401 if not authorized as an admin"|unit|White box|
+|'verifyAuth'|'Tokens are both valid and belong to the requested user'|Integration|Black Box|
+|'verifyAuth'|'Tokens are both valid and user belongs to the requested group'|Integration|Black Box|
+|'verifyAuth'|'Tokens are both valid and user does not belong to the requested group'|Integration|Black Box|
+|'verifyAuth'|'Tokens are both valid and belong to the requested admin'|Integration|Black Box|
+|'verifyAuth'|'User tries to access as admin not granted'|Integration|Black Box|
+|'verifyAuth'|'Admin accesses as simple user'|Integration|Black Box|
+|'verifyAuth'|'User accesses as simple user'|Integration|Black Box|
+|'verifyAuth'|'Undefined tokens'|Integration|Black Box|
+|'verifyAuth'|'Missing parameters in refresh token'|Integration|Black Box|
+|'verifyAuth'|'Refresh token empty'|Integration|Black Box|
+|'verifyAuth'|'Access token username does not correspond to refresh token'|Integration|Black Box|
+|'verifyAuth'|'Access token expired and refresh token belonging to the requested user'|Integration|Black Box|
+|'verifyAuth'|'Access token and refresh token expired belonging to the requested user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle valid date range and authenticated user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle valid exact date and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid from and authenticated user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid upTo and authenticated user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date and authenticated user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date with other param and authenticated user'|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date range and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date range (month) and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date range (year) and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle invalid date range and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle not enough parameter and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|'should handle empty query parameter and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle valid amount range and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle valid amount value and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle valid amount range and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle invalid max amount and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle invalid min amount and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle invalid amount range and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle empty input and authenticated user|Integration|Black Box|
+|'handleAmountFilterParams'|'should handle invalid input and authenticated user|Integration|Black Box|
+|'handleDateFilterParams'|"should return an empty object for an empty query"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $gte condition for valid "from" parameter"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $gte condition for valid "from" parameter"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $gte condition for valid "from" parameter"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $gte condition for valid "from" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for invalid "from" parameter"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $lte condition for valid "upTo" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for invalid "upTo" parameter"|unit|White box|
+|'handleDateFilterParams'|"should return matchStage with $gte and $lte conditions for valid "date" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for "date" parameter with conflicting parameters"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for invalid "date" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for invalid "date" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for invalid "date" parameter"|unit|White box|
+|'handleDateFilterParams'|"should throw an error for conflicting "upTo" and "from" parameters"|unit|White box|
+|'handleDateFilterParams'|"should throw an error when date2 month is after date1"|unit|White box|
+|'handleDateFilterParams'|"should not throw an error after the isAfter method check"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Unauthorized if one of the token is missing"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Token is missing information if one of the access token information is missing"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Token is missing information if one of the refresh token information is missing"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Mismatched users if a field of the AToken is not equal to the same field of the RToken"|unit|White box|
+|'verifyAuth'|"should return authorized true and cause Authorized for Admin authType with valid role"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Unauthorized for Admin authType with invalid role"|unit|White box|
+|'verifyAuth'|"should return authorized true and cause Authorized for User authType with valid username and role"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Unauthorized for User authType with invalid username"|unit|White box|
+|'verifyAuth'|"should return authorized true and cause Authorized for Group authType with valid email"|unit|White box|
+|'verifyAuth'|"should return authorized true and cause Authorized for Group authType with valid email"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Unauthorized for Group authType with invalid email"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Unknown auth type for unknown authType"|unit|White box|
+|'verifyAuth'|"should return authorized true and cause Authorized after refreshing the accessToken"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Perform login again after failing to refresh the accessToken"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Error if the refreshToken throw an unexpected error"|unit|White box|
+|'verifyAuth'|"should return authorized false and cause Error if the accessToken throw an unexpected error"|unit|White box|
+|'handleAmountFilterParams'|"should return an empty object when no query params are present"|unit|White box|
+|'handleAmountFilterParams'|"should return an object with $gte attribute when min query param is present and valid"|unit|White box|
+|'handleAmountFilterParams'|"should return an object with $lte attribute when max query param is present and valid"|unit|White box|
+|'handleAmountFilterParams'|""should return an object with $gte and $lte attributes when min and max query params are present and valid|unit|White box|
+|'handleAmountFilterParams'|"should throw error when min or max query param is not a number"|unit|White box|
+|'handleAmountFilterParams'|"should throw error when min is greater than max"|unit|White box|
 
 
 # Coverage
-
 
 
 ## Coverage of FR
