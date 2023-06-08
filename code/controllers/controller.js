@@ -426,10 +426,7 @@ export const getTransactionsByGroup = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const name = req.params.name;
-        let group = null;
-        if (name) {
-            group = await Group.findOne({ name });
-        }
+        let group = await Group.findOne({ name });
         if (!group) {
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
@@ -482,10 +479,7 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         const name = req.params.name;
         const category = req.params.category;
-        let group = null;
-        if (name) {
-            group = await Group.findOne({ name });
-        }
+        let group = await Group.findOne({ name });
         if (!group) {
             return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
         }
