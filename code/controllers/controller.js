@@ -53,7 +53,7 @@ export const createCategory = async (req, res) => {
         const new_categories = new categories({ type, color });
         new_categories.save()
             .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            //.catch(err => { throw err })
+        //.catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -258,7 +258,7 @@ export const createTransaction = async (req, res) => {
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-          //  .catch(err => { throw err })
+        //  .catch(err => { throw err })
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -427,7 +427,7 @@ export const getTransactionsByGroup = async (req, res) => {
         const name = req.params.name;
         let group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            return res.status(400).json({ error: "There is no Group with this name" });
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
@@ -480,11 +480,10 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         const category = req.params.category;
         let group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            return res.status(400).json({ error: "There is no Group with this name" });
         }
-
-        if(! await categoryTypeExists(category)) {
-            return res.status(400).json({error: "Category type does not exist"})
+        if (! await categoryTypeExists(category)) {
+            return res.status(400).json({ error: "Category type does not exist" })
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })

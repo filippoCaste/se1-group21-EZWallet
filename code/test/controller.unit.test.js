@@ -446,19 +446,19 @@ describe("createTransaction", () => {
         expect(testRes.json).toHaveBeenCalledWith({ error: "Empty parameters are not allowed." });
     });
 
-    test("Should return 400 if username does not exist", async () => {
+    test("Should return 400 if URL username does not exist", async () => {
         User.findOne.mockResolvedValue(null);
         await createTransaction(testReq, testRes);
         expect(testRes.status).toHaveBeenCalledWith(400);
-        // expect(testRes.json).toHaveBeenCalledWith({ error: "The provided username does not exist." });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided URL username does not exist." });
     });
 
-    test("Should return 400 if URL username does not exist", async () => {
+    test("Should return 400 if username does not exist", async () => {
         User.findOne.mockResolvedValueOnce({ username: "testUser" });
         User.findOne.mockResolvedValueOnce(null);
         await createTransaction(testReq, testRes);
         expect(testRes.status).toHaveBeenCalledWith(400);
-        // expect(testRes.json).toHaveBeenCalledWith({ error: "The provided URL username does not exist." });
+        expect(testRes.json).toHaveBeenCalledWith({ error: "The provided username does not exist." });
     });
 
     test("Should return 400 if category does not exist", async () => {
@@ -953,9 +953,20 @@ describe("getTransactionsByGroupByCategory", () => {
         await getTransactionsByGroupByCategory(testReq, testRes);
 
         expect(testRes.status).toHaveBeenCalledWith(400);
-        // expect(testRes.json).toHaveBeenCalledWith({
-        //     error: "There is no Group with this name"
-        // });
+        expect(testRes.json).toHaveBeenCalledWith({
+            error: "There is no Group with this name"
+        });
+    });
+
+    test("Should return 400 if the category does not exist", async () => {
+        Group.findOne.mockResolvedValueOnce(true);
+        categories.findOne.mockResolvedValueOnce(null);
+        await getTransactionsByGroupByCategory(testReq, testRes);
+
+        expect(testRes.status).toHaveBeenCalledWith(400);
+        expect(testRes.json).toHaveBeenCalledWith({
+            error: "Category type does not exist"
+        });
     });
 
     test("Should return 401 if not authorized as admin or group member", async () => {
@@ -1018,7 +1029,7 @@ describe("deleteTransaction", () => {
 
     test("Should delete the transaction for the specified user", async () => {
         await deleteTransaction(testReq, testRes);
-        // expect(statusSpy).toHaveBeenCalledWith(200);
+        expect(statusSpy).toHaveBeenCalledWith(200);
         expect(jsonSpy).toHaveBeenCalledWith({ data: { message: "Transaction deleted" }, refreshedTokenMessage: testRes.locals.refreshedTokenMessage });
         expect(transactions.findByIdAndDelete).toHaveBeenCalledWith("testId");
     });
