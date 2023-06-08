@@ -319,6 +319,8 @@ WB# Contents
 <Report in the following table the coverage of  functional requirements (from official requirements) >
 
 # UNIT 
+| Functional Requirements covered |   Test(s) | 
+| ------------------------------- | ----------- | 
 |  FR1  Manage users | auth.unit.test.js lines |
 | FR11  register | 13-93  |
 | FR12 login |  179-266  |
@@ -350,6 +352,8 @@ WB# Contents
 | FR44  getCategories |301-358|
 
 # INTEGRATION
+| Functional Requirements covered |   Test(s) | 
+| ------------------------------- | ----------- | 
 |  FR1  Manage users | auth.integration.test.js lines |
 | FR11  register | 11-85  |
 | FR12 login | 163-259 |
