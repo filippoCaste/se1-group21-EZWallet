@@ -314,45 +314,71 @@ WB# Contents
 
 # Coverage
 
-
 ## Coverage of FR
 
 <Report in the following table the coverage of  functional requirements (from official requirements) >
 
-FR1-Manage users
--------------
-FR11-register-create a new user |'POST /api/register, 'register'| 
-FR12-login-authorize access for a given user|  'POST /api/login'| 
-FR13-logout-stop authorization for a given user|  'POST /api/logout''registerAdmin' | 
-FR14-registerAdmin-create a new Admin|   'registerAdmin' | 
-FR15-getUsers-return all users|  'getUsers'| 
-FR16-getUser-return info about a specific user|  getUser | 
-FR17-deleteUser-cancel a user|  deleteUser | 
-FR20-Manage groups|  'createGroup,getGroup,addToGroup, removeFromGroup | 
-------------
-FR21-createGroup-create a new group|   createGroup | 
-FR22-getGroups-return all groups| getGroup| 
-FR23-getGroup-return info about a specific group|   getGroup| 
-FR24-addToGroup-add many users to a given group|   addToGroup| 
-FR26-removeFromGroup-remove many users from a given group|  addToGroup | 
-FR28-deleteGroup-cancel a group, users members of the group remain unchanged|  removeFromGroup | 
-FR30-Manage  transactions
---------------
-FR31-createTransaction-create a new transaction|   createTransaction | 
-FR32-getAllTransactions-return all transactions (by all users)|  getAllTransactions | 
-FR33-getTransactionsByUser-return transactions of a given user. transactions may be filtered by date, by period by max / min amount| getTransactionsByUser| 
-FR34-getTransactionsByUserByCategory-return transactions of a given user and a given category|   getTransactionsByUserByCategory | 
-FR35-getTransactionsByGroup-return all transactions of all users of a given group|  getTransactionsByGroup | 
-FR36-getTransactionsByGroupByCategory-return all transactions of all users of a given group, filtered by a given category| getTransactionsByGroupByCategory | 
-FR37-deleteTransaction-delete a given transaction|  deleteTransaction- | 
-FR38-deleteTransactions-delete many transactions|  deleteTransactions | 
-FR40-Manage categories|   Test(s) | 
--------------
-FR41-createCategory-create a new category |  createCategory | 
-FR42-updateCategory-modify existing category|   updateCategory | 
-FR43-deleteCategory-delete a given category|  deleteCategory- | 
-FR44-getCategories-list all categories| getCategories| 
+# UNIT 
+|  FR1  Manage users | auth.unit.test.js lines |
+| FR11  register | 13-93  |
+| FR12 login |  179-266  |
+| FR13 logout | 269-327|
+| FR14 registerAdmin | 96-176 |
+| FR15  getUsers |users.unit.test.js: 28-84 |
+| FR16  getUser |users.unit.test.js: 86-169 |
+| FR17  deleteUser |users.unit.test.js: 767-927 |
+| FR2  Manage groups | users.unit.test.js lines |
+| FR21  createGroup | 171-307 |
+| FR22 getGroups | 309-375 |
+| FR23 getGroup | 377-458 |
+| FR24 addToGroup | 460-569 |
+| FR26 removeFromGroup | 571-765 |
+| FR28 deleteGroup | 929-1019 |
+|  FR3   |  Manage  transactions| controllers.unit.test.js lines| 
+|FR31 createTransaction|360-468 |
+|FR32 getAllTransactions | 470-546|
+| FR33 getTransactionsByUser  | 548-665|
+| FR34 getTransactionsByUserByCategory| 667-769|
+| FR35 getTransactionsByGroup | 771-863|
+| FR36 getTransactionsByGroupByCategory |865-963|
+| FR37 deleteTransaction |965-1066|
+| FR38 deleteTransactions | 1069-1144|
+|  FR4    Manage categories | controllers.unit.test.js lines|
+| FR41 createCategory |17-95 |
+| FR42 updateCategory | 97-185|
+| FR43 deleteCategory | 187-299|
+| FR44  getCategories |301-358|
 
+# INTEGRATION
+|  FR1  Manage users | auth.integration.test.js lines |
+| FR11  register | 11-85  |
+| FR12 login | 163-259 |
+| FR13 logout | 261-361 |
+| FR14 registerAdmin | 87-161 |
+| FR15  getUsers |users.integration.test.js:  |
+| FR16  getUser |users.integration.test.js:  |
+| FR17  deleteUser |users.integration.test.js:  |
+| FR2  Manage groups | users.integration.test.js lines |
+| FR21  createGroup |  |
+| FR22 getGroups |  |
+| FR23 getGroup |  |
+| FR24 addToGroup |  |
+| FR26 removeFromGroup |  |
+| FR28 deleteGroup |  |
+|  FR3   |  Manage  transactions| controllers.integration.test.js lines| 
+|FR31 createTransaction| 1096-1719|
+|FR32 getAllTransactions |1721-1818 |
+| FR33 getTransactionsByUser  |1820-2157 |
+| FR34 getTransactionsByUserByCategory|2159-2524|
+| FR35 getTransactionsByGroup | 2526-2901|
+| FR36 getTransactionsByGroupByCategory |2903-3401|
+| FR37 deleteTransaction |3403-3752|
+| FR38 deleteTransactions |3754-4063 |
+|  FR4    Manage categories | controllers.integration.test.js lines|
+| FR41 createCategory | 63-294|
+| FR42 updateCategory |296-550 |
+| FR43 deleteCategory | 552-929|
+| FR44  getCategories |931-1094|
 ## Coverage WB/ statement coverage
 Report here the screenshot of coverage values obtained with jest-- coverage 
 

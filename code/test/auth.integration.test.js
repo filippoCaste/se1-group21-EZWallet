@@ -160,8 +160,6 @@ describe('POST /admin', () => {
 
 });
 
-
-
 describe('POST /login', () => {
   beforeAll(async () => {
     const dbName = "testDatabase";
