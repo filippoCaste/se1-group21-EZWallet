@@ -161,11 +161,11 @@ WB# Contents
 |'getTransactionsByUser'|'Should return 401 if not authorized as admin'|unit|WB/ statement coverage|
 |'getTransactionsByUser'|'Should return 401 if authorized as User but in the admin path'|unit|WB/ statement coverage|
 |'getTransactionsByUser'|'Should return 500 if there is a server error'|unit|WB/ statement coverage|
-|'getTransactionsByGroup'|'Should return transactions for the specified group|unit||WB/ statement coverage|
+|'getTransactionsByGroup'|'Should return transactions for the specified group|unit|WB/ statement coverage|
 |'getTransactionsByGroup'|'Should return 400 if the group does not exist'|unit|WB/ statement coverage|
-|'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit||WB/ statement coverage|
-|'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit||WB/ statement coverage|
-|'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit||WB/ statement coverage|
+|'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit|WB/ statement coverage|
+|'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
+|'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit|WB/ statement coverage|
 |'getTransactionsByGroupByCategory'|'Should return 400 if the group does not exist'|unit|WB/ statement coverage|
 |'getTransactionsByGroupByCategory'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
 |'deleteTransaction'|'Should delete the transaction for the specified user'|unit|WB/ statement coverage|
