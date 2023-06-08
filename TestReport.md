@@ -318,7 +318,7 @@ WB# Contents
 
 <Report in the following table the coverage of  functional requirements (from official requirements) >
 
-# UNIT 
+### UNIT 
 | Functional Requirements covered |   Test(s) | 
 | ------------------------------- | ----------- | 
 |  FR1  Manage users | auth.unit.test.js lines |
@@ -351,7 +351,7 @@ WB# Contents
 | FR43 deleteCategory | 187-299|
 | FR44  getCategories |301-358|
 
-# INTEGRATION
+### INTEGRATION
 | Functional Requirements covered |   Test(s) | 
 | ------------------------------- | ----------- | 
 |  FR1  Manage users | auth.integration.test.js lines |
