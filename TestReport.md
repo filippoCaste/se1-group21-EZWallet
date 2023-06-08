@@ -12,13 +12,13 @@
 
 - [Coverage](#Coverage)
 
-
-
-
-
 # Dependency graph 
 
      <report the here the dependency graph of EzWallet>
+![](imgs/dependency_graph.jpg)
+
+> No NEW dependencies have been added
+
      
 # Integration approach
 
@@ -41,156 +41,105 @@
             step 2: interaction function A-B and A-C
             step 3: testing function D, and interaction to previous functions.
             
-
-    
-
-
 # Tests
 
    <in the table below list the test cases defined For each test report the object tested, the test level (API, integration, unit) and the technique used to define the test case  (BB/ eq partitioning, BB/ boundary, WB/ statement coverage, etc)>   <split the table if needed>
 
 
 | Test case name | Object(s) tested | Test level | Technique used |
-
-MISSING THE TECHNIQUE USED!!!
-
-- auth.integration.test.js
-
-|'POST /api/register'|'should return 400 if username, email or password are missing'|integration|--|
-|'POST /api/register'|'should return 400 if username, email or password are empty strings'|integration|--|
-|'POST /api/register'|'should return 400 if email is not in a valid format'|integration|--|
-|'POST /api/register'|'should return 400 if username already exists'|integration|--|
-|'POST /api/register'|'should return 400 when email format is invalid'|integration|--|
-|'POST /api/register'|'should return 400 when username is already in use'|integration|--|
-|'POST /api/register'|'should return 400 if email already exists'|integration|--|
-|'POST /api/register'|'should return 200 and confirm user was added successfully'|integration|--|
-
-
-|'registerAdmin'|'should register a new admin user'|integration|--|
-|'registerAdmin'|should return 400 when missing fields|integration|--|
-|'registerAdmin'|'should return 400 when fields are empty strings'|integration|--|
-|'registerAdmin'|'Empty fields are not allowed'|integration|--|
-|'registerAdmin'|'should return 400 when email format is invalid'|integration|--|
-|'registerAdmin'|'should return 400 when username is already in use'|integration|--|
-|'registerAdmin'|'should return 400 when email is already in use'|integration|--|
-|'registerAdmin'|should return 500 if database operation fails|integration|--|
-
-
-
-|'POST /api/login'|'should return 400 if email or password are missing'|integration|--|
-|'POST /api/login'|'should return 400 if email or password are empty strings'|integration|--|
-|'POST /api/login'|'should return 400 if email is not in a valid format''|integration|--|
-|'POST /api/login'|''should return 400 if the user does not exist'|integration|--|
-|'POST /api/login'|'should return 400 if the supplied password does not match with the one in the database'|integration|--|
-|'POST /api/login'|'should return 200 and create an accessToken and refreshToken'|integration|--|
-
-
-|'POST /api/logout'|'should return 400 if no refresh token is provided'|integration|--|
-|'POST /api/logout'|'should return 400 if refresh token does not represent a user in the database'|integration|--|
-|'POST /api/logout'|should return 200 and confirm user was logged out successfully'|integration|--|
-
-
-
-
-- auth.unit.test.js
-
-|'register'|'should register a new user successfully'|unit|--|
-|'register'|'should return 400 error if the request body does not contain all the necessary attributes'|unit|--|
-|'register'|'should return 400 error if at least one of the parameters in the request body is an empty string'|unit|--|
-|'register'|'should return 400 error if the email in the request body is not in a valid email format'|unit|--|
-|'register'|'should return 400 error if the username in the request body identifies an already existing user'|unit|--|
+|---|----|---|---|
+|'POST /api/register'|'should return 400 if username, email or password are missing'|integration|BB|
+|'POST /api/register'|'should return 400 if username, email or password are empty strings'|integration|BB|
+|'POST /api/register'|'should return 400 if email is not in a valid format'|integration|BB|
+|'POST /api/register'|'should return 400 if username already exists'|integration|BB|
+|'POST /api/register'|'should return 400 when email format is invalid'|integration|BB|
+|'POST /api/register'|'should return 400 when username is already in use'|integration|BB|
+|'POST /api/register'|'should return 400 if email already exists'|integration|BB|
+|'POST /api/register'|'should return 200 and confirm user was added successfully'|integration|BB
+|'registerAdmin'|'should register a new admin user'|integration|BB|
+|'registerAdmin'|should return 400 when missing fields|integration|BB|
+|'registerAdmin'|'should return 400 when fields are empty strings'|integration|BB|
+|'registerAdmin'|'Empty fields are not allowed'|integration|BB|
+|'registerAdmin'|'should return 400 when email format is invalid'|integration|BB|
+|'registerAdmin'|'should return 400 when username is already in use'|integration|BB|
+|'registerAdmin'|'should return 400 when email is already in use'|integration|BB|
+|'registerAdmin'|should return 500 if database operation fails|integration|BB|
+|'POST /api/login'|'should return 400 if email or password are missing'|integration|BB|
+|'POST /api/login'|'should return 400 if email or password are empty strings'|integration|BB|
+|'POST /api/login'|'should return 400 if email is not in a valid format''|integration|BB|
+|'POST /api/login'|''should return 400 if the user does not exist'|integration|BB|
+|'POST /api/login'|'should return 400 if the supplied password does not match with the one in the database'|integration|BB|
+|'POST /api/login'|'should return 200 and create an accessToken and refreshToken'|integration|BB|
+|'POST /api/logout'|'should return 400 if no refresh token is provided'|integration|BB|
+|'POST /api/logout'|'should return 400 if refresh token does not represent a user in the database'|integration|BB|
+|'POST /api/logout'|should return 200 and confirm user was logged out successfully'|integration|BB|
+|'register'|'should register a new user successfully'|unit|WB|
+|'register'|'should return 400 error if the request body does not contain all the necessary attributes'|unit|WB|
+|'register'|'should return 400 error if at least one of the parameters in the request body is an empty string'|unit|WB|
+|'register'|'should return 400 error if the email in the request body is not in a valid email format'|unit|WB|
+|'register'|'should return 400 error if the username in the request body identifies an already existing user'|unit|WB|
 |'register'|'should return 400 error if the email in the request body identifies an already existing user'
-|unit|--|
-|'register'|'should return 500 error if there is a server error'|unit|--|
-
-
-|'registerAdmin '|'should register a new admin user successfully'|unit|--|
-|'registerAdmin '|'should return 400 error if the request body does not contain all the necessary attributes'|unit|--|
-|'registerAdmin '|''should return 400 error if at least one of the parameters in the request body is an empty string'|unit|--|
-|'registerAdmin '|'should return 400 error if the email in the request body is not in a valid email format'|unit|--|
-|'registerAdmin '|'should return 400 error if the username in the request body identifies an already existing user'|unit|--|
-|'registerAdmin '|'should return 400 error if the email in the request body identifies an already existing user'|unit|--|
-|'registerAdmin '|'should return 500 error if there is a server error'|unit|--|
-
-
-|'login'|'should log in a user successfully'|unit|--|
-|'login'|'should return 400 error if the request body does not contain all the necessary attributes'|unit|--|
-|'login'|'should return 400 error if at least one of the parameters in the request body is an empty string'|unit|--|
-|'login'|'should return 400 error if the email in the request body is not in a valid email format'|unit|--|
-|'login'|'should return 400 error if the email in the request body does not identify a user in the database'|unit|--|
-|'login'|'should return 400 error if the supplied password does not match with the one in the database'|unit|--|
-|'login'|'should return 500 error if there is a server error'|unit|--|
-
-
-|'logout'|'should logout a user successfully'|unit|--|
-|'logout'|'should return 400 error if the request does not have a refresh token in the cookies'|unit|--|
-|'logout'|'should return 400 error if the refresh token in the request\'s cookies does not represent a user in the database'|unit|--|
-|'logout'|'should return 500 error if there is a server error'|unit|--|
-
-
-
-- controller.integration.test.js
-
-|'createCategory'|'createCategory: returns status 200 if admin creates a new category'|Integration|--|
-|'createCategory'|'createCategory: returns status 401 if user tries to create a new category'|Integration|--|
-|'createCategory'|'createCategory: returns status 400 if some parameters are not provided'|Integration|--|
-|'createCategory'|returns status 400 if some parameters are empty'|Integration|--|
-|'createCategory'|createCategory: returns status 400 if the type of category passed in the request body represents an already existing category in the database'|Integration|--|
-
-|'updateCategory'|'Returns a message for confirmation and the number of updated transactions'|Integration|--|
-|'updateCategory'|'Returns a 400 error if the type of the new category is the same as one that exists already and that category is not the requested one'|Integration|--|
-|'updateCategory'|'Returns a 400 error  if at least one of the parameters in the request body is an empty string'|Integration|--|
-|'updateCategory'|'Returns a 400 error if the type of category passed as a route parameter does not represent a category in the databas'|Integration|--|
-|'updateCategory'|'Returns a 400 error if the request body does not contain all the necessary parameters'|Integration|--|
-|'updateCategory'|'Returns a 401 error if called by a user who is not an Admin'|Integration|--|
-
-
-
-|'deleteCategory'|'returns status 400 if at least one of the types in the array does not represent a category in the database'|Integration|--|
-|'deleteCategory'|'returns status 401 if called by an authenticated user who is not an admin'|Integration|--|
-
-
-|'getCategories'|'returns status 200 if okay - user'|Integration|--|
-|'getCategories'|'getCategories: returns status 200 if okay - admin'|Integration|--|
-|'getCategories'|returns status 401 if user is not authenticated'|Integration|--|
-
-
-|'createTransaction'|'returns status 200 if okay - user'|Integration|--|
-|'createTransaction'|'returns status 200 if okay - user - negative'|Integration|--|
-|'createTransaction'|'returns status 200 if okay - admin'|Integration|--|
-|'createTransaction'|' returns status 400 if the request body does not contain all the necessary attributes'|Integration|--|
-|'createTransaction'|'returns status 400 if at least one of the parameters in the request body is an empty string'|Integration|--|
-|'createTransaction'|'createTransaction: returns status 400 if the type of category passed in the request body does not represent a category in the database'|Integration|--|
-|'createTransaction'|' returns status 400 if the username passed in the request body is not equal to the one passed as a route parameter'|Integration|--|
-
-
--- controller.unit.test.js
-
+|unit|WB|
+|'register'|'should return 500 error if there is a server error'|unit|WB|
+|'registerAdmin '|'should register a new admin user successfully'|unit|WB|
+|'registerAdmin '|'should return 400 error if the request body does not contain all the necessary attributes'|unit|WB|
+|'registerAdmin '|''should return 400 error if at least one of the parameters in the request body is an empty string'|unit|WB|
+|'registerAdmin '|'should return 400 error if the email in the request body is not in a valid email format'|unit|WB|
+|'registerAdmin '|'should return 400 error if the username in the request body identifies an already existing user'|unit|WB|
+|'registerAdmin '|'should return 400 error if the email in the request body identifies an already existing user'|unit|WB|
+|'registerAdmin '|'should return 500 error if there is a server error'|unit|WB|
+|'login'|'should log in a user successfully'|unit|WB|
+|'login'|'should return 400 error if the request body does not contain all the necessary attributes'|unit|WB|
+|'login'|'should return 400 error if at least one of the parameters in the request body is an empty string'|unit|WB|
+|'login'|'should return 400 error if the email in the request body is not in a valid email format'|unit|WB|
+|'login'|'should return 400 error if the email in the request body does not identify a user in the database'|unit|WB|
+|'login'|'should return 400 error if the supplied password does not match with the one in the database'|unit|WB|
+|'login'|'should return 500 error if there is a server error'|unit|WB|
+|'logout'|'should logout a user successfully'|unit|WB|
+|'logout'|'should return 400 error if the request does not have a refresh token in the cookies'|unit|WB|
+|'logout'|'should return 400 error if the refresh token in the request\'s cookies does not represent a user in the database'|unit|WB|
+|'logout'|'should return 500 error if there is a server error'|unit|WB|
+|'createCategory'|'createCategory: returns status 200 if admin creates a new category'|Integration|BB|
+|'createCategory'|'createCategory: returns status 401 if user tries to create a new category'|Integration|BB|
+|'createCategory'|'createCategory: returns status 400 if some parameters are not provided'|Integration|BB|
+|'createCategory'|returns status 400 if some parameters are empty'|Integration|BB|
+|'createCategory'|createCategory: returns status 400 if the type of category passed in the request body represents an already existing category in the database'|Integration|BB|
+|'updateCategory'|'Returns a message for confirmation and the number of updated transactions'|Integration|BB|
+|'updateCategory'|'Returns a 400 error if the type of the new category is the same as one that exists already and that category is not the requested one'|Integration|BB|
+|'updateCategory'|'Returns a 400 error  if at least one of the parameters in the request body is an empty string'|Integration|BB|
+|'updateCategory'|'Returns a 400 error if the type of category passed as a route parameter does not represent a category in the databas'|Integration|BB|
+|'updateCategory'|'Returns a 400 error if the request body does not contain all the necessary parameters'|Integration|BB|
+|'updateCategory'|'Returns a 401 error if called by a user who is not an Admin'|Integration|BB|
+|'deleteCategory'|'returns status 400 if at least one of the types in the array does not represent a category in the database'|Integration|BB|
+|'deleteCategory'|'returns status 401 if called by an authenticated user who is not an admin'|Integration|BB|
+|'getCategories'|'returns status 200 if okay - user'|Integration|BB|
+|'getCategories'|'getCategories: returns status 200 if okay - admin'|Integration|BB|
+|'getCategories'|returns status 401 if user is not authenticated'|Integration|BB|
+|'createTransaction'|'returns status 200 if okay - user'|Integration|BB|
+|'createTransaction'|'returns status 200 if okay - user - negative'|Integration|BB|
+|'createTransaction'|'returns status 200 if okay - admin'|Integration|BB|
+|'createTransaction'|' returns status 400 if the request body does not contain all the necessary attributes'|Integration|BB|
+|'createTransaction'|'returns status 400 if at least one of the parameters in the request body is an empty string'|Integration|BB|
+|'createTransaction'|'createTransaction: returns status 400 if the type of category passed in the request body does not represent a category in the database'|Integration|BB|
+|'createTransaction'|' returns status 400 if the username passed in the request body is not equal to the one passed as a route parameter'|Integration|BB|
 |'createCategory'|'Should successfully create a Category'|unit|White Box|
 |'createCategory'|'Should return 400 error if the body is missing a parameter'|unit|White Box|
 |'createCategory'|'Should return 400 if at least one of the parameters in the request body is an empty string'|unit|White Box|
 |'createCategory'|'Should return 401 if the User is not an authorized'|unit|White Box|
 |'createCategory'|'Should return 400 if a category with the same type already exists'|unit|White Box|
 |'createCategory'|'Should return 500 if there is a Server Error'|unit|White Box|
-
 |'updateCategory'|'Invalid color'|unit|White Box|
 |'updateCategory'|'Category not found'|unit|White Box|
 |'updateCategory'|'Unauthorized user'|unit|White Box|
-
-
 |'deleteCategory'|'Category does not exist'|unit|White Box|
 |'deleteCategory'|'Deletes categories successfully'|unit|White Box|
 |'deleteCategory'|'Returns 400 if parameters are not enough'|unit|White Box|
 |'deleteCategory'|'Returns 400 if the category doesnt exist'|unit|White Box|
 |'deleteCategory'|'Returns 400 if empty string is found in types array'|unit|White Box|
-
-
 |'getCategories'|'Should return all categories'|unit|White Box|
 |'getCategories'|'Should return empty array if there are no categories'|unit|White Box|
 |'getCategories'|'Should return 401 if User is not authorized'|unit|White Box|
 |'getCategories'|'Should return 500 if there is a Server Error'|unit|White Box|
-
-
 |'createTransaction'|'Should successfully create a transaction'|unit|White Box|
 |'createTransaction'|'Should return 401 if the User is not an authorized'|unit|White Box|
 |'createTransaction'|'Should return 400 if some parameters are missing'|unit|White Box|
@@ -201,15 +150,6 @@ MISSING THE TECHNIQUE USED!!!
 |'createTransaction'|'Should return 500 if there is a Server Error'|unit|White Box|
 
 CONTINUE WITH GET ALL TRANSACTIONS
-
-
-
-
-
-
-
-
-
 
 
 
@@ -266,9 +206,4 @@ FR44-getCategories-list all categories|   Test(s) |
 ## Coverage white box
 
 Report here the screenshot of coverage values obtained with jest-- coverage 
-
-
-
-
-
 
