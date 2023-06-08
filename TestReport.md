@@ -180,7 +180,7 @@ WB# Contents
 |'deleteTransactions'|'Should return 401 if not authorized'|unit|WB/ statement coverage|
 |'deleteTransactions'|'Should return 400 if '_ids' is not provided in the request body'|unit|WB/ statement coverage|
 |'deleteTransactions'|'Should return 400 if there is at least one id empty'|unit|WB/ statement coverage|
-|'deleteTransactions'|'Should return 400 if any of the provided ids do not match any transaction'|unit||WB/ statement coverage|
+|'deleteTransactions'|'Should return 400 if any of the provided ids do not match any transaction'|unit|WB/ statement coverage|
 |'deleteTransactions'|'Should return 500 if there is a Server Error'|unit|WB/ statement coverage|
 |'getUsers'|'should return empty list if there are no users'|Integration|BB/ boundary|
 |'getUsers'|'should retrieve list of all users'|integration|BB/ boundary|
