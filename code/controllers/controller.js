@@ -219,13 +219,12 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const usernameURL = req.params.username;
-        if (!(await userExistsByUsername(usernameURL))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-
         const userAuth = verifyAuth(req, res, { authType: "User", username: usernameURL });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
+        }
+        if (!(await userExistsByUsername(usernameURL))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
         }
 
         // Check for incomplete request body
@@ -315,15 +314,15 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const username = req.params.username;
-        if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const userAuth = verifyAuth(req, res, { authType: "User", username })
         const route = req.path;
 
         // Check authorization
         if ((adminAuth.authorized && route === `/transactions/users/${username}`) || (userAuth.authorized && route === `/users/${username}/transactions`)) {
+            if (!(await userExistsByUsername(username))) {
+                return res.status(400).json({ error: "The provided URL username does not exist." });
+            }
             let filterAmount = {};
             let filterDate = {};
             if (route === `/users/${username}/transactions`) {
@@ -532,15 +531,13 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const username = req.params.username;
-        if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-
         const userAuth = verifyAuth(req, res, { authType: "User", username });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
         }
-
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
         // Check for incomplete request body
         if (!('_id' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
