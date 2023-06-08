@@ -330,37 +330,36 @@
 
 FR1-Manage users
 -------------
-FR11-register-create a new user |   Test(s) | 
-FR12-login-authorize access for a given user|   Test(s) | 
-FR13-logout-stop authorization for a given user|   Test(s) | 
-FR14-registerAdmin-create a new Admin|   Test(s) | 
-FR15-getUsers-return all users|   Test(s) | 
-FR16-getUser-return info about a specific user|   Test(s) | 
-FR17-deleteUser-cancel a user|   Test(s) | 
-FR20-Manage groups|   Test(s) | 
-------------
-FR21-createGroup-create a new group|   Test(s) | 
-FR22-getGroups-return all groups|   Test(s) | 
-FR23-getGroup-return info about a specific group|   Test(s) | 
-FR24-addToGroup-add many users to a given group|   Test(s) | 
-FR26-removeFromGroup-remove many users from a given group|   Test(s) | 
-FR28-deleteGroup-cancel a group, users members of the group remain unchanged|   Test(s) | 
-FR30-Manage  transactions
---------------
-FR31-createTransaction-create a new transaction|   Test(s) | 
-FR32-getAllTransactions-return all transactions (by all users)|   Test(s) | 
-FR33-getTransactionsByUser-return transactions of a given user. transactions may be filtered by date, by period by max / min amount|   Test(s) | 
-FR34-getTransactionsByUserByCategory-return transactions of a given user and a given category|   Test(s) | 
-FR35-getTransactionsByGroup-return all transactions of all users of a given group|   Test(s) | 
-FR36-getTransactionsByGroupByCategory-return all transactions of all users of a given group, filtered by a given category|   Test(s) | 
-FR37-deleteTransaction-delete a given transaction|   Test(s) | 
-FR38-deleteTransactions-delete many transactions|   Test(s) | 
-FR40-Manage categories|   Test(s) | 
--------------
-FR41-createCategory-create a new category |   Test(s) | 
-FR42-updateCategory-modify existing category|   Test(s) | 
-FR43-deleteCategory-delete a given category|   Test(s) | 
-FR44-getCategories-list all categories|   Test(s) | 
+|FR12-login-authorize access for a given user|   Test(s) | 
+|FR13-logout-stop authorization for a given user|   Test(s) | 
+|FR14-registerAdmin-create a new Admin|   Test(s) | 
+|FR15-getUsers-return all users|   Test(s) | 
+|FR16-getUser-return info about a specific user|   Test(s) | 
+|FR17-deleteUser-cancel a user|   Test(s) | 
+|FR20-Manage groups|   Test(s) | 
+|------------||
+|FR21-createGroup-create a new group|   Test(s) | 
+|FR22-getGroups-return all groups|   Test(s) | 
+|FR23-getGroup-return info about a specific group|   Test(s) | 
+|FR24-addToGroup-add many users to a given group|   Test(s) | 
+|FR26-removeFromGroup-remove many users from a given group|   Test(s) | 
+|FR28-deleteGroup-cancel a group, users members of the group remain unchanged|   Test(s) | 
+|FR30-Manage  transactions
+|--------------||
+|FR31-createTransaction-create a new transaction|   Test(s) | 
+|FR32-getAllTransactions-return all transactions (by all users)|   Test(s) | 
+|FR33-getTransactionsByUser-return transactions of a given user. transactions may be filtered by date, by period by max / min amount|   Test(s) | 
+|FR34-getTransactionsByUserByCategory-return transactions of a given user and a given category|   Test(s) | 
+|FR35-getTransactionsByGroup-return all transactions of all users of a given group|   Test(s) | 
+|FR36-getTransactionsByGroupByCategory-return all transactions of all users of a given group, filtered by a given category|   Test(s) | 
+|FR37-deleteTransaction-delete a given transaction|   Test(s) | 
+|FR38-deleteTransactions-delete many transactions|   Test(s) | 
+|FR40-Manage categories|   Test(s) | 
+|-------------||
+|FR41-createCategory-create a new category |   Test(s) | 
+|FR42-updateCategory-modify existing category|   Test(s) | 
+|FR43-deleteCategory-delete a given category|   Test(s) | 
+|FR44-getCategories-list all categories|   Test(s) | 
 
 ## Coverage white box
 
