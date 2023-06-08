@@ -13,30 +13,6 @@ jest.mock('../models/User.js');
 jest.mock('../controllers/utils.js');
 jest.mock('../models/model.js');
 
-/*
-
-TO PUT INSIDE EVERY DESCRIBE
--only the needed ones
-
-beforeEach(() => {
-    categories.find.mockClear();
-    categories.findOne.mockClear();
-    categories.updateOne.mockClear();
-    categories.deleteMany.mockClear();
-    transactions.updateMany.mockClear();
-    categories.updateMany.mockClear();
-    categories.updateOne.mockClear();
-
-
-    categories.prototype.save.mockClear();
-    transactions.find.mockClear();
-    transactions.deleteOne.mockClear();
-    transactions.aggregate.mockClear();
-    transactions.prototype.save.mockClear();
-
-});
-
-*/
 
 describe("createCategory", () => {
     let testReq;
@@ -490,7 +466,6 @@ describe("createTransaction", () => {
         expect(testRes.json).toHaveBeenCalledWith({ error: "Server error" });
     });
 });
-
 
 describe("getAllTransactions", () => {
     let testReq;
