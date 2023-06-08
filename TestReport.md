@@ -163,7 +163,7 @@
 |'getTransactionsByUser'|'Should return 401 if authorized as User but in the admin path'|unit|White Box|
 |'getTransactionsByUser'|'Should return 500 if there is a server error'|unit|White Box|
 |'getTransactionsByGroup'|'Should return transactions for the specified group|unit||White Box|
-|'getTransactionsByGroup'|unit||'Should return 400 if the group does not exist'|unit||White Box|
+|'getTransactionsByGroup'|'Should return 400 if the group does not exist'|unit||White Box|
 |'getTransactionsByGroup'|'Should return 401 if not authorized as admin or group member|unit||White Box|
 |'getTransactionsByGroup'|'Should return 500 if there is a Server Error'|unit||White Box|
 |'getTransactionsByGroupByCategory'|'Should return transactions grouped by category for the specified group'|unit||White Box|
