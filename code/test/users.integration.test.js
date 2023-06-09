@@ -65,6 +65,79 @@ beforeEach(async () => {
 })
 
 describe("getUsers", () => {
+  // Test Case 1: Only Admins should be able to retrieve all users
+  test("should fail to retrieve all users if the user is not an admin", (done) => {
+    User.create({
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid,
+    }).then(() => {
+      request(app)
+        .get("/api/users")
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+        .then((response) => {
+          expect(response.status).toBe(401)
+          expect(response.body).toHaveProperty('error')
+          done()
+        })
+        .catch((err) => done(err))
+    })
+  })
+
+  test("should retrieve list of all users if the user is an admin", (done) => {
+    User.create([
+      {
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid,
+      },
+      {
+        username: "admin",
+        email: "admin@email.com",
+        password: "admin",
+        refreshToken: adminAccessTokenValid,
+        role: "Admin"
+      }
+    ]).then(() => {
+      request(app)
+        .get("/api/users")
+        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+        .then((response) => {
+          expect(response.status).toBe(200)
+          expect(response.body.data).toHaveLength(2)
+          expect(response.body.data).toContainEqual(
+            expect.objectContaining({
+              username: "tester",
+              email: "tester@test.com",
+              role: "Regular"
+            })
+          );
+          expect(response.body.data).toContainEqual(
+            expect.objectContaining({
+              username: "admin",
+              email: "admin@email.com",
+              role: "Admin"
+            })
+          );
+          done() // Notify Jest that the test is complete
+        })
+        .catch((err) => done(err))
+    })
+  })
+
+  // Test Case 3: Unauthorized requests should not be able to retrieve all users
+  test("should fail to retrieve all users if the request is unauthorized", (done) => {
+    request(app)
+      .get("/api/users")
+      .then((response) => {
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error')
+        done()
+      })
+      .catch((err) => done(err))
+  })
   test("should return empty list if there are no users", (done) => {
     request(app)
       .get("/api/users")
@@ -98,63 +171,7 @@ describe("getUsers", () => {
     })
   })
 })
-/*
-describe("getUser", () => {
-
-  test("should return user if exists", async () => {
-    const newUser = new User({
-      username: "tester",
-      email: "test@test.com",
-      password: "tester",
-      role: "Admin",
-    });
-    await newUser.save();
-
-    const response = await request(app)
-      .get(`/api/users/${newUser.username}`)
-      .set('Authorization', `Bearer ${newUser.refreshToken}`); // assuming jwt based auth
-
-    expect(response.status).toBe(200);
-    expect(response.body.data.username).toEqual(newUser.username);
-    expect(response.body.data.email).toEqual(newUser.email);
-    expect(response.body.data.role).toEqual(newUser.role);
-  });
-
-
-  test("should return 400 error if user does not exist", (done) => {
-    request(app)
-      .get("/api/users/nonexistentUser")
-      .set('Authorization', 'Bearer dummytoken') // assuming jwt based auth
-      .then((response) => {
-        expect(response.status).toBe(400);
-        expect(response.body.error).toEqual("User not found");
-        done();
-      })
-      .catch((err) => done(err));
-  });
-
-  test("should return 401 error if user is not authorized", async (done) => {
-    const newUser = new User({
-      username: "tester",
-      email: "test@test.com",
-      password: "tester",
-      role: "Regular",
-    });
-    await newUser.save();
-
-    request(app)
-      .get(`/api/users/${newUser.username}`)
-      .set('Authorization', 'Bearer dummytoken') // assuming jwt based auth
-      .then((response) => {
-        expect(response.status).toBe(401);
-        done();
-      })
-      .catch((err) => done(err));
-  });
-});*/
-
-
-
+ 
 describe('GET /users/:username', () => {
 
   // Test Case 1: Successful retrieval of user information
@@ -223,10 +240,126 @@ describe('GET /users/:username', () => {
   });
 });
 
+describe('POST /api/groups', () => {
+  
+  // Test Case 1: Successfully create a group
+  it('should successfully create a new group', async () => {
+    await User.insertMany([{
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "new",
+      email: "new@email.com",
+      password: "new",
+      refreshToken: newAccessTokenValid,
+    }])
 
+    const groupData = { 
+      name: "Test Group", 
+      memberEmails: ["new@email.com"]
+    };
 
-describe("createGroup", () => { })
+    const res = await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData);
 
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('group');
+    expect(res.body.data.group).toHaveProperty('name', 'Test Group');
+    expect(res.body.data.group.members).toContain("tester@test.com");
+    expect(res.body.data.group.members).toContain("new@email.com");
+  });
+
+  // Test Case 2: Failure due to incomplete request body
+  it('should fail to create a group due to incomplete request body', async () => {
+    const groupData = { 
+      name: "Test Group"
+    };
+
+    const res = await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 3: Failure due to group name already exists
+  it('should fail to create a group due to group name already exists', async () => {
+    const groupData = { 
+      name: "Test Group", 
+      memberEmails: ["new@email.com"]
+    };
+
+    await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData);
+
+    const res = await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'A group with the same name already exists.');
+  });
+  // Test Case 4: Should not be able to create a group if the user is already part of another group
+  it('should fail to create a group because the user is already a member of another group', async () => {
+    // Create a group with user first
+    const initialGroupData = { 
+      name: "Initial Group", 
+      memberEmails: [tester.email]
+    };
+    await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(initialGroupData);
+
+    // Try to create another group with the same user
+    const newGroupData = { 
+      name: "New Group", 
+      memberEmails: [tester.email]
+    };
+    const response = await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(newGroupData);
+
+    // Check if the server responds with the correct error message and status code
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toHaveProperty('error', 'User is already a member of another group');
+  });
+  // Test Case 5: Failure due to an invited user already in a group
+  it('should fail to create a group due to an invited user already in a group', async () => {
+    const groupData1 = { 
+      name: "Test Group", 
+      memberEmails: ["new@email.com"]
+    };
+    await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData1);
+
+    const groupData2 = { 
+      name: "Test Group 2", 
+      memberEmails: ["new@email.com"]
+    };
+
+    const res = await request(app)
+      .post('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(groupData2);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'One or more invited members are already in a group');
+  });
+});
 describe("getGroups", () => { })
 
 describe("getGroup", () => { })
@@ -235,6 +368,87 @@ describe("addToGroup", () => { })
 
 describe("removeFromGroup", () => { })
 
-describe("deleteUser", () => { })
+describe('DELETE /users', () => {
+  // Test Case 1: Successfully delete a user
+  it('should successfully delete a user', async () => {
+    // Create a user for testing
+    await User.create({
+      username: "testUser",
+      email: "testUser@test.com",
+      password: "testUser",
+      refreshToken: newAccessTokenValid,
+    });
+
+    // Create an admin for testing
+    await User.create({
+      username: "adminUser",
+      email: "adminUser@admin.com",
+      password: "adminUser",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    });
+
+    const res = await request(app)
+      .delete('/api/users')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ email: "testUser@test.com" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('deletedTransactions', 0);
+    expect(res.body.data).toHaveProperty('deletedFromGroup', false);
+  });
+
+  // Test Case 2: Deleting a user which does not exist
+  it('should return error when deleting a user which does not exist', async () => {
+    const res = await request(app)
+      .delete('/api/users')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ email: "nonExistingUser@test.com" });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'User does not exist');
+  });
+
+  // Test Case 3: Unauthorized delete of user
+  it('should return error when deleting user without being authorized', async () => {
+    // Create a user for testing
+    await User.create({
+      username: "testUser",
+      email: "testUser@test.com",
+      password: "testUser",
+      refreshToken: newAccessTokenValid,
+    });
+
+    const res = await request(app)
+      .delete('/api/users')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({ email: "testUser@test.com" });
+
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  // Test Case 4: Deleting an admin user
+  it('should return error when deleting an admin user', async () => {
+    // Create an admin for testing
+    await User.create({
+      username: "adminUser",
+      email: "adminUser@admin.com",
+      password: "adminUser",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    });
+
+    const res = await request(app)
+      .delete('/api/users')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ email: "adminUser@admin.com" });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'You cannot delete an Admin');
+  });
+});
+
 
 describe("deleteGroup", () => { })
