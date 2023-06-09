@@ -266,7 +266,7 @@ test('should return 500 error if there is a server error', async () => {
 });
 
 import { logout } from '../controllers/auth.js';
-describe('logout function', () => {
+describe('logout', () => {
     let mockRequest;
     let mockResponse;
     let statusSpy;

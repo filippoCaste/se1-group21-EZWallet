@@ -179,7 +179,7 @@ describe("createGroup", () => {
     testReq = {
       body: {
         name: "testGroup",
-        memberEmails: ["userTest1@test.ut", "userTest2@test.ut"]
+        emails: ["userTest1@test.ut", "userTest2@test.ut"]
       },
       cookies: {
         refreshToken: "aValidToken"
@@ -219,7 +219,7 @@ describe("createGroup", () => {
     const responseData = {
       group: {
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: group.members.map(member => {return {email: member.email}})
       },
       alreadyInGroup: [],
       membersNotFound: []
@@ -272,7 +272,7 @@ describe("createGroup", () => {
   });
 
   test("Should return 400 if invalid memberEmail format", async () => {
-    testReq.body.memberEmails = ["userTest1@test", "userTest2@test"];
+    testReq.body.emails = ["userTest1@test", "userTest2@test"];
     verifyAuth.mockReturnValue({ authorized: true });
     User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
     Group.findOne.mockResolvedValueOnce();
@@ -341,7 +341,7 @@ describe("getGroups", () => {
 
     const responseData = groups.map(group => ({
       name: group.name,
-      members: group.members.map(member => member.email)
+      members: group.members.map(member => {return {email: member.email}})
     }));
 
     await getGroups(testReq, testRes);
@@ -410,7 +410,7 @@ describe("getGroup", () => {
 
     const responseData = {
       name: group.name,
-      members: group.members.map(member => member.email)
+      members: group.members.map(member => {return {email: member.email}})
     };
 
     await getGroup(testReq, testRes);
@@ -468,7 +468,7 @@ describe("addToGroup", () => {
     jsonSpy = jest.fn();
     testReq = {
       params: { name: "testGroup" },
-      body: { memberEmails: ["test2@example.com"] },
+      body: { emails: ["test2@example.com"] },
       path: "/groups/testGroup/insert"
     };
     testRes = {
@@ -495,10 +495,10 @@ describe("addToGroup", () => {
     await addToGroup(testReq, testRes);
     expect(statusSpy).toHaveBeenCalledWith(200);
     expect(jsonSpy).toHaveBeenCalledWith({
-      data: {
+      data:{
         group: {
           name: "testGroup",
-          members: ["test1@example.com", "test2@example.com"]
+          members: [{email:"test1@example.com"}, {email:"test2@example.com"}]
         },
         alreadyInGroup: [],
         membersNotFound: []
@@ -525,7 +525,7 @@ describe("addToGroup", () => {
 
   test("Should return 400 if some of memberEmails are not in valid format", async () => {
     Group.findOne.mockResolvedValueOnce({ name: "testGroup", members: [{ email: "test1@example.com" }] });
-    testReq.body.memberEmails = ["test1@example.com", "invalidEmail"];
+    testReq.body.emails = ["test1@example.com", "invalidEmail"];
     await addToGroup(testReq, testRes);
     expect(statusSpy).toHaveBeenCalledWith(400);
     expect(jsonSpy).toHaveBeenCalledWith({ error: "Invalid memberEmail format" });
@@ -535,7 +535,7 @@ describe("addToGroup", () => {
   test("Should return 400 if all memberEmails do not exist or are already in a group", async () => {
     testReq = {
       params: { name: "testGroup" },
-      body: { memberEmails: ["test2@example.com","testNotFound@example.com"] },
+      body: { emails: ["test2@example.com","testNotFound@example.com"] },
       path: "/groups/testGroup/insert"
     };
     
@@ -579,7 +579,7 @@ describe("removeFromGroup", () => {
     jsonSpy = jest.fn();
     testReq = {
       params: { name: "testGroup" },
-      body: { memberEmails: ["test2@example.com"] },
+      body: { emails: ["test2@example.com"] },
       path: "/groups/testGroup/remove"
     };
     testRes = {
@@ -620,7 +620,7 @@ describe("removeFromGroup", () => {
       data: {
         group: {
           name: "testGroup",
-          members: ["test1@example.com"]
+          members: [{email: "test1@example.com"}]
         },
         notInGroup: [],
         membersNotFound: []
@@ -656,7 +656,7 @@ describe("removeFromGroup", () => {
     Group.findOne.mockResolvedValueOnce(group);
     verifyAuth.mockReturnValueOnce({ authorized: true });
     verifyAuth.mockReturnValueOnce({ authorized: true });
-    testReq.body.memberEmails = ["test1@example.com", "invalidEmail"];
+    testReq.body.emails = ["test1@example.com", "invalidEmail"];
 
     await removeFromGroup(testReq, testRes);
 
@@ -673,7 +673,7 @@ describe("removeFromGroup", () => {
     Group.findOne.mockResolvedValueOnce(group);
     verifyAuth.mockReturnValueOnce({ authorized: true });
     verifyAuth.mockReturnValueOnce({ authorized: true });
-    testReq.body.memberEmails = ["test1@example.com"];
+    testReq.body.emails = ["test1@example.com"];
 
     await removeFromGroup(testReq, testRes);
 
@@ -742,7 +742,7 @@ describe("removeFromGroup", () => {
     verifyAuth.mockReturnValueOnce({ authorized: true });
     User.find.mockResolvedValueOnce([user1, user2, user3]);
     Group.updateOne.mockResolvedValueOnce();
-    testReq.body.memberEmails = ["test1@example.com", "test2@example.com", "test3@example.com"];
+    testReq.body.emails = ["test1@example.com", "test2@example.com", "test3@example.com"];
   
     await removeFromGroup(testReq, testRes);
   
@@ -751,7 +751,7 @@ describe("removeFromGroup", () => {
       data: {
         group: {
           name: "testGroup",
-          members: ["test1@example.com"]
+          members: [{email: "test1@example.com"}]
         },
         notInGroup: [],
         membersNotFound: []

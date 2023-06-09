@@ -53,7 +53,7 @@ export const createCategory = async (req, res) => {
         const new_categories = new categories({ type, color });
         new_categories.save()
             .then(data => res.status(200).json({ data: { type, color }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-            //.catch(err => { throw err })
+        //.catch(err => { throw err })
     } catch (error) {
         res.status(500).json({ error: error.message })
     }
@@ -219,13 +219,12 @@ export const getCategories = async (req, res) => {
 export const createTransaction = async (req, res) => {
     try {
         const usernameURL = req.params.username;
-        if (!(await userExistsByUsername(usernameURL))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-
         const userAuth = verifyAuth(req, res, { authType: "User", username: usernameURL });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
+        }
+        if (!(await userExistsByUsername(usernameURL))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
         }
 
         // Check for incomplete request body
@@ -259,7 +258,7 @@ export const createTransaction = async (req, res) => {
         const new_transaction = new transactions({ username, amount, type });
         new_transaction.save()
             .then(data => res.status(200).json({ data: { username: data.username, amount: data.amount, type: data.type, date: data.date }, refreshedTokenMessage: res.locals.refreshedTokenMessage }))
-          //  .catch(err => { throw err })
+        //  .catch(err => { throw err })
 
     } catch (error) {
         res.status(500).json({ error: error.message })
@@ -315,15 +314,15 @@ export const getTransactionsByUser = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const username = req.params.username;
-        if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
         const userAuth = verifyAuth(req, res, { authType: "User", username })
         const route = req.path;
 
         // Check authorization
         if ((adminAuth.authorized && route === `/transactions/users/${username}`) || (userAuth.authorized && route === `/users/${username}/transactions`)) {
+            if (!(await userExistsByUsername(username))) {
+                return res.status(400).json({ error: "The provided URL username does not exist." });
+            }
             let filterAmount = {};
             let filterDate = {};
             if (route === `/users/${username}/transactions`) {
@@ -426,12 +425,9 @@ export const getTransactionsByGroup = async (req, res) => {
         //Distinction between route accessed by Admins or Regular users for functions that can be called by both
         //and different behaviors and access rights
         const name = req.params.name;
-        let group = null;
-        if (name) {
-            group = await Group.findOne({ name });
-        }
+        let group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            return res.status(400).json({ error: "There is no Group with this name" });
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
@@ -482,16 +478,12 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
         //and different behaviors and access rights
         const name = req.params.name;
         const category = req.params.category;
-        let group = null;
-        if (name) {
-            group = await Group.findOne({ name });
-        }
+        let group = await Group.findOne({ name });
         if (!group) {
-            return res.status(400).json({ error: "The provided id does not match with any transaction in the db." });
+            return res.status(400).json({ error: "There is no Group with this name" });
         }
-
-        if(! await categoryTypeExists(category)) {
-            return res.status(400).json({error: "Category type does not exist"})
+        if (! await categoryTypeExists(category)) {
+            return res.status(400).json({ error: "Category type does not exist" })
         }
         const memberEmails = group.members.map(member => member.email);
         const adminAuth = verifyAuth(req, res, { authType: "Admin" })
@@ -538,15 +530,13 @@ export const getTransactionsByGroupByCategory = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     try {
         const username = req.params.username;
-        if (!(await userExistsByUsername(username))) {
-            return res.status(400).json({ error: "The provided URL username does not exist." });
-        }
-
         const userAuth = verifyAuth(req, res, { authType: "User", username });
         if (!userAuth.authorized) {
             return res.status(401).json({ error: userAuth.cause });
         }
-
+        if (!(await userExistsByUsername(username))) {
+            return res.status(400).json({ error: "The provided URL username does not exist." });
+        }
         // Check for incomplete request body
         if (!('_id' in req.body)) {
             return res.status(400).json({ error: "Not enough parameters." });
