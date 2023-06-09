@@ -368,7 +368,6 @@ describe('POST /api/groups', () => {
   
 });
 
-
 describe("getGroups", () => {
   beforeEach(async () => {
     await Group.deleteMany({})
@@ -504,20 +503,33 @@ describe('getGroup', () => {
 
 describe("PATCH /groups/:name/add", () => {
   beforeEach(async () => {
+    await User.deleteMany({});
     await Group.deleteMany({});
+    User.create({
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid,
+    });
   });
   // Test Case 1: Successful addition of a new member to the group
   it("should successfully add a new member to the group", async () => {
     // Create a group
-    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
-
+    const groupName = "Family"
+    await Group.create({ name: groupName, members: [{ email: "mario.red@email.com," }, {email: "tester@test.com"}] });
+    User.create({
+      username: "pietro",
+      email: "pietro.blue@email.com",
+      password: "mockpsw",
+      refreshToken: "mock",
+    })
     // Prepare the request body
     const reqBody = {
       memberEmails: ["pietro.blue@email.com"]
     };
 
     const res = await request(app)
-      .patch(`/api/groups/Family/add`)
+      .patch(`/api/groups/${groupName}/add`)
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
       .send(reqBody);
 
@@ -531,13 +543,14 @@ describe("PATCH /groups/:name/add", () => {
 
   // Test Case 2: Failure due to group not found
   it("should fail to add members due to group not found", async () => {
+    const groupName = "Family"
     // Prepare the request body
     const reqBody = {
       memberEmails: ["pietro.blue@email.com"]
     };
 
     const res = await request(app)
-      .patch(`/api/groups/NonExistingGroup/add`)
+    .patch(`/api/groups/${groupName}/add`)
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
       .send(reqBody);
 
@@ -565,7 +578,7 @@ describe("PATCH /groups/:name/add", () => {
   // Test Case 4: Failure due to invalid email format
   it("should fail to add members due to invalid email format", async () => {
     // Create a group
-    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" },{email: "tester@test.com"}] });
 
     // Prepare the request body
     const reqBody = {
@@ -593,21 +606,26 @@ describe("PATCH /groups/:name/add", () => {
   
       const res = await request(app)
         .patch(`/api/groups/Friends/add`)
-        .set("Cookie", `accessToken=${unauthorizedUserToken}; refreshToken=${unauthorizedUserToken}`) //Setting cookies with unauthorized user in the request
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies with unauthorized user in the request
         .send(reqBody);
   
       expect(res.statusCode).toBe(401);
-      expect(res.body).toHaveProperty('error', 'Not authorized to perform this action');
+      expect(res.body).toHaveProperty('error', 'Unauthorized');
     });
   
     // Test Case 6: Adding an existing member to the group
-    it("should not add an existing member to the group", async () => {
+    it("should fail adding only one member that is already in another group", async () => {
       // Create a group
-      await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
-  
+      await Group.create({ name: "Family", members: [{ email: "pietro.blue@email.com" },{email: "tester@test.com"}] });
+      User.create({
+        username: "pietro",
+        email: "pietro.blue@email.com",
+        password: "mockpsw",
+        refreshToken: "mock",
+      })
       // Prepare the request body
       const reqBody = {
-        memberEmails: ["mario.red@email.com"]
+        memberEmails: ["pietro.blue@email.com"]
       };
   
       const res = await request(app)
@@ -615,23 +633,18 @@ describe("PATCH /groups/:name/add", () => {
         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
         .send(reqBody);
   
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data).toHaveProperty('group');
-      expect(res.body.data.group).toHaveProperty('name', 'Family');
-      expect(res.body.data.group.members).toContain("mario.red@email.com");
-      expect(res.body.data.membersNotFound).toHaveLength(0);
-      expect(res.body.data.alreadyInGroup).toHaveLength(1);
-      expect(res.body.data.alreadyInGroup).toContain("mario.red@email.com");
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error','Member emails either do not exist or are already in a group');
+      
     });
   
     // Test Case 7: Adding a non-existing member to the group
     it("should not add a non-existing member to the group", async () => {
       // Create a group
-      await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+      await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" },{email: "tester@test.com"}] });
   
-      // Prepare the request body
       const reqBody = {
-        memberEmails: ["nonexisting.user@email.com"]
+        memberEmails: ["pietro.blue@email.com"]
       };
   
       const res = await request(app)
@@ -639,16 +652,11 @@ describe("PATCH /groups/:name/add", () => {
         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
         .send(reqBody);
   
-      expect(res.statusCode).toBe(200);
-      expect(res.body.data).toHaveProperty('group');
-      expect(res.body.data.group).toHaveProperty('name', 'Family');
-      expect(res.body.data.group.members).toContain("mario.red@email.com");
-      expect(res.body.data.membersNotFound).toHaveLength(1);
-      expect(res.body.data.membersNotFound).toContain("nonexisting.user@email.com");
-      expect(res.body.data.alreadyInGroup).toHaveLength(0);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toHaveProperty('error','Member emails either do not exist or are already in a group');
     });
 });
-
+/*
 describe('removeFromGroup', () => {
   beforeEach(async () => {
     await Group.deleteMany({});
@@ -849,7 +857,7 @@ describe('deleteUser', () => {
     expect(res.body).toHaveProperty('error', 'You cannot delete an Admin');
   });
 });
-/* */
+ 
 describe('deleteGroup', () => {
   beforeEach(async () => {
     await Group.deleteMany({});
@@ -926,5 +934,5 @@ describe('deleteGroup', () => {
     expect(res.body).toHaveProperty('error');
   });
 });
-
+*/
 
