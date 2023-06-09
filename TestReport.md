@@ -336,7 +336,7 @@ WB# Contents
 | FR24 addToGroup | 460-569 |
 | FR26 removeFromGroup | 571-765 |
 | FR28 deleteGroup | 929-1019 |
-|  FR3   |  Manage  transactions| controllers.unit.test.js lines| 
+|  FR3    Manage  transactions| controllers.unit.test.js lines| 
 |FR31 createTransaction|360-468 |
 |FR32 getAllTransactions | 470-546|
 | FR33 getTransactionsByUser  | 548-665|
@@ -369,7 +369,7 @@ WB# Contents
 | FR24 addToGroup |  |
 | FR26 removeFromGroup |  |
 | FR28 deleteGroup |  |
-|  FR3   |  Manage  transactions| controllers.integration.test.js lines| 
+|  FR3   Manage  transactions| controllers.integration.test.js lines| 
 |FR31 createTransaction| 1096-1719|
 |FR32 getAllTransactions |1721-1818 |
 | FR33 getTransactionsByUser  |1820-2157 |
