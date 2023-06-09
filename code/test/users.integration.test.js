@@ -261,7 +261,7 @@ describe('POST /api/groups', () => {
 
     const groupData = {
       name: "Test Group",
-      memberEmails: ["new@email.com"],
+      emails: ["new@email.com"],
     };
 
     const res = await request(app)
@@ -313,7 +313,7 @@ describe('POST /api/groups', () => {
     ]);
     const groupData = { 
       name: "Test Group", 
-      memberEmails: ["new@email.com"]
+      emails: ["new@email.com"]
     };
 
     await request(app)
@@ -354,7 +354,7 @@ describe('POST /api/groups', () => {
     // Try to create another group with the same user
     const newGroupData = { 
       name: "New Group", 
-      memberEmails: ["tester@test.com"]
+      emails: ["tester@test.com"]
     };
     const response = await request(app)
       .post('/api/groups')
@@ -392,7 +392,7 @@ describe("getGroups", () => {
     expect(res.body.data[0]).toHaveProperty('name', 'Group1');
     expect(res.body.data[0].members).toEqual([{email: 'mario.red@email.com'}, {email: 'luigi.red@email.com'}]);
     expect(res.body.data[1]).toHaveProperty('name', 'Group2');
-    expect(res.body.data[1].members).toEqual(['peach.pink@email.com', 'toad.blue@email.com']);
+    expect(res.body.data[1].members).toEqual([{email: 'peach.pink@email.com'}, {email: 'toad.blue@email.com'}]);
   });
 
   // Test Case 2: Failure due to unauthenticated user
@@ -536,7 +536,7 @@ describe("PATCH /groups/:name/add", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.data).toHaveProperty('group');
     expect(res.body.data.group).toHaveProperty('name', 'Family');
-    expect(res.body.data.group.members).toContain({email: "pietro.blue@email.com"});
+    expect(res.body.data.group.members).toContainEqual({email: "pietro.blue@email.com"});
     expect(res.body.data.membersNotFound).toHaveLength(0);
     expect(res.body.data.alreadyInGroup).toHaveLength(0);
   });
@@ -694,7 +694,7 @@ describe('removeFromGroup', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('data');
-    expect(res.body.data.group.members).toHaveLength(2);
+    expect(res.body.data.group.members).toHaveLength(1);
     expect(res.body.data.group.members[0].email).toEqual('admin@email.com');
     expect(res.body.data.notInGroup).toHaveLength(0);
     expect(res.body.data.membersNotFound).toHaveLength(0);
