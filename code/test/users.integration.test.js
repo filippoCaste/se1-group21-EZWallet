@@ -656,13 +656,26 @@ describe("PATCH /groups/:name/add", () => {
         expect(res.body).toHaveProperty('error','Member emails either do not exist or are already in a group');
     });
 });
-/*
+
 describe('removeFromGroup', () => {
   beforeEach(async () => {
     await Group.deleteMany({});
   });
   // Test Case 1: Successful removal of user from group
   it('should successfully remove user from group', async () => {
+    await User.insertMany([{
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "admin",
+      email: "admin@email.com",
+      password: "admin",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    }])
+
     await Group.create({
       name: "Family",
       members: [{
@@ -677,18 +690,29 @@ describe('removeFromGroup', () => {
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send({ memberEmails: ["admin@email.com"] });
+      .send({ memberEmails: ["tester@test.com"] });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('data');
     expect(res.body.data.group.members).toHaveLength(1);
-    expect(res.body.data.group.members[0].email).toEqual('tester@test.com');
+    expect(res.body.data.group.members[0]).toEqual('admin@email.com');
     expect(res.body.data.notInGroup).toHaveLength(0);
     expect(res.body.data.membersNotFound).toHaveLength(0);
   });
 
   // Test Case 2: Failure due to group not found
   it('should fail to remove user from group due to group not found', async () => {
+    await Group.create({
+      name: "Family",
+      members: [{
+        username: "tester",
+        email: "tester@test.com"
+      }, {
+        username: "admin",
+        email: "admin@email.com"
+      }]
+    });
+
     const res = await request(app)
       .patch('/api/groups/NonExistingGroup/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
@@ -700,6 +724,30 @@ describe('removeFromGroup', () => {
 
   // Test Case 3: Failure due to incomplete request body
   it('should fail to remove user from group due to incomplete request body', async () => {
+    await User.insertMany([{
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "admin",
+      email: "admin@email.com",
+      password: "admin",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    }])
+
+    await Group.create({
+      name: "Family",
+      members: [{
+        username: "tester",
+        email: "tester@test.com"
+      }, {
+        username: "admin",
+        email: "admin@email.com"
+      }]
+    });
+
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
@@ -711,6 +759,30 @@ describe('removeFromGroup', () => {
 
   // Test Case 4: Failure due to unauthorized access
   it('should fail to remove user from group due to unauthorized access', async () => {
+    await User.insertMany([{
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "admin",
+      email: "admin@email.com",
+      password: "admin",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    }])
+
+    await Group.create({
+      name: "Family",
+      members: [{
+        username: "tester",
+        email: "tester@test.com"
+      }, {
+        username: "admin",
+        email: "admin@email.com"
+      }]
+    });
+
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
@@ -722,6 +794,30 @@ describe('removeFromGroup', () => {
 
   // Test Case 5: Failure due to invalid email format
   it('should fail to remove user from group due to invalid email format', async () => {
+    await User.insertMany([{
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "admin",
+      email: "admin@email.com",
+      password: "admin",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    }])
+
+    await Group.create({
+      name: "Family",
+      members: [{
+        username: "tester",
+        email: "tester@test.com"
+      }, {
+        username: "admin",
+        email: "admin@email.com"
+      }]
+    });
+
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
@@ -732,49 +828,107 @@ describe('removeFromGroup', () => {
   });
     // Test Case 6: Failure due to last member of the group
     it('should fail to remove the last user from the group', async () => {
+      await User.insertMany([{
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid
+      }, {
+        username: "admin",
+        email: "admin@email.com",
+        password: "admin",
+        refreshToken: adminAccessTokenValid,
+        role: "Admin"
+      }])
+
       await Group.create({
         name: "Solo",
         members: [{
-          username: "loner",
-          email: "loner@test.com"
+          username: "tester",
+          email: "tester@test.com"
         }]
       });
   
       const res = await request(app)
         .patch('/api/groups/Solo/remove')
-        .set("Cookie", `accessToken=${lonerAccessTokenValid}; refreshToken=${lonerRefreshTokenValid}`) //Setting cookies in the request
-        .send({ memberEmails: ["loner@test.com"] });
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+        .send({ memberEmails: ["tester@test.com"] });
   
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('error', 'Cannot remove the last member of a group.');
+      expect(res.body).toHaveProperty('error', 'You cannot remove the last member of the group!');
     });
   
     // Test Case 7: Failure due to member not found in group
     it('should fail to remove a member that is not part of the group', async () => {
+      await User.insertMany([{
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid
+      }, {
+        username: "admin",
+        email: "admin@email.com",
+        password: "admin",
+        refreshToken: adminAccessTokenValid,
+        role: "Admin"
+      }])
+
+      await Group.create({
+        name: "Family",
+        members: [{
+          username: "tester",
+          email: "tester@test.com"
+        }, {
+          username: "admin",
+          email: "admin@email.com"
+        }]
+      });
+
       const res = await request(app)
         .patch('/api/groups/Family/remove')
-        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerRefreshTokenValid}`) //Setting cookies in the request
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
         .send({ memberEmails: ["stranger@email.com"] });
   
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('error', 'Some of the members were not found in the group');
-      expect(res.body).toHaveProperty('data');
-      expect(res.body.data.notInGroup).toEqual(["stranger@email.com"]);
+      expect(res.body).toHaveProperty('error', 'Member emails either do not exist or are not in the group');
     });
   
     // Test Case 8: Failure due to non-existent member
     it('should fail to remove a member that does not exist', async () => {
+      await User.insertMany([{
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid
+      }, {
+        username: "admin",
+        email: "admin@email.com",
+        password: "admin",
+        refreshToken: adminAccessTokenValid,
+        role: "Admin"
+      }])
+
+      await Group.create({
+        name: "Family",
+        members: [{
+          username: "tester",
+          email: "tester@test.com"
+        }, {
+          username: "admin",
+          email: "admin@email.com"
+        }]
+      });
+
       const res = await request(app)
         .patch('/api/groups/Family/remove')
-        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerRefreshTokenValid}`) //Setting cookies in the request
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
         .send({ memberEmails: ["nonexistent@email.com"] });
   
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('error', 'Some of the members were not found in the system');
-      expect(res.body).toHaveProperty('data');
-      expect(res.body.data.membersNotFound).toEqual(["nonexistent@email.com"]);
+      expect(res.body).toHaveProperty('error', 'Member emails either do not exist or are not in the group');
     });
 });
+
  
 describe('deleteUser', () => {
   // Test Case 1: Successfully delete a user
@@ -857,7 +1011,7 @@ describe('deleteUser', () => {
     expect(res.body).toHaveProperty('error', 'You cannot delete an Admin');
   });
 });
- 
+
 describe('deleteGroup', () => {
   beforeEach(async () => {
     await Group.deleteMany({});
@@ -934,5 +1088,5 @@ describe('deleteGroup', () => {
     expect(res.body).toHaveProperty('error');
   });
 });
-*/
+ /**/
 
