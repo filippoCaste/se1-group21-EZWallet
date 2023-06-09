@@ -172,7 +172,7 @@ describe("getUsers", () => {
   })
 })
  
-describe('GET /users/:username', () => {
+describe('getUser', () => {
 
   // Test Case 1: Successful retrieval of user information
   it('should successfully retrieve user information', async () => {
@@ -360,15 +360,409 @@ describe('POST /api/groups', () => {
     expect(res.body).toHaveProperty('error', 'One or more invited members are already in a group');
   });
 });
-describe("getGroups", () => { })
 
-describe("getGroup", () => { })
+describe("getGroups", () => {
+  beforeEach(async () => {
+    await Group.deleteMany({})
+  })
+  
+  // Test Case 1: Successful retrieval of groups by an admin
+  it('should return an array of groups', async () => {
+    // Create some test groups
+    await Group.insertMany([
+      { name: "Group1", members: [{email: "mario.red@email.com"}, {email: "luigi.red@email.com"}] },
+      { name: "Group2", members: [{email: "peach.pink@email.com"}, {email: "toad.blue@email.com"}] },
+    ]);
 
-describe("addToGroup", () => { })
+    const res = await request(app)
+      .get('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
 
-describe("removeFromGroup", () => { })
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveLength(2);
 
-describe('DELETE /users', () => {
+    expect(res.body.data[0]).toHaveProperty('name', 'Group1');
+    expect(res.body.data[0].members).toEqual(['mario.red@email.com', 'luigi.red@email.com']);
+    expect(res.body.data[1]).toHaveProperty('name', 'Group2');
+    expect(res.body.data[1].members).toEqual(['peach.pink@email.com', 'toad.blue@email.com']);
+  });
+
+  // Test Case 2: Failure due to unauthenticated user
+  it('should fail to retrieve groups due to unauthorized access', async () => {
+    const res = await request(app)
+      .get('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  // Test Case 3: Successful retrieval of an empty array if no groups
+  it('should return an empty array if no groups exist', async () => {
+    const res = await request(app)
+      .get('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveLength(0);
+  });
+
+  // Test Case 4: Failure due to expired access token
+  it('should fail to retrieve groups due to expired access token', async () => {
+    const res = await request(app)
+      .get('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenExpired}; refreshToken=${testerAccessTokenExpired}`) //Setting cookies in the request
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+});
+
+describe('getGroup', () => {
+  
+  // Test Case 1: Successful retrieval of group information
+  it('should successfully retrieve group information by group name', async () => {
+    
+    // Create users and a group for testing
+    const users = await User.insertMany([{
+      username: "admin",
+      email: "admin@email.com",
+      password: "admin",
+      refreshToken: adminAccessTokenValid,
+      role: "Admin"
+    }, {
+      username: "tester",
+      email: "tester@test.com",
+      password: "tester",
+      refreshToken: testerAccessTokenValid
+    }, {
+      username: "new",
+      email: "new@email.com",
+      password: "new",
+      refreshToken: newAccessTokenValid
+    }])
+
+    await Group.create({
+      name: "Family",
+      members: [
+        {
+          email: "admin@email.com",
+          user: users[0]._id
+        },
+        {
+          email: "tester@test.com",
+          user: users[1]._id
+        },
+        {
+          email: "new@email.com",
+          user: users[2]._id
+        }
+      ]
+    });
+
+    const res = await request(app)
+      .get('/api/groups/Family')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('name', 'Family');
+    expect(res.body.data).toHaveProperty('members');
+    expect(res.body.data.members).toEqual(expect.arrayContaining([expect.any(String)]));
+  });
+
+  // Test Case 2: Failure due to group not found
+  it('should fail to retrieve group information due to group not found', async () => {
+    const res = await request(app)
+      .get('/api/groups/NonExistingGroup')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'The group does not exist');
+  });
+
+  // Test Case 3: Failure due to unauthorized access (user is not a member of the group and not an admin)
+  it('should fail to retrieve group information due to unauthorized access', async () => {
+    const res = await request(app)
+      .get('/api/groups/Family')
+      .set("Cookie", `accessToken=${testerAccessTokenExpired}; refreshToken=${testerAccessTokenExpired}`) //Setting cookies in the request
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+});
+
+describe("PATCH /groups/:name/add", () => {
+  beforeEach(async () => {
+    await Group.deleteMany({});
+  });
+  // Test Case 1: Successful addition of a new member to the group
+  it("should successfully add a new member to the group", async () => {
+    // Create a group
+    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+
+    // Prepare the request body
+    const reqBody = {
+      memberEmails: ["pietro.blue@email.com"]
+    };
+
+    const res = await request(app)
+      .patch(`/api/groups/Family/add`)
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(reqBody);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data).toHaveProperty('group');
+    expect(res.body.data.group).toHaveProperty('name', 'Family');
+    expect(res.body.data.group.members).toContain("pietro.blue@email.com");
+    expect(res.body.data.membersNotFound).toHaveLength(0);
+    expect(res.body.data.alreadyInGroup).toHaveLength(0);
+  });
+
+  // Test Case 2: Failure due to group not found
+  it("should fail to add members due to group not found", async () => {
+    // Prepare the request body
+    const reqBody = {
+      memberEmails: ["pietro.blue@email.com"]
+    };
+
+    const res = await request(app)
+      .patch(`/api/groups/NonExistingGroup/add`)
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(reqBody);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'There is no Group with this name');
+  });
+
+  // Test Case 3: Failure due to incomplete request body
+  it("should fail to add members due to incomplete request body", async () => {
+    // Create a group
+    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+
+    // Prepare the request body
+    const reqBody = {};
+
+    const res = await request(app)
+      .patch(`/api/groups/Family/add`)
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(reqBody);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 4: Failure due to invalid email format
+  it("should fail to add members due to invalid email format", async () => {
+    // Create a group
+    await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+
+    // Prepare the request body
+    const reqBody = {
+      memberEmails: ["invalidEmail"]
+    };
+
+    const res = await request(app)
+      .patch(`/api/groups/Family/add`)
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send(reqBody);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Invalid memberEmail format');
+  });
+
+    // Test Case 5: Failure due to user not being a group member
+    it("should fail to add members because the current user is not a member of the group", async () => {
+      // Create a group
+      await Group.create({ name: "Friends", members: [{ email: "mario.red@email.com" }] });
+  
+      // Prepare the request body
+      const reqBody = {
+        memberEmails: ["pietro.blue@email.com"]
+      };
+  
+      const res = await request(app)
+        .patch(`/api/groups/Friends/add`)
+        .set("Cookie", `accessToken=${unauthorizedUserToken}; refreshToken=${unauthorizedUserToken}`) //Setting cookies with unauthorized user in the request
+        .send(reqBody);
+  
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toHaveProperty('error', 'Not authorized to perform this action');
+    });
+  
+    // Test Case 6: Adding an existing member to the group
+    it("should not add an existing member to the group", async () => {
+      // Create a group
+      await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+  
+      // Prepare the request body
+      const reqBody = {
+        memberEmails: ["mario.red@email.com"]
+      };
+  
+      const res = await request(app)
+        .patch(`/api/groups/Family/add`)
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+        .send(reqBody);
+  
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data).toHaveProperty('group');
+      expect(res.body.data.group).toHaveProperty('name', 'Family');
+      expect(res.body.data.group.members).toContain("mario.red@email.com");
+      expect(res.body.data.membersNotFound).toHaveLength(0);
+      expect(res.body.data.alreadyInGroup).toHaveLength(1);
+      expect(res.body.data.alreadyInGroup).toContain("mario.red@email.com");
+    });
+  
+    // Test Case 7: Adding a non-existing member to the group
+    it("should not add a non-existing member to the group", async () => {
+      // Create a group
+      await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" }] });
+  
+      // Prepare the request body
+      const reqBody = {
+        memberEmails: ["nonexisting.user@email.com"]
+      };
+  
+      const res = await request(app)
+        .patch(`/api/groups/Family/add`)
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+        .send(reqBody);
+  
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data).toHaveProperty('group');
+      expect(res.body.data.group).toHaveProperty('name', 'Family');
+      expect(res.body.data.group.members).toContain("mario.red@email.com");
+      expect(res.body.data.membersNotFound).toHaveLength(1);
+      expect(res.body.data.membersNotFound).toContain("nonexisting.user@email.com");
+      expect(res.body.data.alreadyInGroup).toHaveLength(0);
+    });
+  });
+  
+
+
+describe('removeFromGroup', () => {
+  beforeEach(async () => {
+    await Group.deleteMany({});
+  });
+  // Test Case 1: Successful removal of user from group
+  it('should successfully remove user from group', async () => {
+    await Group.create({
+      name: "Family",
+      members: [{
+        username: "tester",
+        email: "tester@test.com"
+      }, {
+        username: "admin",
+        email: "admin@email.com"
+      }]
+    });
+
+    const res = await request(app)
+      .patch('/api/groups/Family/remove')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({ memberEmails: ["admin@email.com"] });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data.group.members).toHaveLength(1);
+    expect(res.body.data.group.members[0].email).toEqual('tester@test.com');
+    expect(res.body.data.notInGroup).toHaveLength(0);
+    expect(res.body.data.membersNotFound).toHaveLength(0);
+  });
+
+  // Test Case 2: Failure due to group not found
+  it('should fail to remove user from group due to group not found', async () => {
+    const res = await request(app)
+      .patch('/api/groups/NonExistingGroup/remove')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({ memberEmails: ["admin@email.com"] });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'There is no Group with this name');
+  });
+
+  // Test Case 3: Failure due to incomplete request body
+  it('should fail to remove user from group due to incomplete request body', async () => {
+    const res = await request(app)
+      .patch('/api/groups/Family/remove')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({});
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 4: Failure due to unauthorized access
+  it('should fail to remove user from group due to unauthorized access', async () => {
+    const res = await request(app)
+      .patch('/api/groups/Family/remove')
+      .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
+      .send({ memberEmails: ["admin@email.com"] });
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  // Test Case 5: Failure due to invalid email format
+  it('should fail to remove user from group due to invalid email format', async () => {
+    const res = await request(app)
+      .patch('/api/groups/Family/remove')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({ memberEmails: ["invalidEmail"] });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Invalid memberEmail format');
+  });
+    // Test Case 6: Failure due to last member of the group
+    it('should fail to remove the last user from the group', async () => {
+      await Group.create({
+        name: "Solo",
+        members: [{
+          username: "loner",
+          email: "loner@test.com"
+        }]
+      });
+  
+      const res = await request(app)
+        .patch('/api/groups/Solo/remove')
+        .set("Cookie", `accessToken=${lonerAccessTokenValid}; refreshToken=${lonerRefreshTokenValid}`) //Setting cookies in the request
+        .send({ memberEmails: ["loner@test.com"] });
+  
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('error', 'Cannot remove the last member of a group.');
+    });
+  
+    // Test Case 7: Failure due to member not found in group
+    it('should fail to remove a member that is not part of the group', async () => {
+      const res = await request(app)
+        .patch('/api/groups/Family/remove')
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerRefreshTokenValid}`) //Setting cookies in the request
+        .send({ memberEmails: ["stranger@email.com"] });
+  
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('error', 'Some of the members were not found in the group');
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.notInGroup).toEqual(["stranger@email.com"]);
+    });
+  
+    // Test Case 8: Failure due to non-existent member
+    it('should fail to remove a member that does not exist', async () => {
+      const res = await request(app)
+        .patch('/api/groups/Family/remove')
+        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerRefreshTokenValid}`) //Setting cookies in the request
+        .send({ memberEmails: ["nonexistent@email.com"] });
+  
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('error', 'Some of the members were not found in the system');
+      expect(res.body).toHaveProperty('data');
+      expect(res.body.data.membersNotFound).toEqual(["nonexistent@email.com"]);
+    });
+});
+  
+describe('deleteUser', () => {
   // Test Case 1: Successfully delete a user
   it('should successfully delete a user', async () => {
     // Create a user for testing
@@ -450,5 +844,80 @@ describe('DELETE /users', () => {
   });
 });
 
+describe('deleteGroup', () => {
+  beforeEach(async () => {
+    await Group.deleteMany({});
+  });
+  // Test Case 1: Successfully delete a group
+  it('should delete a group successfully', async () => {
+    await Group.create({
+      name: "Family",
+      members: []
+    });
 
-describe("deleteGroup", () => { })
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ name: "Family" })
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body.data).toHaveProperty('message', 'Group deleted successfully');
+  });
+
+  // Test Case 2: Failure due to group not found
+  it('should fail to delete a group due to group not found', async () => {
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ name: "NonExistingGroup" })
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Group does not exist');
+  });
+
+  // Test Case 3: Failure due to incomplete request body
+  it('should fail to delete a group due to incomplete request body', async () => {
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ })
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Incomplete request body');
+  });
+
+  // Test Case 4: Failure due to empty group name
+  it('should fail to delete a group due to empty group name', async () => {
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
+      .send({ name: "" })
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Empty fields are not allowed');
+  });
+
+  // Test Case 5: Failure due to unauthorized access
+  it('should fail to delete a group due to unauthorized access', async () => {
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .send({ name: "Family" })
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  // Test Case 6: Failure due to expired token
+  it('should fail to delete a group due to expired token', async () => {
+    const res = await request(app)
+      .delete('/api/groups')
+      .set("Cookie", `accessToken=${testerAccessTokenExpired}; refreshToken=${testerAccessTokenExpired}`) //Setting cookies in the request
+      .send({ name: "Family" })
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body).toHaveProperty('error');
+  });
+});
+
