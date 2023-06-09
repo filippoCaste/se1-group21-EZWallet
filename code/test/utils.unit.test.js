@@ -72,6 +72,22 @@ describe("handleDateFilterParams", () => {
         const req = { query: { date: '2023-04-31' } };
         expect(() => handleDateFilterParams(req)).toThrow('The string is not a date');
     });
+    test('should throw an error for conflicting "upTo" and "from" parameters', () => {
+        const req = { query: { from: '2023-01-01', upTo: '2022-12-31' } };
+        expect(() => handleDateFilterParams(req)).toThrow('Impossible combination');
+    });
+    test('should throw an error when date2 month is after date1', () => {
+        const req = { query: { from: '2023-03-02', upTo: '2023-02-01' } };
+        expect(() => handleDateFilterParams(req)).toThrow('Impossible combination');
+    });
+    test('should throw an error when date2 day is after date1', () => {
+        const req = { query: { from: '2023-02-02', upTo: '2023-02-01' } };
+        expect(() => handleDateFilterParams(req)).toThrow('Impossible combination');
+    });
+    test('should not throw an error after the isAfter method check', () => {
+        const req = { query: { from: '2023-01-02', upTo: '2023-02-01' } };
+        expect(() => handleDateFilterParams(req)).not.toThrow('Impossible combination');
+    });
 });
 
 

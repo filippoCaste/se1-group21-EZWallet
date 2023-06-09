@@ -1529,11 +1529,6 @@ describe("createTransaction", () => {
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
             User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
                 username: "admin",
                 email: "admin@email.com",
                 password: "admin",
@@ -1555,7 +1550,7 @@ describe("createTransaction", () => {
                     amount: 10000
                 }]).then(() => {
                     request(app)
-                        .post("/api/users/Ghost/transactions") //Route to call
+                        .post("/api/users/tester/transactions") //Route to call
                         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
                         .send({ username: "tester", amount: 999, type: "food" })
                         .then((response) => { //After obtaining the response, we check its actual body content
@@ -1882,11 +1877,6 @@ describe("getTransactionsByUser", () => {
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
             User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
                 username: "admin",
                 email: "admin@email.com",
                 password: "admin",
@@ -1908,8 +1898,8 @@ describe("getTransactionsByUser", () => {
                     amount: 10000
                 }]).then(() => {
                     request(app)
-                        .get("/api/transactions/users/ghost") //Route to call
-                        .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+                        .get("/api/transactions/users/tester") //Route to call
+                        .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
                         .then((response) => { //After obtaining the response, we check its actual body content
                             expect(response.status).toBe(400)
                             const errorMessage = response.body.error ? true : response.body.message ? true : false
@@ -2027,11 +2017,6 @@ describe("getTransactionsByUser", () => {
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
             User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
                 username: "admin",
                 email: "admin@email.com",
                 password: "admin",
@@ -2053,7 +2038,7 @@ describe("getTransactionsByUser", () => {
                     amount: 10000
                 }]).then(() => {
                     request(app)
-                        .get("/api/users/ghost/transactions") //Route to call
+                        .get("/api/users/tester/transactions") //Route to call
                         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
                         .then((response) => { //After obtaining the response, we check its actual body content
                             expect(response.status).toBe(400)
@@ -2291,11 +2276,6 @@ describe("getTransactionsByUserByCategory", () => {
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
             User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
                 username: "admin",
                 email: "admin@email.com",
                 password: "admin",
@@ -2322,7 +2302,7 @@ describe("getTransactionsByUserByCategory", () => {
                     amount: 10000
                 }]).then(() => {
                     request(app)
-                        .get("/api/transactions/users/ghost/category/food") //Route to call
+                        .get("/api/transactions/users/tester/category/food") //Route to call
                         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
                         .then((response) => { //After obtaining the response, we check its actual body content
                             expect(response.status).toBe(401)
@@ -2400,17 +2380,6 @@ describe("getTransactionsByUserByCategory", () => {
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
             User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
-                username: "admin",
-                email: "admin@email.com",
-                password: "admin",
-                refreshToken: adminAccessTokenValid,
-                role: "Admin"
-            }, {
                 username: "new",
                 email: "new@email.com",
                 password: "new",
@@ -2431,7 +2400,7 @@ describe("getTransactionsByUserByCategory", () => {
                     amount: 10000
                 }]).then(() => {
                     request(app)
-                        .get("/api/transactions/users/ghost/category/food") //Route to call
+                        .get("/api/transactions/users/admin/category/food") //Route to call
                         .set("Cookie", `accessToken=${adminAccessTokenValid}; refreshToken=${adminAccessTokenValid}`) //Setting cookies in the request
                         .then((response) => { //After obtaining the response, we check its actual body content
                             expect(response.status).toBe(400)
@@ -3592,12 +3561,7 @@ describe("deleteTransaction", () => {
             color: "blue"
         }]).then(() => {
             //We insert two users in the datbase: an Admin and a user that made two transactions
-            User.insertMany([{
-                username: "tester",
-                email: "tester@test.com",
-                password: "tester",
-                refreshToken: testerAccessTokenValid
-            }, {
+            User.insertMany([ {
                 username: "admin",
                 email: "admin@email.com",
                 password: "admin",
@@ -3620,7 +3584,7 @@ describe("deleteTransaction", () => {
                 }]).then(async () => {
                     const testData = await transactions.findOne({ username: "tester" })
                     request(app)
-                        .delete("/api/users/Ghost/transactions") //Route to call
+                        .delete("/api/users/tester/transactions") //Route to call
                         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
                         .send({ _id: testData.id })
                         .then((response) => { //After obtaining the response, we check its actual body content
