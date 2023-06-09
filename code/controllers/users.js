@@ -136,12 +136,12 @@ export const createGroup = async (req, res) => {
 
     // Create the new group
     const group = await Group.create( {name, members: validMembers} );
-    const groupMembers = group.members.map(member => member.email);
+    
     // Prepare and send the response
     const responseData = {
       group: {
         name: group.name,
-        members: groupMembers
+        members: group.members.map(member => {return {email: member.email}})
       },
       alreadyInGroup,
       membersNotFound
@@ -176,7 +176,7 @@ export const getGroups = async (req, res) => {
       // Prepare the response data
       const responseData = groups.map(group => ({
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: group.members.map(member => {return {email: member.email}})
       }));
 
       // Send the response with the data
@@ -216,7 +216,7 @@ export const getGroup = async (req, res) => {
       // Prepare and send the response
       const responseData = {
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: group.members.map(member => {return {email: member.email}})
       };
 
       return res.status(200).json({ data: responseData, refreshedTokenMessage: res.locals.refreshedTokenMessage });
@@ -301,7 +301,7 @@ export const addToGroup = async (req, res) => {
       const responseData = {
         group: {
           name: groupUpdate.name,
-          members: groupUpdate.members.map(member => member.email)
+          members: group.members.map(member => {return {email: member.email}})
         },
         alreadyInGroup,
         membersNotFound
@@ -396,7 +396,7 @@ export const removeFromGroup = async (req, res) => {
       const responseData = {
         group: {
           name: groupUpdate.name,
-          members: groupUpdate.members.map(member => member.email)
+          members: group.members.map(member => {return {email: member.email}})
         },
         notInGroup,
         membersNotFound
