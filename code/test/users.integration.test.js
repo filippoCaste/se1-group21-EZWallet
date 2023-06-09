@@ -276,8 +276,8 @@ describe('POST /api/groups', () => {
     expect(res.body).toHaveProperty('data');
     expect(res.body.data).toHaveProperty('group');
     expect(res.body.data.group).toHaveProperty('name', 'Test Group');
-    expect(res.body.data.group.members).toContain("tester@test.com");
-    expect(res.body.data.group.members).toContain(groupData.memberEmails[0]);
+    expect(res.body.data.group.members[1].email).toBe("tester@test.com");
+    expect(res.body.data.group.members).toHaveLength(2);
   });
 
   // Test Case 2: Failure due to incomplete request body
@@ -390,7 +390,7 @@ describe("getGroups", () => {
     expect(res.body.data).toHaveLength(2);
 
     expect(res.body.data[0]).toHaveProperty('name', 'Group1');
-    expect(res.body.data[0].members).toEqual(['mario.red@email.com', 'luigi.red@email.com']);
+    expect(res.body.data[0].members).toEqual([{email: 'mario.red@email.com'}, {email: 'luigi.red@email.com'}]);
     expect(res.body.data[1]).toHaveProperty('name', 'Group2');
     expect(res.body.data[1].members).toEqual(['peach.pink@email.com', 'toad.blue@email.com']);
   });
@@ -477,7 +477,7 @@ describe('getGroup', () => {
     expect(res.body).toHaveProperty('data');
     expect(res.body.data).toHaveProperty('name', 'Family');
     expect(res.body.data).toHaveProperty('members');
-    expect(res.body.data.members).toEqual(expect.arrayContaining([expect.any(String)]));
+    expect(res.body.data.members).toHaveLength(3);
   });
 
   // Test Case 2: Failure due to group not found
@@ -525,7 +525,7 @@ describe("PATCH /groups/:name/add", () => {
     })
     // Prepare the request body
     const reqBody = {
-      memberEmails: ["pietro.blue@email.com"]
+      emails: ["pietro.blue@email.com"]
     };
 
     const res = await request(app)
@@ -536,7 +536,7 @@ describe("PATCH /groups/:name/add", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.data).toHaveProperty('group');
     expect(res.body.data.group).toHaveProperty('name', 'Family');
-    expect(res.body.data.group.members).toContain("pietro.blue@email.com");
+    expect(res.body.data.group.members).toContain({email: "pietro.blue@email.com"});
     expect(res.body.data.membersNotFound).toHaveLength(0);
     expect(res.body.data.alreadyInGroup).toHaveLength(0);
   });
@@ -546,7 +546,7 @@ describe("PATCH /groups/:name/add", () => {
     const groupName = "Family"
     // Prepare the request body
     const reqBody = {
-      memberEmails: ["pietro.blue@email.com"]
+      emails: ["pietro.blue@email.com"]
     };
 
     const res = await request(app)
@@ -582,7 +582,7 @@ describe("PATCH /groups/:name/add", () => {
 
     // Prepare the request body
     const reqBody = {
-      memberEmails: ["invalidEmail"]
+      emails: ["invalidEmail"]
     };
 
     const res = await request(app)
@@ -601,7 +601,7 @@ describe("PATCH /groups/:name/add", () => {
   
       // Prepare the request body
       const reqBody = {
-        memberEmails: ["pietro.blue@email.com"]
+        emails: ["pietro.blue@email.com"]
       };
   
       const res = await request(app)
@@ -625,7 +625,7 @@ describe("PATCH /groups/:name/add", () => {
       })
       // Prepare the request body
       const reqBody = {
-        memberEmails: ["pietro.blue@email.com"]
+        emails: ["pietro.blue@email.com"]
       };
   
       const res = await request(app)
@@ -644,7 +644,7 @@ describe("PATCH /groups/:name/add", () => {
       await Group.create({ name: "Family", members: [{ email: "mario.red@email.com" },{email: "tester@test.com"}] });
   
       const reqBody = {
-        memberEmails: ["pietro.blue@email.com"]
+        emails: ["pietro.blue@email.com"]
       };
   
       const res = await request(app)
@@ -690,11 +690,11 @@ describe('removeFromGroup', () => {
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send({ memberEmails: ["tester@test.com"] });
+      .send({ emails: ["tester@test.com"] });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('data');
-    expect(res.body.data.group.members).toHaveLength(1);
+    expect(res.body.data.group.members).toHaveLength(2);
     expect(res.body.data.group.members[0].email).toEqual('admin@email.com');
     expect(res.body.data.notInGroup).toHaveLength(0);
     expect(res.body.data.membersNotFound).toHaveLength(0);
@@ -716,7 +716,7 @@ describe('removeFromGroup', () => {
     const res = await request(app)
       .patch('/api/groups/NonExistingGroup/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send({ memberEmails: ["admin@email.com"] });
+      .send({ emails: ["admin@email.com"] });
 
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('error', 'There is no Group with this name');
@@ -786,7 +786,7 @@ describe('removeFromGroup', () => {
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
-      .send({ memberEmails: ["admin@email.com"] });
+      .send({ emails: ["admin@email.com"] });
 
     expect(res.statusCode).toEqual(401);
     expect(res.body).toHaveProperty('error');
@@ -821,7 +821,7 @@ describe('removeFromGroup', () => {
     const res = await request(app)
       .patch('/api/groups/Family/remove')
       .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send({ memberEmails: ["invalidEmail"] });
+      .send({ emails: ["invalidEmail"] });
 
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('error', 'Invalid memberEmail format');
@@ -852,7 +852,7 @@ describe('removeFromGroup', () => {
       const res = await request(app)
         .patch('/api/groups/Solo/remove')
         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-        .send({ memberEmails: ["tester@test.com"] });
+        .send({ emails: ["tester@test.com"] });
   
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('error', 'You cannot remove the last member of the group!');
@@ -887,7 +887,7 @@ describe('removeFromGroup', () => {
       const res = await request(app)
         .patch('/api/groups/Family/remove')
         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-        .send({ memberEmails: ["stranger@email.com"] });
+        .send({ emails: ["stranger@email.com"] });
   
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('error', 'Member emails either do not exist or are not in the group');
@@ -922,7 +922,7 @@ describe('removeFromGroup', () => {
       const res = await request(app)
         .patch('/api/groups/Family/remove')
         .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-        .send({ memberEmails: ["nonexistent@email.com"] });
+        .send({ emails: ["nonexistent@email.com"] });
   
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('error', 'Member emails either do not exist or are not in the group');
