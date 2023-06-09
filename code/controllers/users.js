@@ -135,13 +135,13 @@ export const createGroup = async (req, res) => {
     }
 
     // Create the new group
-    const group = await Group.create( {name,validMembers} );
-
+    const group = await Group.create( {name, members: validMembers} );
+    const groupMembers = group.members.map(member => member.email);
     // Prepare and send the response
     const responseData = {
       group: {
         name: group.name,
-        members: group.members.map(member => member.email)
+        members: groupMembers
       },
       alreadyInGroup,
       membersNotFound

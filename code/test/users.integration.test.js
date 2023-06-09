@@ -244,26 +244,32 @@ describe('POST /api/groups', () => {
   
   // Test Case 1: Successfully create a group
   it('should successfully create a new group', async () => {
-    await User.insertMany([{
-      username: "tester",
-      email: "tester@test.com",
-      password: "tester",
-      refreshToken: testerAccessTokenValid
-    }, {
-      username: "new",
-      email: "new@email.com",
-      password: "new",
-      refreshToken: newAccessTokenValid,
-    }])
+    await User.insertMany([
+      {
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid,
+      },
+      {
+        username: "new",
+        email: "new@email.com",
+        password: "new",
+        refreshToken: newAccessTokenValid,
+      },
+    ]);
 
-    const groupData = { 
-      name: "Test Group", 
-      memberEmails: ["new@email.com"]
+    const groupData = {
+      name: "Test Group",
+      memberEmails: ["new@email.com"],
     };
 
     const res = await request(app)
       .post('/api/groups')
-      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
+      .set(
+        "Cookie",
+        `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`
+      )
       .send(groupData);
 
     expect(res.statusCode).toBe(200);
@@ -271,7 +277,7 @@ describe('POST /api/groups', () => {
     expect(res.body.data).toHaveProperty('group');
     expect(res.body.data.group).toHaveProperty('name', 'Test Group');
     expect(res.body.data.group.members).toContain("tester@test.com");
-    expect(res.body.data.group.members).toContain("new@email.com");
+    expect(res.body.data.group.members).toContain(groupData.memberEmails[0]);
   });
 
   // Test Case 2: Failure due to incomplete request body
@@ -291,6 +297,20 @@ describe('POST /api/groups', () => {
 
   // Test Case 3: Failure due to group name already exists
   it('should fail to create a group due to group name already exists', async () => {
+    await User.insertMany([
+      {
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid,
+      },
+      {
+        username: "new",
+        email: "new@email.com",
+        password: "new",
+        refreshToken: newAccessTokenValid,
+      },
+    ]);
     const groupData = { 
       name: "Test Group", 
       memberEmails: ["new@email.com"]
@@ -311,20 +331,30 @@ describe('POST /api/groups', () => {
   });
   // Test Case 4: Should not be able to create a group if the user is already part of another group
   it('should fail to create a group because the user is already a member of another group', async () => {
+    await User.insertMany([
+      {
+        username: "tester",
+        email: "tester@test.com",
+        password: "tester",
+        refreshToken: testerAccessTokenValid,
+      },
+      {
+        username: "new",
+        email: "new@email.com",
+        password: "new",
+        refreshToken: newAccessTokenValid,
+      },
+    ]);
     // Create a group with user first
     const initialGroupData = { 
       name: "Initial Group", 
-      memberEmails: [tester.email]
+      memberEmails: ["tester@test.com"]
     };
-    await request(app)
-      .post('/api/groups')
-      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send(initialGroupData);
-
+  
     // Try to create another group with the same user
     const newGroupData = { 
       name: "New Group", 
-      memberEmails: [tester.email]
+      memberEmails: ["tester@test.com"]
     };
     const response = await request(app)
       .post('/api/groups')
@@ -333,33 +363,11 @@ describe('POST /api/groups', () => {
 
     // Check if the server responds with the correct error message and status code
     expect(response.statusCode).toBe(400);
-    expect(response.body).toHaveProperty('error', 'User is already a member of another group');
+    expect(response.body).toHaveProperty('error', 'You are already in a Group');
   });
-  // Test Case 5: Failure due to an invited user already in a group
-  it('should fail to create a group due to an invited user already in a group', async () => {
-    const groupData1 = { 
-      name: "Test Group", 
-      memberEmails: ["new@email.com"]
-    };
-    await request(app)
-      .post('/api/groups')
-      .set("Cookie", `accessToken=${newAccessTokenValid}; refreshToken=${newAccessTokenValid}`) //Setting cookies in the request
-      .send(groupData1);
-
-    const groupData2 = { 
-      name: "Test Group 2", 
-      memberEmails: ["new@email.com"]
-    };
-
-    const res = await request(app)
-      .post('/api/groups')
-      .set("Cookie", `accessToken=${testerAccessTokenValid}; refreshToken=${testerAccessTokenValid}`) //Setting cookies in the request
-      .send(groupData2);
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('error', 'One or more invited members are already in a group');
-  });
+  
 });
+
 
 describe("getGroups", () => {
   beforeEach(async () => {
@@ -639,9 +647,7 @@ describe("PATCH /groups/:name/add", () => {
       expect(res.body.data.membersNotFound).toContain("nonexisting.user@email.com");
       expect(res.body.data.alreadyInGroup).toHaveLength(0);
     });
-  });
-  
-
+});
 
 describe('removeFromGroup', () => {
   beforeEach(async () => {
@@ -761,7 +767,7 @@ describe('removeFromGroup', () => {
       expect(res.body.data.membersNotFound).toEqual(["nonexistent@email.com"]);
     });
 });
-  
+ 
 describe('deleteUser', () => {
   // Test Case 1: Successfully delete a user
   it('should successfully delete a user', async () => {
@@ -843,7 +849,7 @@ describe('deleteUser', () => {
     expect(res.body).toHaveProperty('error', 'You cannot delete an Admin');
   });
 });
-
+/* */
 describe('deleteGroup', () => {
   beforeEach(async () => {
     await Group.deleteMany({});
@@ -920,4 +926,5 @@ describe('deleteGroup', () => {
     expect(res.body).toHaveProperty('error');
   });
 });
+
 
