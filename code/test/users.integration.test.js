@@ -695,7 +695,7 @@ describe('removeFromGroup', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('data');
     expect(res.body.data.group.members).toHaveLength(1);
-    expect(res.body.data.group.members[0]).toEqual('admin@email.com');
+    expect(res.body.data.group.members[0].email).toEqual('admin@email.com');
     expect(res.body.data.notInGroup).toHaveLength(0);
     expect(res.body.data.membersNotFound).toHaveLength(0);
   });
