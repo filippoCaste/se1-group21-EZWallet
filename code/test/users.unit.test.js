@@ -620,7 +620,7 @@ describe("removeFromGroup", () => {
       data: {
         group: {
           name: "testGroup",
-          members: ["test1@example.com"]
+          members: [{email: "test1@example.com"}]
         },
         notInGroup: [],
         membersNotFound: []
@@ -751,7 +751,7 @@ describe("removeFromGroup", () => {
       data: {
         group: {
           name: "testGroup",
-          members: ["test1@example.com"]
+          members: [{email: "test1@example.com"}]
         },
         notInGroup: [],
         membersNotFound: []
