@@ -53,14 +53,14 @@ export const getUser = async (req, res) => {
 
 /**
  * Create a new group
-  - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `memberEmails`
+  - Request Body Content: An object having a string attribute for the `name` of the group and an array that lists all the `emails`
   - Response `data` Content: An object having an attribute `group` (this object must have a string attribute for the `name`
     of the created group and an array for the `members` of the group), an array that lists the `alreadyInGroup` members
     (members whose email is already present in a group) and an array that lists the `membersNotFound` (members whose email
     +does not appear in the system)
   - Optional behavior:
     - error 400 is returned if there is already an existing group with the same name
-    - error 400 is returned if all the `memberEmails` either do not exist or are already in a group
+    - error 400 is returned if all the `emails` either do not exist or are already in a group
  */
 export const createGroup = async (req, res) => {
   try {
@@ -72,23 +72,23 @@ export const createGroup = async (req, res) => {
     }
 
     // Check for incomplete request body
-    if (!('name' in req.body) || !('memberEmails' in req.body)) {
+    if (!('name' in req.body) || !('emails' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
 
-    let { name, memberEmails } = req.body;
+    let { name, emails } = req.body;
     name = name.trim();
     // Check for empty strings
     if (name.trim().length === 0) {
       return res.status(400).json({ error: "Empty fields are not allowed" });
     }
-    memberEmails = memberEmails.map((e) => e.trim());
+    emails = emails.map((e) => e.trim());
     const reqUser = (await User.findOne({ refreshToken: req.cookies.refreshToken }));
     const reqUserMail = reqUser.email;
 
     // If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
-    if (!memberEmails.includes(reqUserMail)) {
-      memberEmails.push(reqUserMail);
+    if (!emails.includes(reqUserMail)) {
+      emails.push(reqUserMail);
     }
     
 
@@ -104,18 +104,18 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ "error": 'You are already in a Group' });
     }
 
-    // Check if all memberEmails exist or are already in a group
+    // Check if all emails exist or are already in a group
     const membersNotFound = [];
     const alreadyInGroup = [];
     const validMembers = [];
     // Check if at least one of the member emails is not in a valid email format or empty
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const validFormatCheck = memberEmails.every(email => emailRegex.test(email));
+    const validFormatCheck = emails.every(email => emailRegex.test(email));
     if (!validFormatCheck) {
       return res.status(400).json({ error: "Invalid memberEmail format" });
     }
 
-    for (const email of memberEmails) {
+    for (const email of emails) {
 
       const user = await User.findOne({ email });
       if (!user) {
@@ -130,7 +130,7 @@ export const createGroup = async (req, res) => {
       }
     }
 
-    if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
+    if (membersNotFound.length + alreadyInGroup.length === emails.length) {
       return res.status(400).json({ error: "All the provided emails represent users that are already in a group or do not exist in the database" });
     }
 
@@ -237,7 +237,7 @@ export const getGroup = async (req, res) => {
     the `membersNotFound` (members whose email does not appear in the system)
   - Optional behavior:
     - error 400 is returned if the group does not exist
-    - error 400 is returned if all the `memberEmails` either do not exist or are already in a group
+    - error 400 is returned if all the `emails` either do not exist or are already in a group
  */
 export const addToGroup = async (req, res) => {
   try {
@@ -248,10 +248,10 @@ export const addToGroup = async (req, res) => {
       return res.status(400).json({ error: 'There is no Group with this name' });
     }
     // Check for incomplete request body
-    if (!('memberEmails' in req.body)) {
+    if (!('emails' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
-    const { memberEmails } = req.body;
+    const { emails } = req.body;
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
     const route = req.path;
@@ -264,14 +264,14 @@ export const addToGroup = async (req, res) => {
       const validMembers = [];
       // Check if at least one of the member emails is not in a valid email format or empty
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const validFormatCheck = memberEmails.every(email => emailRegex.test(email));
+      const validFormatCheck = emails.every(email => emailRegex.test(email));
       if (!validFormatCheck) {
         return res.status(400).json({ error: "Invalid memberEmail format" });
       }
 
-      for (let email of memberEmails) {
+      for (let email of emails) {
         email = email.trim();
-        // Check if all memberEmails exist and are not already in a group
+        // Check if all emails exist and are not already in a group
         const user = await User.findOne({ email });
         if (!user) {
           membersNotFound.push(email);
@@ -284,7 +284,7 @@ export const addToGroup = async (req, res) => {
           }
         }
       }
-      if (memberEmails.length === membersNotFound.length + alreadyInGroup.length) {
+      if (emails.length === membersNotFound.length + alreadyInGroup.length) {
         return res.status(400).json({ error: 'Member emails either do not exist or are already in a group' });
       }
 
@@ -301,7 +301,7 @@ export const addToGroup = async (req, res) => {
       const responseData = {
         group: {
           name: groupUpdate.name,
-          members: group.members.map(member => {return {email: member.email}})
+          members: groupUpdate.members.map(member => {return {email: member.email}})
         },
         alreadyInGroup,
         membersNotFound
@@ -325,7 +325,7 @@ export const addToGroup = async (req, res) => {
     the `membersNotFound` (members whose email does not appear in the system)
   - Optional behavior:
     - error 400 is returned if the group does not exist
-    - error 400 is returned if all the `memberEmails` either do not exist or are not in the group
+    - error 400 is returned if all the `emails` either do not exist or are not in the group
  */
 export const removeFromGroup = async (req, res) => {
   try {
@@ -337,11 +337,11 @@ export const removeFromGroup = async (req, res) => {
     }
     
     // Check for incomplete request body
-    if (!('memberEmails' in req.body)) {
+    if (!('emails' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
-    let { memberEmails } = req.body;
-    memberEmails = memberEmails.map((e) => e.trim())
+    let { emails } = req.body;
+    emails = emails.map((e) => e.trim())
 
     const adminAuth = verifyAuth(req, res, { authType: "Admin" })
     const groupAuth = verifyAuth(req, res, { authType: "Group", memberEmails: group.members.map(member => member.email) })
@@ -353,7 +353,7 @@ export const removeFromGroup = async (req, res) => {
       const groupMembers = group.members.map(member => member.email);
       // Check if at least one of the member emails is not in a valid email format or empty
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const validFormatCheck = memberEmails.every(email => emailRegex.test(email));
+      const validFormatCheck = emails.every(email => emailRegex.test(email));
       if (!validFormatCheck) {
         return res.status(400).json({ error: "Invalid memberEmail format" });
       }
@@ -367,23 +367,23 @@ export const removeFromGroup = async (req, res) => {
       const allUserEmails = (await User.find()).map(user => user.email);
 
       // Check if all the member emails exist and are in the group
-      const notInGroup = memberEmails.filter(email => !groupMembers.includes(email) && allUserEmails.includes(email));
-      const membersNotFound = memberEmails.filter(email => !allUserEmails.includes(email));
+      const notInGroup = emails.filter(email => !groupMembers.includes(email) && allUserEmails.includes(email));
+      const membersNotFound = emails.filter(email => !allUserEmails.includes(email));
 
-      // Check if all memberEmails exist and are in the group
-      if (memberEmails.length === membersNotFound.length + notInGroup.length) {
+      // Check if all emails exist and are in the group
+      if (emails.length === membersNotFound.length + notInGroup.length) {
         return res.status(400).json({ error: 'Member emails either do not exist or are not in the group' });
       }
 
       // Check if all the emails in the group are in the list to be removed
-      const allGroupMembersRemoved = groupMembers.every(member => memberEmails.includes(member));
+      const allGroupMembersRemoved = groupMembers.every(member => emails.includes(member));
 
       // Remove members from the group
       let remainingMembers;
       if (allGroupMembersRemoved) {
         remainingMembers = group.members.slice(0, 1); // Keep the first member
       } else {
-        remainingMembers = group.members.filter(member => !memberEmails.includes(member.email));
+        remainingMembers = group.members.filter(member => !emails.includes(member.email));
       }
 
       const groupUpdate = {
@@ -396,7 +396,7 @@ export const removeFromGroup = async (req, res) => {
       const responseData = {
         group: {
           name: groupUpdate.name,
-          members: group.members.map(member => {return {email: member.email}})
+          members: groupUpdate.members.map(member => {return {email: member.email}})
         },
         notInGroup,
         membersNotFound
