@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import { verifyAuth } from './utils.js';
@@ -12,20 +12,46 @@ import { verifyAuth } from './utils.js';
  */
 export const register = async (req, res) => {
     try {
+
+        // Check for incomplete request body
+        if (!('username' in req.body) || !('email' in req.body) || !('password' in req.body)) {
+            return res.status(400).json({ error: "Incomplete request body" });
+        }
+
         const { username, email, password } = req.body;
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) return res.status(400).json({ message: "you are already registered" });
+
+        // Check for empty strings
+        if (username.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0) {
+            return res.status(400).json({ error: "Empty fields are not allowed" });
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Check if username or email is already in use
+        const existingUser = await User.findOne({
+            $or: [{ username: username }, { email: email }],
+        });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username or email already in use" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
             email,
             password: hashedPassword,
         });
-        res.status(200).json('user added succesfully');
-    } catch (err) {
-        res.status(400).json(err);
+        res.status(200).json({ data: { message: "User added successfully" } });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
+
+
 
 /**
  * Register a new user in the system with an Admin role
@@ -36,22 +62,45 @@ export const register = async (req, res) => {
  */
 export const registerAdmin = async (req, res) => {
     try {
-        const { username, email, password } = req.body
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) return res.status(400).json({ message: "you are already registered" });
+
+        // Check for incomplete request body
+        if (!('username' in req.body) || !('email' in req.body) || !('password' in req.body)) {
+            return res.status(400).json({ error: "Incomplete request body" });
+        }
+
+        const { username, email, password } = req.body;
+
+        // Check for empty strings
+        if (username.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0) {
+            return res.status(400).json({ error: "Empty fields are not allowed" });
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Check if username or email is already in use
+        const existingUser = await User.findOne({
+            $or: [{ username: username }, { email: email }],
+        });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username or email already in use" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 12);
         const newUser = await User.create({
             username,
             email,
             password: hashedPassword,
-            role: "Admin"
+            role: "Admin",
         });
-        res.status(200).json('admin added succesfully');
-    } catch (err) {
-        res.status(500).json(err);
+        res.status(200).json({ data: { message: "Admin added successfully" } })
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-
-}
+};
 
 /**
  * Perform login 
@@ -62,13 +111,31 @@ export const registerAdmin = async (req, res) => {
     - error 400 is returned if the supplied password does not match with the one in the database
  */
 export const login = async (req, res) => {
-    const { email, password } = req.body
+    try {
+    // Check for incomplete request body
+    if (!('email' in req.body) || !('password' in req.body)) {
+        return res.status(400).json({ error: "Incomplete request body" });
+    }
+
+    const { email, password } = req.body;
+
+    // Check for empty strings
+    if (email.trim().length === 0 || password.trim().length === 0) {
+        return res.status(400).json({ error: "Empty fields are not allowed" });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+    }
+
     const cookie = req.cookies
     const existingUser = await User.findOne({ email: email })
-    if (!existingUser) return res.status(400).json('please you need to register')
-    try {
+    if (!existingUser) return res.status(400).json({ error: "please you need to register" })
+        
         const match = await bcrypt.compare(password, existingUser.password)
-        if (!match) return res.status(400).json('wrong credentials')
+        if (!match) return res.status(400).json({ error: "wrong credentials" })
         //CREATE ACCESSTOKEN
         const accessToken = jwt.sign({
             email: existingUser.email,
@@ -90,7 +157,8 @@ export const login = async (req, res) => {
         res.cookie('refreshToken', refreshToken, { httpOnly: true, domain: "localhost", path: '/api', maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'none', secure: true })
         res.status(200).json({ data: { accessToken: accessToken, refreshToken: refreshToken } })
     } catch (error) {
-        res.status(400).json(error)
+        
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -103,17 +171,19 @@ export const login = async (req, res) => {
     - error 400 is returned if the user does not exist
  */
 export const logout = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken
-    if (!refreshToken) return res.status(400).json("user not found")
-    const user = await User.findOne({ refreshToken: refreshToken })
-    if (!user) return res.status(400).json('user not found')
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.status(400).json({ error: "No refresh token provided" });
+
     try {
-        user.refreshToken = null
-        res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-        res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true })
-        const savedUser = await user.save()
-        res.status(200).json('logged out')
+        const user = await User.findOne({ refreshToken: refreshToken });
+        if (!user) return res.status(400).json({ error: "User not found" });
+
+        user.refreshToken = null;
+        res.cookie("accessToken", "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
+        res.cookie('refreshToken', "", { httpOnly: true, path: '/api', maxAge: 0, sameSite: 'none', secure: true });
+        const savedUser = await user.save();
+        res.status(200).json({ data: { message: "User logged out" } });
     } catch (error) {
-        res.status(400).json(error)
+        res.status(500).json({ error: error.message });
     }
-}
+};
