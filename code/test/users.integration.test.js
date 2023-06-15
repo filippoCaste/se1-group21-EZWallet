@@ -240,7 +240,7 @@ describe('getUser', () => {
   });
 });
 
-describe('POST /api/groups', () => {
+describe('createGroup', () => {
   
   // Test Case 1: Successfully create a group
   it('should successfully create a new group', async () => {
@@ -501,7 +501,7 @@ describe('getGroup', () => {
   });
 });
 
-describe("PATCH /groups/:name/add", () => {
+describe("addToGroup", () => {
   beforeEach(async () => {
     await User.deleteMany({});
     await Group.deleteMany({});
@@ -929,7 +929,6 @@ describe('removeFromGroup', () => {
     });
 });
 
- 
 describe('deleteUser', () => {
   // Test Case 1: Successfully delete a user
   it('should successfully delete a user', async () => {

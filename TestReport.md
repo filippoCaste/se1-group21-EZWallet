@@ -359,16 +359,16 @@ WB# Contents
 | FR12 login | 163-259 |
 | FR13 logout | 261-361 |
 | FR14 registerAdmin | 87-161 |
-| FR15  getUsers |users.integration.test.js:  |
-| FR16  getUser |users.integration.test.js:  |
-| FR17  deleteUser |users.integration.test.js:  |
+| FR15  getUsers |users.integration.test.js: 67-173 |
+| FR16  getUser |users.integration.test.js: 175-241  |
+| FR17  deleteUser |users.integration.test.js: 932-1012 |
 | FR2  Manage groups | users.integration.test.js lines |
-| FR21  createGroup |  |
-| FR22 getGroups |  |
-| FR23 getGroup |  |
-| FR24 addToGroup |  |
-| FR26 removeFromGroup |  |
-| FR28 deleteGroup |  |
+| FR21  createGroup | 243-369 |
+| FR22 getGroups |  371-428|
+| FR23 getGroup | 430-502 |
+| FR24 addToGroup | 504-658 |
+| FR26 removeFromGroup | 660-930 |
+| FR28 deleteGroup | 1014-1089 |
 |  FR3   Manage  transactions| controllers.integration.test.js lines| 
 |FR31 createTransaction| 1096-1719|
 |FR32 getAllTransactions |1721-1818 |
@@ -386,3 +386,4 @@ WB# Contents
 ## Coverage WB/ statement coverage
 Report here the screenshot of coverage values obtained with jest-- coverage 
 
+![](imgs/jestCoverage.png)
