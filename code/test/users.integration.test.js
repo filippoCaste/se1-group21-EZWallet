@@ -241,7 +241,7 @@ describe('getUser', () => {
 });
 
 describe('createGroup', () => {
-  
+ 
   // Test Case 1: Successfully create a group
   it('should successfully create a new group', async () => {
     await User.insertMany([
@@ -261,7 +261,7 @@ describe('createGroup', () => {
 
     const groupData = {
       name: "Test Group",
-      emails: ["new@email.com"],
+      memberEmails: ["new@email.com"],
     };
 
     const res = await request(app)
@@ -279,7 +279,7 @@ describe('createGroup', () => {
     expect(res.body.data.group.members[1].email).toBe("tester@test.com");
     expect(res.body.data.group.members).toHaveLength(2);
   });
-
+ 
   // Test Case 2: Failure due to incomplete request body
   it('should fail to create a group due to incomplete request body', async () => {
     const groupData = { 
@@ -294,7 +294,6 @@ describe('createGroup', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toHaveProperty('error', 'Incomplete request body');
   });
-
   // Test Case 3: Failure due to group name already exists
   it('should fail to create a group due to group name already exists', async () => {
     await User.insertMany([
@@ -313,7 +312,7 @@ describe('createGroup', () => {
     ]);
     const groupData = { 
       name: "Test Group", 
-      emails: ["new@email.com"]
+      memberEmails: ["new@email.com"]
     };
 
     await request(app)
@@ -354,7 +353,7 @@ describe('createGroup', () => {
     // Try to create another group with the same user
     const newGroupData = { 
       name: "New Group", 
-      emails: ["tester@test.com"]
+      memberEmails: ["tester@test.com"]
     };
     const response = await request(app)
       .post('/api/groups')

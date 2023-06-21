@@ -179,7 +179,7 @@ describe("createGroup", () => {
     testReq = {
       body: {
         name: "testGroup",
-        emails: ["userTest1@test.ut", "userTest2@test.ut"]
+        memberEmails: ["userTest1@test.ut", "userTest2@test.ut"]
       },
       cookies: {
         refreshToken: "aValidToken"
@@ -272,7 +272,7 @@ describe("createGroup", () => {
   });
 
   test("Should return 400 if invalid memberEmail format", async () => {
-    testReq.body.emails = ["userTest1@test", "userTest2@test"];
+    testReq.body.memberEmails = ["userTest1@test", "userTest2@test"];
     verifyAuth.mockReturnValue({ authorized: true });
     User.findOne.mockResolvedValueOnce({ email: "userTest1@test.ut" });
     Group.findOne.mockResolvedValueOnce();
