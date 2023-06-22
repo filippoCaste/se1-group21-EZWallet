@@ -64,6 +64,5 @@ stages:
 test:
   stage: test
   script:
-    - npm run test:official
-  rules:
-  - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "testdelivery"'
+    - npm run test
+ 
