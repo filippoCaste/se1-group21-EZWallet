@@ -72,23 +72,23 @@ export const createGroup = async (req, res) => {
     }
 
     // Check for incomplete request body
-    if (!('name' in req.body) || !('emails' in req.body)) {
+    if (!('name' in req.body) || !('memberEmails' in req.body)) {
       return res.status(400).json({ error: "Incomplete request body" });
     }
 
-    let { name, emails } = req.body;
+    let { name, memberEmails } = req.body;
     name = name.trim();
     // Check for empty strings
     if (name.trim().length === 0) {
       return res.status(400).json({ error: "Empty fields are not allowed" });
     }
-    emails = emails.map((e) => e.trim());
+    memberEmails = memberEmails.map((e) => e.trim());
     const reqUser = (await User.findOne({ refreshToken: req.cookies.refreshToken }));
     const reqUserMail = reqUser.email;
 
     // If the user who calls the API does not have their email in the list of emails then their email is added to the list of members
-    if (!emails.includes(reqUserMail)) {
-      emails.push(reqUserMail);
+    if (!memberEmails.includes(reqUserMail)) {
+      memberEmails.push(reqUserMail);
     }
     
 
@@ -110,12 +110,12 @@ export const createGroup = async (req, res) => {
     const validMembers = [];
     // Check if at least one of the member emails is not in a valid email format or empty
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const validFormatCheck = emails.every(email => emailRegex.test(email));
+    const validFormatCheck = memberEmails.every(email => emailRegex.test(email));
     if (!validFormatCheck) {
       return res.status(400).json({ error: "Invalid memberEmail format" });
     }
 
-    for (const email of emails) {
+    for (const email of memberEmails) {
 
       const user = await User.findOne({ email });
       if (!user) {
@@ -130,7 +130,7 @@ export const createGroup = async (req, res) => {
       }
     }
 
-    if (membersNotFound.length + alreadyInGroup.length === emails.length) {
+    if (membersNotFound.length + alreadyInGroup.length === memberEmails.length) {
       return res.status(400).json({ error: "All the provided emails represent users that are already in a group or do not exist in the database" });
     }
 

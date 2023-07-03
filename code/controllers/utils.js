@@ -222,7 +222,7 @@ export const handleAmountFilterParams = (req) => {
         let min = -1;
         let max = -1;
         if (query.min) {
-            if (!query.min.match(/[0-9]+/)) {
+            if (!String(query.min).match(/[0-9]+/)) {
                 throw Error("The input is not a number");
             }
             min = Number(query.min);
@@ -230,7 +230,7 @@ export const handleAmountFilterParams = (req) => {
         }
 
         if (query.max) {
-            if (!query.max.match(/[0-9]+/)) {
+            if (!String(query.max).match(/[0-9]+/)) {
                 throw Error("The input is not a number");
             }
             max = Number(query.max)
